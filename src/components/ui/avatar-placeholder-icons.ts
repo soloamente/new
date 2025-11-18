@@ -45,7 +45,7 @@ export function getAvatarPlaceholderIcon(seed?: string | null): AvatarPlaceholde
   const normalizedSeed = seed?.trim().toLowerCase();
 
   if (!normalizedSeed) {
-    return PLACEHOLDER_ICONS[0];
+    return PLACEHOLDER_ICONS[0]!;
   }
 
   let hash = 0;
@@ -55,8 +55,9 @@ export function getAvatarPlaceholderIcon(seed?: string | null): AvatarPlaceholde
 
   const iconIndex = hash % PLACEHOLDER_ICONS.length;
 
-  return PLACEHOLDER_ICONS[iconIndex];
+  return PLACEHOLDER_ICONS[iconIndex]!;
 }
+
 
 
 

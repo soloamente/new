@@ -87,7 +87,7 @@ export default function Sidebar() {
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href} 
                   className={cn(
                     "text-sidebar-secondary hover:text-sidebar-primary flex items-center gap-3.5",
                     isActiveItem(item.href) && "text-sidebar-primary",
