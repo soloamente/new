@@ -1,0 +1,38 @@
+import { type SVGProps } from "react";
+
+interface PotionPlaceholderIconProps extends SVGProps<SVGSVGElement> {
+  size?: number;
+}
+
+/**
+ * Potion placeholder icon to symbolize experimentation and creativity.
+ */
+export function PotionPlaceholderIcon({
+  size,
+  width,
+  height,
+  ...props
+}: PotionPlaceholderIconProps) {
+  const resolvedWidth = width ?? size ?? 20;
+  const resolvedHeight = height ?? size ?? 22;
+
+  return (
+    <svg
+      width={resolvedWidth}
+      height={resolvedHeight}
+      viewBox="0 0 20 22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      suppressHydrationWarning
+      {...props}
+    >
+      <path
+        d="M12.8571 0H5.71429C4.92411 0 4.28571 0.614453 4.28571 1.375C4.28571 2.13555 4.92411 2.75 5.71429 2.75V9.25977L0.334821 18.3176C0.116071 18.6914 0 19.1082 0 19.5379C0 20.9 1.14286 22 2.55804 22H17.442C18.8527 22 20 20.9 20 19.5379C20 19.1082 19.8839 18.6871 19.6652 18.3176L14.2857 9.25977V2.75C15.0759 2.75 15.7143 2.13555 15.7143 1.375C15.7143 0.614453 15.0759 0 14.2857 0H12.8571ZM8.57143 9.25977V2.75H11.4286V9.25977C11.4286 9.73672 11.558 10.2094 11.8036 10.6262L13.6607 13.75H6.33929L8.19643 10.6262C8.44197 10.2094 8.57143 9.74102 8.57143 9.25977Z"
+        fill="currentColor"
+        suppressHydrationWarning
+      />
+    </svg>
+  );
+}
+
+

@@ -1,0 +1,109 @@
+// React Red Flags - Code Quality Rules
+
+// Data Fetching
+// NEVER use fetch() directly inside useEffect for data fetching
+// Instead, use:
+// - React Query / TanStack Query (@tanstack/react-query)
+// - SWR
+// - tRPC (if using tRPC)
+// - Next.js Server Components / Server Actions (for Next.js apps)
+//
+// Rationale: useEffect runs more often than you think, and manual lifecycle management
+// of fetch operations is error-prone. Data fetching libraries handle caching, refetching,
+// error states, and loading states properly.
+//
+// BAD:
+//   useEffect(() => {
+//     fetch('/api/data').then(res => res.json()).then(setData)
+//   }, [])
+//
+// GOOD:
+//   const { data } = useQuery({ queryKey: ['data'], queryFn: fetchData })
+//   // or with tRPC:
+//   const { data } = api.post.getLatest.useQuery()
+
+// Interactive Elements
+// NEVER use <div onClick={...}> for interactive elements
+// Always use semantic HTML interactive elements:
+// - <button> for actions
+// - <a> for navigation
+// - <input type="button"> or <input type="submit"> for form buttons
+// - Properly implemented custom components that extend these elements
+//
+// Rationale: divs are not interactive elements. Using onClick on divs requires:
+// - Manual keyboard event handling (onKeyDown, Enter/Space keys)
+// - Manual focus management
+// - Manual ARIA attributes for screen readers
+// - Manual tabIndex management
+// This is almost never the right move. If you need custom styling, style the button element.
+//
+// BAD:
+//   <div onClick={handleClick}>Click me</div>
+//
+// GOOD:
+//   <button onClick={handleClick}>Click me</button>
+//   // or with custom styling:
+//   <button onClick={handleClick} className="custom-styles">Click me</button>
+
+// Event Prevention
+// When using preventDefault(), wrap it in a helper function for better debugging
+// This helps track where preventDefault is being called and why
+//
+// Example wrapper:
+//   function preventDefaultWrapper(e: React.SyntheticEvent, reason?: string) {
+//     if (process.env.NODE_ENV === 'development') {
+//       console.log('preventDefault called', { reason, event: e.type })
+//     }
+//     e.preventDefault()
+//   }
+//
+// Note: preventDefault is fine to use, but wrapping helps with debugging and progressive enhancement
+// awareness. Remember that preventDefault only works after JavaScript loads - if a user clicks
+// a link or submits a form before JS loads, preventDefault won't run.
+
+// ============================================================================
+// React Green Flags - Recommended Patterns and Tools
+// ============================================================================
+
+// Framework and Styling
+// PREFER Next.js for React applications
+// - Use App Router for new projects
+// - Leverage Server Components by default
+// - Use Server Actions for mutations
+// - Utilize built-in routing, image optimization, and performance features
+
+// PREFER Tailwind CSS for styling
+// - Use utility-first approach
+// - Keep styles co-located with components
+// - Use Tailwind's design tokens and responsive utilities
+// - Avoid custom CSS files when Tailwind utilities suffice
+
+// Component Libraries
+// PREFER shadcn/ui (@shadcn/ui) for component primitives
+// - Copy components into your codebase (not installed as a dependency)
+// - Customize components to match your design system
+// - Build on Radix UI primitives for accessibility
+// - Maintain full control over component code
+
+// Package Managers
+// PREFER modern package managers with lock files:
+// - Bun (bun.lockb) - Fast, all-in-one runtime and package manager
+// - pnpm (pnpm-lock.yaml) - Efficient disk usage with content-addressable storage
+// - npm (package-lock.json) - Standard, widely supported
+// Lock files ensure reproducible installs across environments
+
+// Monorepo Tools
+// PREFER Turborepo (@turborepo) for monorepo management
+// - Efficient task orchestration and caching
+// - Parallel execution of tasks
+// - Smart rebuilds based on dependency graph
+// - Great DX with clear build outputs
+
+// Database ORM
+// PREFER Drizzle ORM (@drizzleorm) for type-safe database access
+// - TypeScript-first with excellent type inference
+// - Lightweight and performant
+// - Works with multiple databases (PostgreSQL, MySQL, SQLite, etc.)
+// - Composable query builder API
+// - Great developer experience with migrations
+
