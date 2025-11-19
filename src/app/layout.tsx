@@ -7,6 +7,7 @@ import Providers from "@/components/providers";
 import Sidebar from "@/components/sidebar";
 import Preferences from "@/components/ui/preferences";
 import Script from "next/script";
+import LayoutContent from "@/components/layout-content";
 
 export const metadata: Metadata = {
   title: "Nuova interfaccia",
@@ -40,11 +41,7 @@ export default function RootLayout({
       </head>
       <body className="h-full overflow-hidden">
         <Providers>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            {children}
-            <Preferences />
-          </div>
+          <LayoutContent>{children}</LayoutContent>
         </Providers>
       </body>
     </html>
