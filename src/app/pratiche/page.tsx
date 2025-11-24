@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -13,12 +13,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FaChevronDown } from "react-icons/fa";
+import { FaChevronDown, FaPlus } from "react-icons/fa";
 
 type PracticeStatus = "assigned" | "in_progress" | "completed" | "cancelled";
 
@@ -91,6 +98,59 @@ const internalOperators = {
     imageUrl: "/icons/placeholders/davide-romano.jpg",
   },
 };
+
+// Component to show tooltip only when text is truncated
+function NoteWithTooltip({ note }: { note: string }) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (textRef.current) {
+        setIsTruncated(
+          textRef.current.scrollWidth > textRef.current.clientWidth,
+        );
+      }
+    };
+
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      checkTruncation();
+    });
+
+    window.addEventListener("resize", checkTruncation);
+
+    return () => {
+      window.removeEventListener("resize", checkTruncation);
+    };
+  }, [note]);
+
+  const noteSpan = (
+    <span ref={textRef} className="block w-full truncate text-left">
+      {note}
+    </span>
+  );
+
+  if (!isTruncated) {
+    return noteSpan;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          ref={textRef}
+          className="block w-full cursor-help truncate text-left"
+        >
+          {note}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={4} className="max-w-md">
+        <p className="">{note}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const practiceStatusStyles: Record<
   PracticeStatus,
@@ -342,35 +402,6 @@ export default function PratichePage() {
     new Set(),
   );
 
-  // Helper function to resize select based on selected option
-  const resizeSelect = (selectElement: HTMLSelectElement) => {
-    // Create a temporary span to measure text width
-    const tempSpan = document.createElement("span");
-    tempSpan.style.visibility = "hidden";
-    tempSpan.style.position = "absolute";
-    tempSpan.style.whiteSpace = "nowrap";
-    tempSpan.style.fontSize = window.getComputedStyle(selectElement).fontSize;
-    tempSpan.style.fontFamily =
-      window.getComputedStyle(selectElement).fontFamily;
-    tempSpan.style.fontWeight =
-      window.getComputedStyle(selectElement).fontWeight;
-    tempSpan.style.paddingLeft = "1.5375rem"; // pl-3.75
-    tempSpan.style.paddingRight = "1.5rem"; // pr-6
-    document.body.appendChild(tempSpan);
-
-    // Get selected option text
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const text = selectedOption ? selectedOption.text : selectElement.value;
-    tempSpan.textContent = text;
-
-    // Set select width based on measured text width
-    const width = tempSpan.offsetWidth;
-    selectElement.style.width = `${width}px`;
-
-    // Clean up
-    document.body.removeChild(tempSpan);
-  };
-
   // Calculate statistics from mockPractices
   const totalPractices = mockPractices.length;
   const completedCount = mockPractices.filter(
@@ -543,20 +574,20 @@ export default function PratichePage() {
     [],
   );
 
-  // Initialize and resize selects on mount and when filters change
-  useEffect(() => {
-    assigneeFilters.forEach((filter) => {
-      const selectId = `assignee-${filter.triggerLabel
-        .toLowerCase()
-        .replace(/\s+/g, "-")}`;
-      const selectElement = document.getElementById(
-        selectId,
-      ) as HTMLSelectElement;
-      if (selectElement) {
-        resizeSelect(selectElement);
-      }
-    });
-  }, [assigneeFilters]);
+  // State for assignee filter values - initialized after assigneeFilters is defined
+  const initialFilterValues = useMemo(
+    () =>
+      Object.fromEntries(
+        assigneeFilters.map((filter) => [
+          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
+          filter.triggerLabel,
+        ]),
+      ),
+    [assigneeFilters],
+  );
+
+  const [assigneeFilterValues, setAssigneeFilterValues] =
+    useState<Record<string, string>>(initialFilterValues);
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -569,10 +600,16 @@ export default function PratichePage() {
             <PraticheIcon />
             <span>Pratiche</span>
           </h1>
-          <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
-            Esporta
-            <FaChevronDown size={15} className="text-button-secondary" />
-          </button>
+          <div className="flex items-center justify-center gap-2.5">
+            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
+              Esporta
+              <FaChevronDown size={15} className="text-button-secondary" />
+            </button>
+            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
+              Aggiungi
+              <FaPlus className="text-button-secondary" />
+            </button>
+          </div>
         </div>
         {/* Header - Filters & Search Container */}
         <div className="flex items-center justify-between gap-2">
@@ -595,40 +632,37 @@ export default function PratichePage() {
             {/* Header - Assignee Filters */}
             <div className="flex w-full flex-0 items-center justify-center gap-1.25">
               {assigneeFilters.map((filter) => {
-                const selectId = `assignee-${filter.triggerLabel
+                const filterKey = filter.triggerLabel
                   .toLowerCase()
-                  .replace(/\s+/g, "-")}`;
+                  .replace(/\s+/g, "-");
 
                 return (
-                  <div
+                  <Select
                     key={filter.triggerLabel}
-                    className="relative flex items-center"
+                    value={
+                      assigneeFilterValues[filterKey] ?? filter.triggerLabel
+                    }
+                    onValueChange={(value) => {
+                      setAssigneeFilterValues((prev) => ({
+                        ...prev,
+                        [filterKey]: value,
+                      }));
+                    }}
                   >
-                    <label htmlFor={selectId} className="sr-only">
-                      {filter.triggerLabel}
-                    </label>
-                    <select
-                      id={selectId}
-                      name={filter.triggerLabel}
-                      className="bg-background inline-block w-auto appearance-none rounded-full py-1.75 pr-6 pl-3.75 text-sm font-normal"
-                      defaultValue={filter.triggerLabel}
-                      onChange={(e) => resizeSelect(e.target)}
-                    >
-                      <option value={filter.triggerLabel}>
+                    <SelectTrigger className="w-auto">
+                      <SelectValue placeholder={filter.triggerLabel} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={filter.triggerLabel}>
                         {filter.triggerLabel}
-                      </option>
+                      </SelectItem>
                       {filter.values.map((value) => (
-                        <option key={value.value} value={value.value}>
+                        <SelectItem key={value.value} value={value.value}>
                           {value.label}
-                        </option>
+                        </SelectItem>
                       ))}
-                    </select>
-                    <FaChevronDown
-                      aria-hidden
-                      size={14}
-                      className="text-button-secondary pointer-events-none absolute right-3"
-                    />
-                  </div>
+                    </SelectContent>
+                  </Select>
                 );
               })}
             </div>
@@ -637,7 +671,7 @@ export default function PratichePage() {
           <div className="absolute right-0 flex items-center justify-center">
             <label
               htmlFor="search"
-              className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200 focus-within:outline-1"
+              className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200"
             >
               <input
                 placeholder="Numero pratica, stato, cliente..."
@@ -882,22 +916,11 @@ export default function PratichePage() {
                     <div className="truncate">{practice.type}</div>
                     <div className="truncate">
                       {practice.note ? (
-                        <Tooltip>
-                          <TooltipTrigger className="block w-full truncate">
-                            <span className="cursor-help truncate">
-                              {practice.note}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            sideOffset={4}
-                            className="max-w-md"
-                          >
-                            <p className="">{practice.note}</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <NoteWithTooltip note={practice.note} />
                       ) : (
-                        <span className="text-stats-title">Nessuna nota</span>
+                        <span className="text-stats-title block w-full truncate text-left">
+                          Nessuna nota
+                        </span>
                       )}
                     </div>
                     <div>

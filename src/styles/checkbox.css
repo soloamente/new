@@ -37,7 +37,7 @@
 }
 
 .checkbox-fill {
-  background: #fff;
+  background: var(--checkbox-fill-background);
   border-radius: inherit;
   display: flex;
   align-items: center;

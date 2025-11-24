@@ -4,8 +4,6 @@ import { type Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import Providers from "@/components/providers";
-import Sidebar from "@/components/sidebar";
-import Preferences from "@/components/ui/preferences";
 import Script from "next/script";
 import LayoutContent from "@/components/layout-content";
 

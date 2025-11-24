@@ -79,7 +79,7 @@ export default function Sidebar() {
       {/* Sidebar Groups Wrapper */}
       <div className="flex h-full flex-col justify-between">
         {/* Navigation Group Wrapper */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 pt-2">
           {/* Navigation Group */}
           <div className="flex gap-7">
             {/* Dashboard Navigation */}
@@ -87,7 +87,7 @@ export default function Sidebar() {
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href} 
+                  href={item.href}
                   className={cn(
                     "text-sidebar-secondary hover:text-sidebar-primary flex items-center gap-3.5",
                     isActiveItem(item.href) && "text-sidebar-primary",
