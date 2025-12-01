@@ -13,6 +13,11 @@ import {
 } from "./icons";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { authClient } from "@/lib/auth-client";
+import { Separator } from "@radix-ui/react-select";
+import { ChevronDownIcon } from "lucide-react";
+import { Spinner } from "./ui/spinner";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -30,6 +35,9 @@ interface FooterItem {
 }
 
 export default function Sidebar() {
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
   const navigationItems: NavigationItem[] = [
     {
       icon: DashboardIcon,
@@ -102,7 +110,7 @@ export default function Sidebar() {
           {/* Operatori Group */}
           <div className="flex flex-col gap-2"></div>
         </div>
-        <div className="flex flex-col gap-6 pb-7.25">
+        <div className="flex flex-col gap-6 pb-2">
           {navFooter.map((item) => (
             <button
               key={item.label}
@@ -112,6 +120,20 @@ export default function Sidebar() {
               {item.label}
             </button>
           ))}
+
+          <div className="hover:bg-card flex cursor-pointer items-center gap-3.5 rounded-full">
+            <Avatar>
+              <AvatarImage src={user?.image ?? ""} />
+              <AvatarFallback />
+            </Avatar>
+            <div className="flex flex-col gap-1">
+              {isPending ? (
+                <Spinner size="sm" />
+              ) : (
+                <span>{user?.name ?? "User"}</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </aside>

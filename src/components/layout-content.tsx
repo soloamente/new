@@ -27,12 +27,13 @@ export default function LayoutContent({
   // List of paths where the sidebar should be visible
   // All routes that match these patterns will show the sidebar
   const visibleSidebarPaths = [
-    "/",
     "/dashboard",
     "/pratiche",
     "/clienti",
     "/operatori",
   ];
+
+  const hidePreferencesPaths: string[] = [];
 
   // Check if current pathname matches any hide patterns
   const shouldHideSidebar = hideSidebarPaths.some((path) =>
@@ -50,11 +51,15 @@ export default function LayoutContent({
   // Show sidebar if it matches visible paths AND is not in the hide list
   const shouldShowSidebar = matchesVisiblePath && !shouldHideSidebar;
 
+  const shouldPreferences = !hidePreferencesPaths.some((path) =>
+    pathname.startsWith(path),
+  );
+
   return (
     <div className="flex h-screen overflow-hidden">
       {shouldShowSidebar && <Sidebar />}
       {children}
-      {shouldShowSidebar && <Preferences />}
+      {shouldPreferences && <Preferences />}
     </div>
   );
 }

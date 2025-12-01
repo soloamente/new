@@ -512,7 +512,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => setSelectedTab("live")}
                 className={cn(
-                  "relative flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors",
+                  "relative flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors",
                   selectedTab === "live"
                     ? "bg-background text-foreground"
                     : "text-stats-title hover:text-foreground",
@@ -529,7 +529,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => setSelectedTab("upcoming")}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm transition-colors",
+                  "cursor-pointer rounded-full px-3 py-1.5 text-sm transition-colors",
                   selectedTab === "upcoming"
                     ? "bg-background text-foreground"
                     : "text-stats-title hover:text-foreground",

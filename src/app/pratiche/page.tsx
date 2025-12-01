@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
-
+import { AnimateNumber } from "motion-plus/react";
 type PracticeStatus = "assigned" | "in_progress" | "completed" | "cancelled";
 
 interface PracticeRow {
@@ -693,25 +693,27 @@ export default function PratichePage() {
               Totale pratiche
             </h3>
             <div className="flex items-center justify-start gap-3.75">
-              <h4 className="text-xl">{totalPractices}</h4>
+              <AnimateNumber className="text-xl">
+                {totalPractices}
+              </AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale pratiche - Status Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <h4>{completedCount}</h4>
+                  <AnimateNumber>{completedCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <HalfStatusIcon size={24} className="text-stats-secondary" />
-                  <h4>{inProgressCount}</h4>
+                  <AnimateNumber>{inProgressCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <h4>{assignedCount}</h4>
+                  <AnimateNumber>{assignedCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <h4>{cancelledCount}</h4>
+                  <AnimateNumber>{cancelledCount}</AnimateNumber>
                 </div>
               </div>
             </div>
@@ -722,17 +724,18 @@ export default function PratichePage() {
               Andamento pratiche completate
             </h3>
             <div className="flex items-center justify-start gap-2.5 text-xl">
-              <h4 className="">{completionPercentage}%</h4>
+              <AnimateNumber suffix="%">{completionPercentage}</AnimateNumber>
               {monthOverMonthChange !== 0 && (
                 <>
                   <ArrowUpRightIcon size={24} />
-                  <h4>
-                    <span
+                  <h4 className="flex items-center justify-center gap-1.25">
+                    <AnimateNumber
+                      prefix={monthOverMonthChange > 0 ? "+" : ""}
+                      suffix="%"
                       className={monthOverMonthChange > 0 ? "text-green" : ""}
                     >
-                      {monthOverMonthChange > 0 ? "+" : ""}
-                      {monthOverMonthChange}%
-                    </span>{" "}
+                      {monthOverMonthChange}
+                    </AnimateNumber>{" "}
                     rispetto al mese precedente
                   </h4>
                 </>

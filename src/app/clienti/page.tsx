@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
+import { AnimateNumber } from "motion-plus/react";
 
 type ClientStatus = "active" | "inactive" | "pending";
 
@@ -513,21 +514,21 @@ export default function ClientiPage() {
               Totale clienti
             </h3>
             <div className="flex items-center justify-start gap-3.75">
-              <h4 className="text-xl">{totalClients}</h4>
+              <AnimateNumber className="text-xl">{totalClients}</AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale clienti - Status Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <h4>{activeCount}</h4>
+                  <AnimateNumber>{activeCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <h4>{inactiveCount}</h4>
+                  <AnimateNumber>{inactiveCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <h4>{pendingCount}</h4>
+                  <AnimateNumber>{pendingCount}</AnimateNumber>
                 </div>
               </div>
             </div>
@@ -539,15 +540,18 @@ export default function ClientiPage() {
               Clienti attivi
             </h3>
             <div className="flex items-center justify-start gap-2.5 text-xl">
-              <h4 className="">{activePercentage}%</h4>
+              <AnimateNumber suffix="%">{activePercentage}</AnimateNumber>
               {activeTrend !== 0 && (
                 <>
                   <ArrowUpRightIcon size={24} />
-                  <h4>
-                    <span className={activeTrend > 0 ? "text-green" : ""}>
-                      {activeTrend > 0 ? "+" : ""}
-                      {activeTrend}%
-                    </span>{" "}
+                  <h4 className="flex items-center justify-center gap-1.25">
+                    <AnimateNumber
+                      prefix={activeTrend > 0 ? "+" : ""}
+                      suffix="%"
+                      className={activeTrend > 0 ? "text-green" : ""}
+                    >
+                      {activeTrend}
+                    </AnimateNumber>{" "}
                     rispetto al mese precedente
                   </h4>
                 </>

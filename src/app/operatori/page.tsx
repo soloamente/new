@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
+import { AnimateNumber } from "motion-plus/react";
 
 type OperatorStatus = "active" | "inactive" | "on_leave";
 
@@ -294,10 +295,12 @@ export default function OperatoriPage() {
   // Calculate statistics from mockOperators
   const totalOperators = mockOperators.length;
   const activeCount = mockOperators.filter((o) => o.status === "active").length;
-  const inactiveCount = mockOperators.filter((o) => o.status === "inactive")
-    .length;
-  const onLeaveCount = mockOperators.filter((o) => o.status === "on_leave")
-    .length;
+  const inactiveCount = mockOperators.filter(
+    (o) => o.status === "inactive",
+  ).length;
+  const onLeaveCount = mockOperators.filter(
+    (o) => o.status === "on_leave",
+  ).length;
   const totalPractices = mockOperators.reduce(
     (sum, operator) => sum + operator.practicesCount,
     0,
@@ -513,21 +516,23 @@ export default function OperatoriPage() {
               Totale operatori
             </h3>
             <div className="flex items-center justify-start gap-3.75">
-              <h4 className="text-xl">{totalOperators}</h4>
+              <AnimateNumber className="text-xl">
+                {totalOperators}
+              </AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale operatori - Status Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <h4>{activeCount}</h4>
+                  <AnimateNumber>{activeCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <h4>{inactiveCount}</h4>
+                  <AnimateNumber>{inactiveCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <h4>{onLeaveCount}</h4>
+                  <AnimateNumber>{onLeaveCount}</AnimateNumber>
                 </div>
               </div>
             </div>
@@ -538,17 +543,18 @@ export default function OperatoriPage() {
               Operatori attivi
             </h3>
             <div className="flex items-center justify-start gap-2.5 text-xl">
-              <h4 className="">{activePercentage}%</h4>
+              <AnimateNumber suffix="%">{activePercentage}</AnimateNumber>
               {activeTrend !== 0 && (
                 <>
                   <ArrowUpRightIcon size={24} />
-                  <h4>
-                    <span
+                  <h4 className="flex items-center justify-center gap-1.25">
+                    <AnimateNumber
+                      prefix={activeTrend > 0 ? "+" : ""}
+                      suffix="%"
                       className={activeTrend > 0 ? "text-green" : ""}
                     >
-                      {activeTrend > 0 ? "+" : ""}
-                      {activeTrend}%
-                    </span>{" "}
+                      {activeTrend}
+                    </AnimateNumber>{" "}
                     rispetto al mese precedente
                   </h4>
                 </>
@@ -564,7 +570,7 @@ export default function OperatoriPage() {
               Tasso di completamento
             </h3>
             <div className="flex items-center justify-start gap-2.5 text-xl">
-              <h4 className="">{completionRate}%</h4>
+              <AnimateNumber suffix="%">{completionRate}</AnimateNumber>
             </div>
           </div>
         </div>
@@ -683,13 +689,17 @@ export default function OperatoriPage() {
                                 <span className="text-muted-foreground text-xs">
                                   Email
                                 </span>
-                                <span className="text-sm">{operator.email}</span>
+                                <span className="text-sm">
+                                  {operator.email}
+                                </span>
                               </div>
                               <div className="flex flex-col gap-1">
                                 <span className="text-muted-foreground text-xs">
                                   Telefono
                                 </span>
-                                <span className="text-sm">{operator.phone}</span>
+                                <span className="text-sm">
+                                  {operator.phone}
+                                </span>
                               </div>
                               <div className="flex flex-col gap-1">
                                 <span className="text-muted-foreground text-xs">
@@ -697,7 +707,8 @@ export default function OperatoriPage() {
                                 </span>
                                 <span className="text-sm">
                                   {operator.completedPractices} /{" "}
-                                  {operator.practicesCount} ({completionPercentage}
+                                  {operator.practicesCount} (
+                                  {completionPercentage}
                                   %)
                                 </span>
                               </div>
@@ -712,7 +723,7 @@ export default function OperatoriPage() {
                     <div className="truncate">{operator.phone}</div>
                     <div className="flex items-center gap-2 truncate">
                       <span>{operator.practicesCount}</span>
-                      <div className="flex items-center gap-1 text-sm text-stats-secondary">
+                      <div className="text-stats-secondary flex items-center gap-1 text-sm">
                         <CheckIcon size={14} />
                         <span>{operator.completedPractices}</span>
                       </div>
