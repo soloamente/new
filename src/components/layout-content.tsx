@@ -1,31 +1,34 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-
-import Sidebar from "@/components/sidebar";
+import { useEffect, useState } from "react";
+import { getCurrentUser, type User } from "@/app/actions/auth-actions";
+import Sidebar from "./sidebar";
 import Preferences from "@/components/ui/preferences";
 
 /**
- * LayoutContent Component
+ * LayoutContent Component (Client Component)
  *
- * Wraps the sidebar and children, conditionally rendering the sidebar
- * based on the current pathname. Pages that should hide the sidebar
- * can be added to the hideSidebarPaths array.
+ * Handles pathname-based conditional rendering of sidebar and preferences.
+ * Fetches user data on mount using server action.
  */
 export default function LayoutContent({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+
+  // Fetch user on mount
+  useEffect(() => {
+    getCurrentUser()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
 
   // List of paths where the sidebar should be hidden
-  // Add paths here to hide the sidebar on specific pages
-  const hideSidebarPaths: string[] = [
-    // Add specific paths here if needed in the future
-    // Example: "/login", "/auth", etc.
-  ];
+  const hideSidebarPaths: string[] = [];
 
   // List of paths where the sidebar should be visible
-  // All routes that match these patterns will show the sidebar
   const visibleSidebarPaths = [
     "/dashboard",
     "/pratiche",
@@ -41,9 +44,6 @@ export default function LayoutContent({
   );
 
   // Check if current pathname matches any visible patterns
-  // For 404 pages with invalid routes (e.g., /random-page), pathname won't match our known routes,
-  // so the sidebar will be hidden. For 404s under known paths (e.g., /dashboard/invalid),
-  // the sidebar will still show, which is acceptable as the user is navigating within that section.
   const matchesVisiblePath = visibleSidebarPaths.some(
     (path) => pathname === path || pathname.startsWith(path + "/"),
   );
@@ -57,7 +57,7 @@ export default function LayoutContent({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {shouldShowSidebar && <Sidebar />}
+      {shouldShowSidebar && <Sidebar user={user} />}
       {children}
       {shouldPreferences && <Preferences />}
     </div>

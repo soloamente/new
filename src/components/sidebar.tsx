@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
+import { useState } from "react";
 
 import { DashboardIcon } from "@/components/icons/dashboard-icon";
 import {
@@ -13,11 +14,9 @@ import {
 } from "./icons";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { authClient } from "@/lib/auth-client";
-import { Separator } from "@radix-ui/react-select";
-import { ChevronDownIcon } from "lucide-react";
-import { Spinner } from "./ui/spinner";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { SettingsDialog } from "./ui/settings-dialog";
+import type { User, UserRole } from "@/app/actions/auth-actions";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -34,11 +33,58 @@ interface FooterItem {
   label: string;
 }
 
-export default function Sidebar() {
-  const { data: session, isPending } = authClient.useSession();
-  const user = session?.user;
+interface SidebarProps {
+  user: User | null;
+}
 
-  const navigationItems: NavigationItem[] = [
+// Helper function to get role name from role_id
+function getRoleName(roleId: number): UserRole {
+  switch (roleId) {
+    case 1:
+      return "DATAWEB";
+    case 2:
+      return "AMMINISTRATORE_STUDIO";
+    case 3:
+      return "OPERATORE";
+    default:
+      return "OPERATORE";
+  }
+}
+
+// Check if a navigation item should be visible for a given role
+function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
+  if (!role) return false;
+
+  // Dashboard is visible to all roles
+  if (href === "/dashboard") return true;
+
+  // Role-based visibility
+  switch (role) {
+    case "DATAWEB":
+      // Super Admin: Dashboard only (can add Studi management later)
+      return href === "/dashboard";
+    case "AMMINISTRATORE_STUDIO":
+      // Admin: Dashboard, Pratiche, Clienti, Operatori
+      return (
+        href === "/dashboard" ||
+        href === "/pratiche" ||
+        href === "/clienti" ||
+        href === "/operatori"
+      );
+    case "OPERATORE":
+      // Operator: Dashboard, Pratiche (filtered to their own)
+      return href === "/dashboard" || href === "/pratiche";
+    default:
+      return false;
+  }
+}
+
+export default function Sidebar({ user }: SidebarProps) {
+  const pathname = usePathname();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // All possible navigation items
+  const allNavigationItems: NavigationItem[] = [
     {
       icon: DashboardIcon,
       label: "Dashboard",
@@ -61,6 +107,12 @@ export default function Sidebar() {
     },
   ];
 
+  // Filter navigation items based on user role
+  const userRole = user ? getRoleName(user.role_id) : null;
+  const navigationItems = allNavigationItems.filter((item) =>
+    isNavigationItemVisible(item.href, userRole),
+  );
+
   const navFooter: FooterItem[] = [
     {
       icon: HelpIcon as IconComponent,
@@ -71,8 +123,6 @@ export default function Sidebar() {
       label: "Impostazioni",
     },
   ];
-
-  const pathname = usePathname();
 
   // Check if a navigation item is currently active based on pathname
   function isActiveItem(itemHref: string): boolean {
@@ -114,6 +164,11 @@ export default function Sidebar() {
           {navFooter.map((item) => (
             <button
               key={item.label}
+              onClick={() => {
+                if (item.label === "Impostazioni") {
+                  setIsSettingsOpen(true);
+                }
+              }}
               className="text-sidebar-secondary hover:text-sidebar-primary flex items-center gap-3.5"
             >
               <item.icon size={24} />
@@ -122,20 +177,35 @@ export default function Sidebar() {
           ))}
 
           <div className="hover:bg-card flex cursor-pointer items-center gap-3.5 rounded-full">
-            <Avatar>
-              <AvatarImage src={user?.image ?? ""} />
-              <AvatarFallback />
+            <Avatar className="size-9">
+              <AvatarFallback placeholderSeed={user?.name ?? "User"} />
             </Avatar>
-            <div className="flex flex-col gap-1">
-              {isPending ? (
-                <Spinner size="sm" />
+            <div className="flex flex-col gap-1 truncate">
+              {user ? (
+                <>
+                  <span className="truncate leading-none">{user.name}</span>
+                  <span className="text-sidebar-secondary text-xs leading-none">
+                    {userRole === "DATAWEB"
+                      ? "Super Admin"
+                      : userRole === "AMMINISTRATORE_STUDIO"
+                        ? "Amministratore"
+                        : "Operatore"}
+                  </span>
+                </>
               ) : (
-                <span>{user?.name ?? "User"}</span>
+                <span>User</span>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog */}
+      <SettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        user={user}
+      />
     </aside>
   );
 }

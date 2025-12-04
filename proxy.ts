@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 
 /**
@@ -36,21 +36,18 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    // Get full session with database validation
-    // This uses Node.js runtime which is available in Next.js 16 proxy
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token");
 
-    // If no session, redirect to login
-    if (!session) {
+    // If no token, redirect to login
+    if (!token) {
       const loginUrl = new URL("/login", request.url);
       // Preserve the original URL for redirect after login
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // User is authenticated, allow the request to proceed
+    // User is authenticated (optimistically), allow the request to proceed
     return NextResponse.next();
   } catch (error) {
     // If there's an error checking the session, redirect to login

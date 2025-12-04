@@ -7,6 +7,8 @@ import localFont from "next/font/local";
 import Providers from "@/components/providers";
 import Script from "next/script";
 import LayoutContent from "@/components/layout-content";
+import { Suspense } from "react";
+import Loader from "@/components/loader";
 
 export const metadata: Metadata = {
   title: "Nuova interfaccia",
@@ -82,7 +84,9 @@ export default function RootLayout({
       </head>
       <body className="h-full overflow-hidden">
         <Providers>
-          <LayoutContent>{children}</LayoutContent>
+          <Suspense fallback={<Loader />}>
+            <LayoutContent>{children}</LayoutContent>
+          </Suspense>
         </Providers>
       </body>
     </html>

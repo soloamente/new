@@ -2,17 +2,13 @@
 
 import * as React from "react";
 
-import { authClient } from "@lib/auth-client";
-
+import { login } from "@/app/actions/auth-actions";
 import { useForm } from "@tanstack/react-form";
-
 import z from "zod";
-
 import { motion, AnimatePresence } from "motion/react";
-
 import { Spinner } from "./ui/spinner";
-
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginForm({
   onSwitchToSignUp,
@@ -20,12 +16,7 @@ export default function LoginForm({
   onSwitchToSignUp: () => void;
 }) {
   const router = useRouter();
-
-  // Helper function to detect if input is an email or username
-  const isEmail = (input: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(input);
-  };
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {
@@ -33,49 +24,24 @@ export default function LoginForm({
       password: "",
     },
     onSubmit: async ({ value }) => {
-      const isEmailInput = isEmail(value.username);
+      setServerError(null);
+      const formData = new FormData();
+      formData.append("username", value.username);
+      formData.append("password", value.password);
 
-      if (isEmailInput) {
-        // Sign in with email
-        await authClient.signIn.email(
-          {
-            email: value.username,
-            password: value.password,
-          },
-          {
-            onSuccess: () => {
-              // Check for redirect parameter from proxy
-              const searchParams = new URLSearchParams(window.location.search);
-              const redirectTo = searchParams.get("redirect") ?? "/dashboard";
-              router.push(redirectTo);
-            },
-            onError: (error) => {
-              // Error handling can be added here if needed
-              console.error(error.error.message || error.error.statusText);
-            },
-          },
-        );
-      } else {
-        // Sign in with username
-        await authClient.signIn.username(
-          {
-            username: value.username,
-            password: value.password,
-          },
-          {
-            onSuccess: () => {
-              // Check for redirect parameter from proxy
-              const searchParams = new URLSearchParams(window.location.search);
-              const redirectTo = searchParams.get("redirect") ?? "/dashboard";
-              router.push(redirectTo);
-            },
-            onError: (error) => {
-              // Error handling can be added here if needed
-              console.error(error.error.message || error.error.statusText);
-            },
-          },
-        );
+      // Get redirect param if exists
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get("redirect");
+      if (redirectTo) {
+        formData.append("redirectTo", redirectTo);
       }
+
+      const result = await login(formData);
+
+      if (result?.error) {
+        setServerError(result.error);
+      }
+      // If success, the action will redirect
     },
     validators: {
       onSubmit: z.object({
@@ -106,7 +72,7 @@ export default function LoginForm({
           <form.Field
             name="username"
             validators={{
-              onChange: z.string().min(1, "Email o username è obbligatorio"),
+              onChange: z.string().min(1, "Username è obbligatorio"),
             }}
           >
             {(field) => (
@@ -202,6 +168,28 @@ export default function LoginForm({
           </form.Field>
         </div>
 
+        <AnimatePresence mode="wait">
+          {serverError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+              animate={{ opacity: 1, height: "auto", marginTop: 4 }}
+              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="text-center text-sm text-red-500"
+              >
+                {serverError}
+              </motion.p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <form.Subscribe>
           {(state) => {
             const isUsernameEmpty =
@@ -257,7 +245,7 @@ export default function LoginForm({
         </form.Subscribe>
       </form>
 
-      <div className="mt-4 text-center text-sm">
+      {/* <div className="mt-4 text-center text-sm">
         <span className="text-muted-foreground">Non hai un account? </span>
         <button
           onClick={onSwitchToSignUp}
@@ -265,7 +253,7 @@ export default function LoginForm({
         >
           Registrati
         </button>
-      </div>
+      </div> */}
     </motion.div>
   );
 }
