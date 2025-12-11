@@ -6,6 +6,9 @@
 - Follow-up request: mock practice rows should display the time alongside the date (line 67 reference) so designers can validate temporal info layout.
 - New requirement: convert every placeholder SVG under `src/components/icons/placeholders` into typed React components, surface them through the avatar fallback with deterministic randomness, and display those avatars in the practices table to make clients easy to scan.
 - Latest UI feedback for avatars: the placeholder icon should render in `oklch(0.5693 0 0)` with a background of `oklch(0.36 0 0)` to match the new dark badge treatment demonstrated in the reference screenshot.
+- New request: make all filters functional on the Studi page (`src/app/studi/studi.tsx`), wiring selects and search to actually filter the table and stats.
+- New feedback: redistribute the Utenti table column widths so ID, name, email, role, studio, and status have balanced space without crowding or overflow.
+- New request: refactor the Impostazioni dialog to use the shared `src/components/ui/dialog.tsx` primitives for consistency with other dialogs.
 
 ## Key Challenges and Analysis
 - Ensure new components follow existing icon component conventions (typed props, optional `size`, `currentColor` fills, no hard-coded grays).
@@ -18,6 +21,7 @@
 - Placeholder icons should be centralized behind a helper array to simplify future additions and make random selection/testability straightforward.
 - Adding avatars into the clients column must not break the 12-column layout or introduce dead interaction zones; we need to keep truncation + keyboard navigation accessible.
 - The new placeholder palette requires centralized custom properties (light/dark) and `AvatarFallback` must consume them without overriding any consumer-provided inline styles.
+- Utenti grid needs a stable column template that prioritizes name/email while keeping ID/role/studio/status readable and aligned across header/body.
 
 ## High-level Task Breakdown
 1. Convert each new SVG asset into a typed React component (CheckIcon, HalfStatusIcon, UserCircleIcon) mirroring the structure of existing icons.
@@ -40,6 +44,13 @@
 14. Update `src/components/ui/avatar.tsx` to render the selected placeholder icon within the fallback (with accessible labels + consistent sizing).
 15. Integrate avatars within the `Pratiche` table client column without breaking layout/truncation.
 16. Lint (and, if time permits, run quick tests) covering the touched files.
+17. Rebalance Utenti table column widths to align header/body and reduce crowding.
+18. Refactor Impostazioni dialog to use shared dialog primitives (`src/components/ui/dialog.tsx`) for content/overlay/close behaviors.
+19. Re-run targeted lint on `src/components/ui/settings-dialog.tsx` after refactor.
+20. Add dedicated “Le mie pratiche” page for operator role (assigned_to_me=true) reusing existing UI.
+21. Rename/retitle the existing Pratiche page to “Tutte le pratiche” while keeping full dataset.
+22. Update navigation visibility for OPERATORE to surface both “Tutte le pratiche” and “Le mie pratiche” entries and route correctly.
+23. Add explicit status filter for “Pratiche sospese” alongside other practice filters.
 
 ## Project Status Board
 - [x] Task 1: Add `CheckIcon` component.
@@ -66,6 +77,24 @@
 - [x] Task 22: Match the select content width to its trigger in `create-practice-dialog`.
 - [x] Task 23: Align practice statuses with API wording (use “sospesa” instead of “annullata”) and update dependent styling.
 - [x] Task 24: Add operator creation flow per API (`/api/users` with `role_id=3`) and surface dialog in Operatori page.
+- [x] Task 25: Wire Studi page filters (selects + search) to filter data and stats.
+- [x] Task 26: Adjust select-all checkbox logic to respect filtered rows.
+- [x] Task 27: Run lint on Studi page after filter implementation.
+- [x] Task 28: Wire Utenti page filters (role/studio/user id + search) to filtered list and stats.
+- [x] Task 29: Adjust Utenti select-all checkbox logic to respect filtered rows.
+- [x] Task 30: Run lint on Utenti page after filter implementation.
+- [x] Task 31: Rebalance Utenti table column widths for better spacing.
+- [x] Task 32: Refactor Impostazioni dialog to use shared dialog primitives.
+- [x] Task 33: Run lint on `src/components/ui/settings-dialog.tsx` after refactor.
+- [x] Task 34: Wire Pratiche filters (status/select/search) to filtered list + stats.
+- [x] Task 35: Wire Clienti filters (status/select/search) to filtered list + stats.
+- [x] Task 36: Wire Operatori filters (status/select/search) to filtered list + stats.
+- [x] Task 37: Ensure select-all logic respects filtered rows for Pratiche/Clienti/Operatori.
+- [x] Task 38: Run targeted lint on pratiche, clienti, operatori pages after filter work.
+- [x] Task 39: Add “Le mie pratiche” page (operator, assigned_to_me=true).
+- [x] Task 40: Retitle Pratiche page to “Tutte le pratiche” and keep all data.
+- [x] Task 41: Expose both pages in sidebar for OPERATORE with correct routing.
+- [x] Task 42: Add suspended practices filter button to Pratiche views.
 
 ## Current Status / Progress Tracking
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
@@ -83,6 +112,20 @@
 - Select dropdown content in `create-practice-dialog` now uses the Radix trigger width CSS variable to stay equal in width to its trigger.
 - Practice status taxonomy now matches the API: UI types use “suspended” for the `sospesa` state, labels render “Sospesa,” and all color tokens map to `status-suspended` variables (light/dark). Related dashboards and list/status badges updated accordingly.
 - Operatori page now includes a “Crea operatore” dialog that posts to `/api/users` via the existing `createUser` server action (role_id fixed to 3), with validation, loading state, and page refresh on success.
+- Studi page filters now derive normalized values and feed a memoized filtered list; stats, “select all,” and table rows honor active filters and search. Search input is controlled; lint (`pnpm exec eslint src/app/studi/studi.tsx`) passes. Studio-number filter removed per request.
+- Utenti page filters now normalize role/studio/utente values, search is controlled, derived `filteredUsers` drives stats, table rows, and select-all logic; lint (`pnpm exec eslint src/app/utenti/utenti.tsx`) passes.
+- Utente-number filter removed per request; filters now limited to Ruolo/Studio plus search.
+- Utenti table grid now further shrinks the ID column and enlarges the status column while keeping name/email/studio roomy; header/body templates match. `pnpm exec eslint src/app/utenti/utenti.tsx` passes.
+- Impostazioni dialog now uses the shared dialog primitives (overlay/content/close) for consistency with other modals; targeted ESLint on `src/components/ui/settings-dialog.tsx` passes.
+- New request: make filters functional on Pratiche, Clienti, Operatori pages; added tasks 34–38.
+- Pratiche/Clienti/Operatori pages now derive filtered lists from status/select/search inputs, drive stats and tables from filtered rows, and select-all checkboxes operate on visible results; lint on all three pages passes.
+- Fixed runtime TDZ on Pratiche filters by reordering filter memo/useEffect; eslint clean. Instrumentation added for debugging has been removed after validation.
+- New request: operator needs a dedicated “Le mie pratiche” page, while the existing Pratiche page should become “Tutte le pratiche”; sidebar must expose both for OPERATORE.
+- Added `app/mie-pratiche/page.tsx` rendering practices with `assigned_to_me=true` and passed view-aware paths to the shared Pratiche client.
+- Updated Pratiche page title to “Tutte le pratiche”, removed query-based toggle, and added route-aware view switching between all vs. mine.
+- Sidebar now shows “Tutte le pratiche” and “Le mie pratiche” for OPERATORE; lint (`pnpm exec eslint` on sidebar + pratiche pages) passes.
+- Added “Pratiche sospese” status filter button in the shared Pratiche client; targeted ESLint on the file passes.
+- Sidebar now also renders on `/mie-pratiche` by adding the route to `visibleSidebarPaths`; lint on `layout-content.tsx` passes.
 
 ## Executor's Feedback or Assistance Requests
 - None; awaiting review/validation.

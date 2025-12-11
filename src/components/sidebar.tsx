@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { SettingsDialog } from "./ui/settings-dialog";
 import type { User, UserRole } from "@/app/actions/auth-actions";
+import HouseUserIcon from "./icons/house-user";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -75,9 +76,12 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
         href === "/operatori"
       );
     case "OPERATORE":
-      // Operator: Dashboard, Pratiche (filtered to their own), Clienti
+      // Operator: Dashboard, Tutte le pratiche, Mie pratiche, Clienti
       return (
-        href === "/dashboard" || href === "/pratiche" || href === "/clienti"
+        href === "/dashboard" ||
+        href === "/pratiche" ||
+        href === "/mie-pratiche" ||
+        href === "/clienti"
       );
     default:
       return false;
@@ -97,9 +101,15 @@ export default function Sidebar({ user }: SidebarProps) {
     },
     {
       icon: PraticheIcon,
-      label: "Pratiche",
+      label: "Le mie pratiche",
+      href: "/mie-pratiche",
+    },
+    {
+      icon: PraticheIcon,
+      label: "Tutte le pratiche",
       href: "/pratiche",
     },
+    
     {
       icon: ClientsIcon,
       label: "Clienti",
@@ -111,7 +121,7 @@ export default function Sidebar({ user }: SidebarProps) {
       href: "/operatori",
     },
     {
-      icon: GearIcon,
+      icon: HouseUserIcon,
       label: "Studi",
       href: "/studi",
     },

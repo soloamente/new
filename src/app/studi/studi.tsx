@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowUpRightIcon,
   CheckIcon,
   GearIcon,
   SearchIcon,
@@ -18,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { StudioRow } from "@/lib/studios-utils";
@@ -27,6 +25,9 @@ import { CreateStudioDialog } from "@/components/create-studio-dialog";
 interface StudiProps {
   studios: StudioRow[];
 }
+
+const normalizeValue = (value: string) =>
+  value.toLowerCase().trim().replace(/\s+/g, "-");
 
 export default function Studi({ studios }: StudiProps) {
   // State for selected studios
@@ -37,52 +38,15 @@ export default function Studi({ studios }: StudiProps) {
   // State for create studio dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Calculate statistics from studios
-  const totalStudios = studios.length;
-  const studiosWithOperators = studios.filter(
-    (s) => s.operatorsCount > 0,
-  ).length;
-  const studiosWithoutAdmin = studios.filter(
-    (s) => s.admin === "Nessun admin",
-  ).length;
-  const studiosWithAdmin = totalStudios - studiosWithoutAdmin;
-
-  // Calculate select all checkbox state
-  const allSelected = useMemo(
-    () => totalStudios > 0 && selectedStudios.size === totalStudios,
-    [totalStudios, selectedStudios.size],
-  );
-
-  const someSelected = useMemo(
-    () => selectedStudios.size > 0 && selectedStudios.size < totalStudios,
-    [totalStudios, selectedStudios.size],
-  );
-
-  // Handlers for checkbox selection
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedStudios(new Set(studios.map((s) => s.id)));
-    } else {
-      setSelectedStudios(new Set());
-    }
-  };
-
-  const handleSelectStudio = (studioId: string, checked: boolean) => {
-    const newSelected = new Set(selectedStudios);
-    if (checked) {
-      newSelected.add(studioId);
-    } else {
-      newSelected.delete(studioId);
-    }
-    setSelectedStudios(newSelected);
-  };
+  // State for search and filters
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Get unique cities and admins from studios for filters
   const uniqueCities = useMemo(() => {
     const cities = new Set(studios.map((s) => s.city).filter(Boolean));
     return Array.from(cities).map((city) => ({
       label: city,
-      value: city.toLowerCase().replace(/\s+/g, "-"),
+      value: normalizeValue(city),
       active: false,
     }));
   }, [studios]);
@@ -93,7 +57,7 @@ export default function Studi({ studios }: StudiProps) {
     );
     return Array.from(admins).map((name) => ({
       label: name,
-      value: name.toLowerCase().replace(/\s+/g, "-"),
+      value: normalizeValue(name),
       active: false,
     }));
   }, [studios]);
@@ -108,15 +72,8 @@ export default function Studi({ studios }: StudiProps) {
         triggerLabel: "Admin",
         values: uniqueAdmins,
       },
-      {
-        triggerLabel: "Studio N.",
-        values: studios.slice(0, 10).map((s, idx) => ({
-          label: `Studio N. ${idx + 1}`,
-          value: s.id,
-        })),
-      },
     ],
-    [uniqueCities, uniqueAdmins, studios],
+    [uniqueCities, uniqueAdmins],
   );
 
   // State for assignee filter values
@@ -124,7 +81,7 @@ export default function Studi({ studios }: StudiProps) {
     () =>
       Object.fromEntries(
         assigneeFilters.map((filter) => [
-          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
+          normalizeValue(filter.triggerLabel),
           filter.triggerLabel,
         ]),
       ),
@@ -133,6 +90,99 @@ export default function Studi({ studios }: StudiProps) {
 
   const [assigneeFilterValues, setAssigneeFilterValues] =
     useState<Record<string, string>>(initialFilterValues);
+
+  // Ensure new filters always have a default value when the options change
+  useEffect(() => {
+    setAssigneeFilterValues((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      assigneeFilters.forEach((filter) => {
+        const key = normalizeValue(filter.triggerLabel);
+        if (!(key in next)) {
+          next[key] = filter.triggerLabel;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [assigneeFilters]);
+
+  // Derived studios based on active filters and search term
+  const filteredStudios = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const cityFilter = assigneeFilterValues[normalizeValue("Città")];
+    const adminFilter = assigneeFilterValues[normalizeValue("Admin")];
+
+    return studios.filter((studio) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [studio.id, studio.name, studio.city, studio.vatNumber, studio.admin]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      const matchesCity =
+        !cityFilter || cityFilter === "Città"
+          ? true
+          : normalizeValue(studio.city) === cityFilter;
+
+      const matchesAdmin =
+        !adminFilter || adminFilter === "Admin"
+          ? true
+          : normalizeValue(studio.admin) === adminFilter;
+
+      return matchesSearch && matchesCity && matchesAdmin;
+    });
+  }, [assigneeFilterValues, searchTerm, studios]);
+
+  // Calculate statistics from filtered studios to mirror the visible table
+  const totalStudios = filteredStudios.length;
+  const studiosWithOperators = filteredStudios.filter(
+    (s) => s.operatorsCount > 0,
+  ).length;
+  const studiosWithoutAdmin = filteredStudios.filter(
+    (s) => s.admin === "Nessun admin",
+  ).length;
+  const studiosWithAdmin = totalStudios - studiosWithoutAdmin;
+
+  // Calculate select all checkbox state scoped to the currently filtered rows
+  const allSelected = useMemo(
+    () =>
+      filteredStudios.length > 0 &&
+      filteredStudios.every((studio) => selectedStudios.has(studio.id)),
+    [filteredStudios, selectedStudios],
+  );
+
+  const someSelected = useMemo(
+    () =>
+      filteredStudios.some((studio) => selectedStudios.has(studio.id)) &&
+      !allSelected,
+    [allSelected, filteredStudios, selectedStudios],
+  );
+
+  // Handlers for checkbox selection (scoped to filtered rows to match the UI)
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedStudios((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        filteredStudios.forEach((s) => next.add(s.id));
+      } else {
+        filteredStudios.forEach((s) => next.delete(s.id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectStudio = (studioId: string, checked: boolean) => {
+    const newSelected = new Set(selectedStudios);
+    if (checked) {
+      newSelected.add(studioId);
+    } else {
+      newSelected.delete(studioId);
+    }
+    setSelectedStudios(newSelected);
+  };
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -164,9 +214,7 @@ export default function Studi({ studios }: StudiProps) {
             {/* Header - Assignee Filters */}
             <div className="flex w-full flex-0 items-center justify-center gap-1.25">
               {assigneeFilters.map((filter) => {
-                const filterKey = filter.triggerLabel
-                  .toLowerCase()
-                  .replace(/\s+/g, "-");
+                const filterKey = normalizeValue(filter.triggerLabel);
 
                 return (
                   <Select
@@ -209,6 +257,8 @@ export default function Studi({ studios }: StudiProps) {
                 id="search"
                 placeholder="Nome studio, città, admin..."
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
               />
               <SearchIcon className="text-search-placeholder" />
             </label>
@@ -225,8 +275,8 @@ export default function Studi({ studios }: StudiProps) {
             <h3 className="text-stats-title text-sm font-medium">
               Totale studi
             </h3>
-            <div className="flex items-center justify-start gap-3.75">
-              <AnimateNumber className="text-xl">{totalStudios}</AnimateNumber>
+            <div className="flex items-center justify-start gap-3.75 tabular-nums">
+              <AnimateNumber className="text-xl ">{totalStudios}</AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale studi - Details */}
               <div className="flex items-center gap-2.5">
@@ -272,14 +322,14 @@ export default function Studi({ studios }: StudiProps) {
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {studios.length === 0 ? (
+            {filteredStudios.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
                   Nessuno studio trovato
                 </p>
               </div>
             ) : (
-              studios.map((studio) => {
+              filteredStudios.map((studio) => {
                 return (
                   <div
                     key={studio.id}

@@ -32,6 +32,7 @@ export default function LayoutContent({
   const visibleSidebarPaths = [
     "/dashboard",
     "/pratiche",
+    "/mie-pratiche",
     "/clienti",
     "/operatori",
     "/studi",

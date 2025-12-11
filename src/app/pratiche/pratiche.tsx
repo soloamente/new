@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -30,13 +30,22 @@ import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { PracticeRow } from "@/lib/practices-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
-import { getCurrentUser, type User } from "@/app/actions/auth-actions";
+
+type PracticeView = "all" | "mine";
 
 interface PraticheProps {
   practices: PracticeRow[];
   userRoleId?: number;
   currentUserId?: number;
+  view?: PracticeView;
+  paths?: {
+    all: string;
+    mine: string;
+  };
 }
+
+const normalizeValue = (value: string) =>
+  value.toLowerCase().trim().replace(/\s+/g, "-");
 
 // Component to show tooltip only when text is truncated
 function NoteWithTooltip({ note }: { note: string }) {
@@ -135,115 +144,65 @@ export default function Pratiche({
   practices,
   userRoleId,
   currentUserId,
+  view = "all",
+  paths = { all: "/pratiche", mine: "/mie-pratiche" },
 }: PraticheProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const isOperator = userRoleId === 3;
-  const assignedToMe = searchParams.get("assigned_to_me") === "true";
+  const isMineView = isOperator && view === "mine";
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-
-  // Handler for filter toggle (OPERATORE only)
-  const handleFilterToggle = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (assignedToMe) {
-      params.delete("assigned_to_me");
-    } else {
-      params.set("assigned_to_me", "true");
-    }
-    router.push(`/pratiche?${params.toString()}`);
-  };
+  const [statusFilter, setStatusFilter] = useState<
+    PracticeRow["status"] | "all"
+  >("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
 
   // State for selected practices
   const [selectedPractices, setSelectedPractices] = useState<Set<string>>(
     new Set(),
   );
 
-  // Calculate statistics from practices
-  const totalPractices = practices.length;
-  const completedCount = practices.filter(
-    (p) => p.status === "completed",
-  ).length;
-  const inProgressCount = practices.filter(
-    (p) => p.status === "in_progress",
-  ).length;
-  const assignedCount = practices.filter((p) => p.status === "assigned").length;
-  const suspendedCount = practices.filter(
-    (p) => p.status === "suspended",
-  ).length;
-
-  // Calculate select all checkbox state
-  const allSelected = useMemo(
-    () => totalPractices > 0 && selectedPractices.size === totalPractices,
-    [totalPractices, selectedPractices.size],
-  );
-
-  const someSelected = useMemo(
-    () => selectedPractices.size > 0 && selectedPractices.size < totalPractices,
-    [totalPractices, selectedPractices.size],
-  );
-
-  // Handlers for checkbox selection
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedPractices(new Set(practices.map((p) => p.id)));
-    } else {
-      setSelectedPractices(new Set());
-    }
-  };
-
-  const handleSelectPractice = (practiceId: string, checked: boolean) => {
-    const newSelected = new Set(selectedPractices);
-    if (checked) {
-      newSelected.add(practiceId);
-    } else {
-      newSelected.delete(practiceId);
-    }
-    setSelectedPractices(newSelected);
-  };
-
-  // Calculate completion percentage
-  const completionPercentage =
-    totalPractices > 0
-      ? Math.round((completedCount / totalPractices) * 100)
-      : 0;
-
-  // For month-over-month comparison
-  const activePractices = totalPractices - suspendedCount;
-  const previousMonthCompletion =
-    activePractices > 0
-      ? Math.round(((completedCount - 1) / activePractices) * 100)
-      : 0;
-  const monthOverMonthChange = completionPercentage - previousMonthCompletion;
-
   // Status filters - for OPERATORE, first filter is dynamic (Tutte/Mie)
   const statusFilters = [
     {
       label: isOperator
-        ? assignedToMe
+        ? isMineView
           ? "Mie pratiche"
           : "Tutte le pratiche"
         : "Tutte le pratiche",
       value: "all",
-      active: true,
-      onClick: isOperator ? handleFilterToggle : undefined,
+      active: statusFilter === "all",
+      onClick: isOperator
+        ? () => {
+            setStatusFilter("all");
+            // Operators jump between full studio list and personal list via dedicated routes
+            router.push(isMineView ? paths.all : paths.mine);
+          }
+        : () => setStatusFilter("all"),
     },
     {
       label: "Pratiche assegnate",
       value: "assigned",
-      active: false,
-      onClick: undefined,
+      active: statusFilter === "assigned",
+      onClick: () => setStatusFilter("assigned"),
     },
     {
       label: "Pratiche in lavorazione",
       value: "in_progress",
-      active: false,
-      onClick: undefined,
+      active: statusFilter === "in_progress",
+      onClick: () => setStatusFilter("in_progress"),
     },
     {
       label: "Pratiche concluse",
       value: "completed",
-      active: false,
-      onClick: undefined,
+      active: statusFilter === "completed",
+      onClick: () => setStatusFilter("completed"),
+    },
+    {
+      label: "Pratiche sospese",
+      value: "suspended",
+      active: statusFilter === "suspended",
+      onClick: () => setStatusFilter("suspended"),
     },
   ];
 
@@ -278,15 +237,8 @@ export default function Pratiche({
         triggerLabel: "Cliente",
         values: uniqueClients,
       },
-      {
-        triggerLabel: "Pratica N.",
-        values: practices.slice(0, 10).map((p, idx) => ({
-          label: `Pratica N. ${idx + 1}`,
-          value: p.id,
-        })),
-      },
     ],
-    [uniqueOperators, uniqueClients, practices],
+    [uniqueOperators, uniqueClients],
   );
 
   // State for assignee filter values
@@ -304,6 +256,135 @@ export default function Pratiche({
   const [assigneeFilterValues, setAssigneeFilterValues] =
     useState<Record<string, string>>(initialFilterValues);
 
+  // Ensure select filters always have default placeholders even if options change
+  useEffect(() => {
+    setAssigneeFilterValues((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      assigneeFilters.forEach((filter) => {
+        const key = normalizeValue(filter.triggerLabel);
+        if (!(key in next)) {
+          next[key] = filter.triggerLabel;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [assigneeFilters]);
+
+  // Derived filtered practices for UI (status + selects + search)
+  const filteredPractices = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const operatorFilter = assigneeFilterValues[normalizeValue("Operatore")];
+    const clientFilter = assigneeFilterValues[normalizeValue("Cliente")];
+
+    return practices.filter((practice) => {
+      const matchesStatus =
+        statusFilter === "all" ? true : practice.status === statusFilter;
+
+      const matchesOperator =
+        !operatorFilter || operatorFilter === "Operatore"
+          ? true
+          : normalizeValue(practice.internalOperator) === operatorFilter;
+
+      const matchesClient =
+        !clientFilter || clientFilter === "Cliente"
+          ? true
+          : normalizeValue(practice.client) === clientFilter;
+
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [
+          practice.praticaNumber,
+          practice.internalOperator,
+          practice.client,
+          practice.type,
+          practice.status,
+          practice.note ?? "",
+        ]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      return (
+        matchesStatus &&
+        matchesOperator &&
+        matchesClient &&
+        matchesSearch
+      );
+    });
+  }, [assigneeFilterValues, practices, searchTerm, statusFilter]);
+
+  // Calculate statistics from filtered practices to mirror visible rows
+  const totalPractices = filteredPractices.length;
+  const completedCount = filteredPractices.filter(
+    (p) => p.status === "completed",
+  ).length;
+  const inProgressCount = filteredPractices.filter(
+    (p) => p.status === "in_progress",
+  ).length;
+  const assignedCount = filteredPractices.filter((p) => p.status === "assigned")
+    .length;
+  const suspendedCount = filteredPractices.filter(
+    (p) => p.status === "suspended",
+  ).length;
+
+  // Calculate select all checkbox state
+  const allSelected = useMemo(
+    () =>
+      filteredPractices.length > 0 &&
+      filteredPractices.every((practice) =>
+        selectedPractices.has(practice.id),
+      ),
+    [filteredPractices, selectedPractices],
+  );
+
+  const someSelected = useMemo(
+    () =>
+      filteredPractices.some((practice) =>
+        selectedPractices.has(practice.id),
+      ) && !allSelected,
+    [allSelected, filteredPractices, selectedPractices],
+  );
+
+  // Handlers for checkbox selection
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedPractices((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        filteredPractices.forEach((p) => next.add(p.id));
+      } else {
+        filteredPractices.forEach((p) => next.delete(p.id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectPractice = (practiceId: string, checked: boolean) => {
+    const newSelected = new Set(selectedPractices);
+    if (checked) {
+      newSelected.add(practiceId);
+    } else {
+      newSelected.delete(practiceId);
+    }
+    setSelectedPractices(newSelected);
+  };
+
+  // Calculate completion percentage
+  const completionPercentage =
+    totalPractices > 0
+      ? Math.round((completedCount / totalPractices) * 100)
+      : 0;
+
+  // For month-over-month comparison
+  const activePractices = totalPractices - suspendedCount;
+  const previousMonthCompletion =
+    activePractices > 0
+      ? Math.round(((completedCount - 1) / activePractices) * 100)
+      : 0;
+  const monthOverMonthChange = completionPercentage - previousMonthCompletion;
+
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
       {/* Header - Info Container */}
@@ -312,7 +393,7 @@ export default function Pratiche({
         <div className="flex items-center justify-between gap-2.5">
           <h1 className="flex items-center justify-center gap-3.5">
             <PraticheIcon />
-            <span>Pratiche</span>
+            <span>{pageTitle}</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
             <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
@@ -393,6 +474,8 @@ export default function Pratiche({
             >
               <input
                 placeholder="Numero pratica, stato, cliente..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
               />
               <SearchIcon className="text-search-placeholder" />
@@ -490,23 +573,24 @@ export default function Pratiche({
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {practices.length === 0 ? (
+            {filteredPractices.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
                   Nessuna pratica trovata
                 </p>
               </div>
             ) : (
-              practices.map((practice) => {
+              filteredPractices.map((practice) => {
                 const statusVisual = practiceStatusStyles[practice.status];
 
                 const handleRowClick = (e: React.MouseEvent) => {
                   // Don't navigate if clicking on checkbox or its label
                   const target = e.target as HTMLElement;
-                  const isCheckboxClick =
-                    target.closest('[role="checkbox"]') ||
-                    target.closest('input[type="checkbox"]') ||
-                    target.closest("label");
+                const isCheckboxClick = Boolean(
+                  target.closest('[role="checkbox"]') ??
+                    target.closest('input[type="checkbox"]') ??
+                    target.closest("label"),
+                );
 
                   if (!isCheckboxClick) {
                     router.push(`/pratiche/${practice.id}`);

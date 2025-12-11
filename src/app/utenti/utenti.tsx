@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import {
-  ArrowUpRightIcon,
-  CheckIcon,
-  HalfStatusIcon,
-  SearchIcon,
-  UserCircleIcon,
-  XIcon,
-} from "@/components/icons";
+import { useEffect, useMemo, useState } from "react";
+import type React from "react";
+import { CheckIcon, HalfStatusIcon, SearchIcon, UserCircleIcon, XIcon } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { UserRow } from "@/lib/users-utils";
@@ -27,6 +20,9 @@ import { CreateAdminDialog } from "@/components/create-admin-dialog";
 interface UtentiProps {
   users: UserRow[];
 }
+
+const normalizeValue = (value: string) =>
+  value.toLowerCase().trim().replace(/\s+/g, "-");
 
 const userStatusStyles: Record<
   string,
@@ -68,51 +64,15 @@ export default function Utenti({ users }: UtentiProps) {
   // State for create admin dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Calculate statistics from users
-  const totalUsers = users.length;
-  const datawebCount = users.filter((u) => u.role === "DATAWEB").length;
-  const adminCount = users.filter(
-    (u) => u.role === "AMMINISTRATORE_STUDIO",
-  ).length;
-  const operatorCount = users.filter((u) => u.role === "OPERATORE").length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-
-  // Calculate select all checkbox state
-  const allSelected = useMemo(
-    () => totalUsers > 0 && selectedUsers.size === totalUsers,
-    [totalUsers, selectedUsers.size],
-  );
-
-  const someSelected = useMemo(
-    () => selectedUsers.size > 0 && selectedUsers.size < totalUsers,
-    [totalUsers, selectedUsers.size],
-  );
-
-  // Handlers for checkbox selection
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedUsers(new Set(users.map((u) => u.id)));
-    } else {
-      setSelectedUsers(new Set());
-    }
-  };
-
-  const handleSelectUser = (userId: string, checked: boolean) => {
-    const newSelected = new Set(selectedUsers);
-    if (checked) {
-      newSelected.add(userId);
-    } else {
-      newSelected.delete(userId);
-    }
-    setSelectedUsers(newSelected);
-  };
+  // State for search and filters
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Get unique roles and studios from users for filters
   const uniqueRoles = useMemo(() => {
     const roles = new Set(users.map((u) => u.role).filter(Boolean));
     return Array.from(roles).map((role) => ({
       label: role,
-      value: role.toLowerCase().replace(/\s+/g, "-"),
+      value: normalizeValue(role),
       active: false,
     }));
   }, [users]);
@@ -121,7 +81,7 @@ export default function Utenti({ users }: UtentiProps) {
     const studios = new Set(users.map((u) => u.studio).filter(Boolean));
     return Array.from(studios).map((studio) => ({
       label: studio,
-      value: studio.toLowerCase().replace(/\s+/g, "-"),
+      value: normalizeValue(studio),
       active: false,
     }));
   }, [users]);
@@ -136,15 +96,8 @@ export default function Utenti({ users }: UtentiProps) {
         triggerLabel: "Studio",
         values: uniqueStudios,
       },
-      {
-        triggerLabel: "Utente N.",
-        values: users.slice(0, 10).map((u, idx) => ({
-          label: `Utente N. ${idx + 1}`,
-          value: u.id,
-        })),
-      },
     ],
-    [uniqueRoles, uniqueStudios, users],
+    [uniqueRoles, uniqueStudios],
   );
 
   // State for assignee filter values
@@ -152,7 +105,7 @@ export default function Utenti({ users }: UtentiProps) {
     () =>
       Object.fromEntries(
         assigneeFilters.map((filter) => [
-          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
+          normalizeValue(filter.triggerLabel),
           filter.triggerLabel,
         ]),
       ),
@@ -161,6 +114,96 @@ export default function Utenti({ users }: UtentiProps) {
 
   const [assigneeFilterValues, setAssigneeFilterValues] =
     useState<Record<string, string>>(initialFilterValues);
+
+  // Ensure new filters always have a default value when options change
+  useEffect(() => {
+    setAssigneeFilterValues((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      assigneeFilters.forEach((filter) => {
+        const key = normalizeValue(filter.triggerLabel);
+        if (!(key in next)) {
+          next[key] = filter.triggerLabel;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [assigneeFilters]);
+
+  // Derived users based on active filters and search term
+  const filteredUsers = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const roleFilter = assigneeFilterValues[normalizeValue("Ruolo")];
+    const studioFilter = assigneeFilterValues[normalizeValue("Studio")];
+
+    return users.filter((user) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [user.id, user.name, user.email, user.role, user.studio]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      const matchesRole =
+        !roleFilter || roleFilter === "Ruolo"
+          ? true
+          : normalizeValue(user.role) === roleFilter;
+
+      const matchesStudio =
+        !studioFilter || studioFilter === "Studio"
+          ? true
+          : normalizeValue(user.studio) === studioFilter;
+
+      return matchesSearch && matchesRole && matchesStudio;
+    });
+  }, [assigneeFilterValues, searchTerm, users]);
+
+  // Calculate statistics from filtered users to mirror the visible table
+  const totalUsers = filteredUsers.length;
+  const datawebCount = filteredUsers.filter((u) => u.role === "DATAWEB").length;
+  const adminCount = filteredUsers.filter(
+    (u) => u.role === "AMMINISTRATORE_STUDIO",
+  ).length;
+  const operatorCount = filteredUsers.filter((u) => u.role === "OPERATORE").length;
+
+  // Calculate select all checkbox state scoped to filtered rows
+  const allSelected = useMemo(
+    () =>
+      filteredUsers.length > 0 &&
+      filteredUsers.every((user) => selectedUsers.has(user.id)),
+    [filteredUsers, selectedUsers],
+  );
+
+  const someSelected = useMemo(
+    () =>
+      filteredUsers.some((user) => selectedUsers.has(user.id)) && !allSelected,
+    [allSelected, filteredUsers, selectedUsers],
+  );
+
+  // Handlers for checkbox selection (scoped to filtered rows)
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedUsers((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        filteredUsers.forEach((u) => next.add(u.id));
+      } else {
+        filteredUsers.forEach((u) => next.delete(u.id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUsers);
+    if (checked) {
+      newSelected.add(userId);
+    } else {
+      newSelected.delete(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -192,9 +235,7 @@ export default function Utenti({ users }: UtentiProps) {
             {/* Header - Assignee Filters */}
             <div className="flex w-full flex-0 items-center justify-center gap-1.25">
               {assigneeFilters.map((filter) => {
-                const filterKey = filter.triggerLabel
-                  .toLowerCase()
-                  .replace(/\s+/g, "-");
+                const filterKey = normalizeValue(filter.triggerLabel);
 
                 return (
                   <Select
@@ -237,6 +278,8 @@ export default function Utenti({ users }: UtentiProps) {
                 id="search"
                 placeholder="Nome, email, ruolo, studio..."
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
               />
               <SearchIcon className="text-search-placeholder" />
             </label>
@@ -253,7 +296,7 @@ export default function Utenti({ users }: UtentiProps) {
             <h3 className="text-stats-title text-sm font-medium">
               Totale utenti
             </h3>
-            <div className="flex items-center justify-start gap-3.75">
+            <div className="flex items-center justify-start gap-3.75 tabular-nums">
               <AnimateNumber className="text-xl">{totalUsers}</AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale utenti - Role Counts */}
@@ -273,14 +316,14 @@ export default function Utenti({ users }: UtentiProps) {
               </div>
             </div>
           </div>
-        
         </div>
 
         {/* Table */}
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl">
           {/* Body Head */}
           <div className="bg-table-header shrink-0 rounded-xl px-3 py-2.25">
-            <div className="text-table-header-foreground grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-sm font-medium">
+            {/* Shift width toward name/email/studio; keep ID very compact and grow status */}
+            <div className="text-table-header-foreground grid grid-cols-[minmax(90px,0.5fr)_minmax(220px,1fr)_minmax(320px,1.35fr)_minmax(150px,0.8fr)_minmax(200px,1.1fr)_minmax(200px,1fr)] items-center gap-3.5 text-sm font-medium">
               <div className="flex items-center gap-2.5">
                 <Checkbox
                   aria-label="Seleziona tutti gli utenti"
@@ -300,18 +343,18 @@ export default function Utenti({ users }: UtentiProps) {
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
                   Nessun utente trovato
                 </p>
               </div>
             ) : (
-              users.map((user) => {
+              filteredUsers.map((user) => {
                 const statusKey = user.status.toLowerCase();
                 const statusVisual =
-                  userStatusStyles[statusKey] ||
-                  userStatusStyles[user.status] || {
+                  userStatusStyles[statusKey] ??
+                  userStatusStyles[user.status] ?? {
                     label: user.status,
                     accent: "var(--status-assigned-accent)",
                     background: "var(--status-assigned-background)",
@@ -324,7 +367,7 @@ export default function Utenti({ users }: UtentiProps) {
                     key={user.id}
                     className="border-checkbox-border/70 hover:bg-muted border-b px-3 py-5 transition-colors last:border-b-0"
                   >
-                    <div className="grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-base">
+                    <div className="grid grid-cols-[minmax(90px,0.5fr)_minmax(220px,1fr)_minmax(320px,1.35fr)_minmax(150px,0.8fr)_minmax(200px,1.1fr)_minmax(200px,1fr)] items-center gap-3.5 text-base">
                       <div className="flex items-center gap-2.5">
                         <div
                           onClick={(e) => e.stopPropagation()}

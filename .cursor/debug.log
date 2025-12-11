@@ -1,0 +1,40 @@
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471864322}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"active","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471864322}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"active","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471864322}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471864322}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471864329}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471864329}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471864407}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471864407}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471864417}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471864417}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471865357}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"inactive","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471865358}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"inactive","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471865358}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471865358}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471865360}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471865360}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471866782}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"pending","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471866782}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"pending","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471866783}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471866783}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471866786}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471866787}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471867892}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"all","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471867892}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:134","message":"filteredClients compute start","data":{"statusFilter":"all","clientFilter":"Cliente N.","searchTerm":"","clientsCount":11},"timestamp":1765471867892}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471867893}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471867903}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":["cliente-n."]},"timestamp":1765471867903}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471903181}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471903183}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471903195}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471903195}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471938003}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471938005}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471938016}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471938017}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471938107}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471938107}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:131","message":"Clienti render start","data":{"clientsCount":11},"timestamp":1765471938117}
+{"sessionId":"debug-session","runId":"run1","hypothesisId":"H1","location":"clienti.tsx:274","message":"Assignee filter state initialized","data":{"initialKeys":[]},"timestamp":1765471938118}

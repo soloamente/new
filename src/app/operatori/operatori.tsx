@@ -13,13 +13,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -136,6 +129,10 @@ export default function Operatori({ operators }: OperatoriProps) {
   const [selectedOperators, setSelectedOperators] = useState<Set<string>>(
     new Set(),
   );
+  const [statusFilter, setStatusFilter] = useState<OperatorStatus | "all">(
+    "all",
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -145,38 +142,75 @@ export default function Operatori({ operators }: OperatoriProps) {
     password: "",
   });
 
-  // Calculate statistics from actual operators
-  const totalOperators = operators.length;
-  const activeCount = operators.filter((o) => o.status === "active").length;
-  const inactiveCount = operators.filter((o) => o.status === "inactive").length;
-  const onLeaveCount = operators.filter((o) => o.status === "on_leave").length;
-  const totalPractices = operators.reduce(
+  // Derived filtered operators to mirror the visible table and stats
+  const filteredOperators = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return operators.filter((operator) => {
+      const matchesStatus =
+        statusFilter === "all" ? true : operator.status === statusFilter;
+
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [
+          operator.operatorNumber,
+          operator.name,
+          operator.email,
+          operator.phone,
+          operator.status,
+          operator.lastActivity,
+        ]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [operators, searchTerm, statusFilter]);
+
+  // Calculate statistics from filtered operators
+  const totalOperators = filteredOperators.length;
+  const activeCount = filteredOperators.filter((o) => o.status === "active")
+    .length;
+  const inactiveCount = filteredOperators.filter((o) => o.status === "inactive")
+    .length;
+  const onLeaveCount = filteredOperators.filter((o) => o.status === "on_leave")
+    .length;
+  const totalPractices = filteredOperators.reduce(
     (sum, operator) => sum + operator.practicesCount,
     0,
   );
-  const totalCompletedPractices = operators.reduce(
+  const totalCompletedPractices = filteredOperators.reduce(
     (sum, operator) => sum + operator.completedPractices,
     0,
   );
 
-  // Calculate select all checkbox state
+  // Calculate select all checkbox state scoped to filtered rows
   const allSelected = useMemo(
-    () => totalOperators > 0 && selectedOperators.size === totalOperators,
-    [totalOperators, selectedOperators.size],
+    () =>
+      filteredOperators.length > 0 &&
+      filteredOperators.every((operator) => selectedOperators.has(operator.id)),
+    [filteredOperators, selectedOperators],
   );
 
   const someSelected = useMemo(
-    () => selectedOperators.size > 0 && selectedOperators.size < totalOperators,
-    [totalOperators, selectedOperators.size],
+    () =>
+      filteredOperators.some((operator) =>
+        selectedOperators.has(operator.id),
+      ) && !allSelected,
+    [allSelected, filteredOperators, selectedOperators],
   );
 
   // Handlers for checkbox selection
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedOperators(new Set(operators.map((o) => o.id)));
-    } else {
-      setSelectedOperators(new Set());
-    }
+    setSelectedOperators((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        filteredOperators.forEach((o) => next.add(o.id));
+      } else {
+        filteredOperators.forEach((o) => next.delete(o.id));
+      }
+      return next;
+    });
   };
 
   const handleSelectOperator = (operatorId: string, checked: boolean) => {
@@ -205,53 +239,28 @@ export default function Operatori({ operators }: OperatoriProps) {
     {
       label: "Tutti gli operatori",
       value: "all",
-      active: true,
+      active: statusFilter === "all",
+      onClick: () => setStatusFilter("all"),
     },
     {
       label: "Operatori attivi",
       value: "active",
-      active: false,
+      active: statusFilter === "active",
+      onClick: () => setStatusFilter("active"),
     },
     {
       label: "Operatori inattivi",
       value: "inactive",
-      active: false,
+      active: statusFilter === "inactive",
+      onClick: () => setStatusFilter("inactive"),
     },
     {
       label: "In ferie",
       value: "on_leave",
-      active: false,
+      active: statusFilter === "on_leave",
+      onClick: () => setStatusFilter("on_leave"),
     },
   ];
-
-  // Generate assignee filters dynamically from operators
-  const assigneeFilters = useMemo(
-    () => [
-      {
-        triggerLabel: "Operatore N.",
-        values: operators.map((op) => ({
-          label: op.operatorNumber,
-          value: op.id,
-          active: false,
-        })),
-      },
-    ],
-    [operators],
-  );
-
-  const initialFilterValues = useMemo(
-    () =>
-      Object.fromEntries(
-        assigneeFilters.map((filter) => [
-          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
-          filter.triggerLabel,
-        ]),
-      ),
-    [assigneeFilters],
-  );
-
-  const [assigneeFilterValues, setAssigneeFilterValues] =
-    useState<Record<string, string>>(initialFilterValues);
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -286,6 +295,7 @@ export default function Operatori({ operators }: OperatoriProps) {
               {statusFilters.map((filter) => (
                 <button
                   key={filter.value}
+                  onClick={filter.onClick}
                   className={cn(
                     "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
                     !filter.active &&
@@ -296,43 +306,8 @@ export default function Operatori({ operators }: OperatoriProps) {
                 </button>
               ))}
             </div>
-            {/* Header - Assignee Filters */}
-            <div className="flex w-full flex-0 items-center justify-center gap-1.25">
-              {assigneeFilters.map((filter) => {
-                const filterKey = filter.triggerLabel
-                  .toLowerCase()
-                  .replace(/\s+/g, "-");
-
-                return (
-                  <Select
-                    key={filter.triggerLabel}
-                    value={
-                      assigneeFilterValues[filterKey] ?? filter.triggerLabel
-                    }
-                    onValueChange={(value) => {
-                      setAssigneeFilterValues((prev) => ({
-                        ...prev,
-                        [filterKey]: value,
-                      }));
-                    }}
-                  >
-                    <SelectTrigger className="w-auto">
-                      <SelectValue placeholder={filter.triggerLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={filter.triggerLabel}>
-                        {filter.triggerLabel}
-                      </SelectItem>
-                      {filter.values.map((value) => (
-                        <SelectItem key={value.value} value={value.value}>
-                          {value.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                );
-              })}
-            </div>
+            {/* Header - Assignee Filters removed */}
+            <div className="flex w-full flex-0 items-center justify-center gap-1.25" />
           </div>
           {/* Header - Search */}
           <div className="absolute right-0 flex items-center justify-center">
@@ -342,6 +317,8 @@ export default function Operatori({ operators }: OperatoriProps) {
             >
               <input
                 placeholder="Nome, email, operatore..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
               />
               <SearchIcon className="text-search-placeholder" />
@@ -604,12 +581,12 @@ export default function Operatori({ operators }: OperatoriProps) {
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {operators.length === 0 ? (
+            {filteredOperators.length === 0 ? (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <p>Nessun operatore trovato</p>
               </div>
             ) : (
-              operators.map((operator) => {
+              filteredOperators.map((operator) => {
                 const statusVisual = operatorStatusStyles[operator.status];
                 const completionPercentage =
                   operator.practicesCount > 0

@@ -12,13 +12,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
@@ -122,35 +115,69 @@ export default function Clienti({ clients }: ClientiProps) {
   const [selectedClients, setSelectedClients] = useState<Set<string>>(
     new Set(),
   );
+  const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Calculate statistics from clients
-  const totalClients = clients.length;
-  const activeCount = clients.filter((c) => c.status === "active").length;
-  const inactiveCount = clients.filter((c) => c.status === "inactive").length;
-  const pendingCount = clients.filter((c) => c.status === "pending").length;
-  const totalPractices = clients.reduce(
-    (sum, client) => sum + client.practicesCount,
-    0,
-  );
+  // No assignee filters for clienti page
 
-  // Calculate select all checkbox state
+  // Derived filtered clients for the UI (status + search)
+  const filteredClients = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return clients.filter((client) => {
+      const matchesStatus =
+        statusFilter === "all" ? true : client.status === statusFilter;
+
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [
+          client.clientNumber,
+          client.name,
+          client.company ?? "",
+          client.email ?? "",
+          client.phone ?? "",
+          client.status,
+        ]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [clients, searchTerm, statusFilter]);
+
+  // Calculate statistics from filtered clients
+  const totalClients = filteredClients.length;
+  const activeCount = filteredClients.filter((c) => c.status === "active").length;
+  const inactiveCount = filteredClients.filter((c) => c.status === "inactive")
+    .length;
+  const pendingCount = filteredClients.filter((c) => c.status === "pending")
+    .length;
+  // Calculate select all checkbox state scoped to filtered rows
   const allSelected = useMemo(
-    () => totalClients > 0 && selectedClients.size === totalClients,
-    [totalClients, selectedClients.size],
+    () =>
+      filteredClients.length > 0 &&
+      filteredClients.every((client) => selectedClients.has(client.id)),
+    [filteredClients, selectedClients],
   );
 
   const someSelected = useMemo(
-    () => selectedClients.size > 0 && selectedClients.size < totalClients,
-    [totalClients, selectedClients.size],
+    () =>
+      filteredClients.some((client) => selectedClients.has(client.id)) &&
+      !allSelected,
+    [allSelected, filteredClients, selectedClients],
   );
 
   // Handlers for checkbox selection
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedClients(new Set(clients.map((c) => c.id)));
-    } else {
-      setSelectedClients(new Set());
-    }
+    setSelectedClients((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        filteredClients.forEach((c) => next.add(c.id));
+      } else {
+        filteredClients.forEach((c) => next.delete(c.id));
+      }
+      return next;
+    });
   };
 
   const handleSelectClient = (clientId: string, checked: boolean) => {
@@ -173,58 +200,28 @@ export default function Clienti({ clients }: ClientiProps) {
     {
       label: "Tutti i clienti",
       value: "all",
-      active: true,
+      active: statusFilter === "all",
+      onClick: () => setStatusFilter("all"),
     },
     {
       label: "Clienti attivi",
       value: "active",
-      active: false,
+      active: statusFilter === "active",
+      onClick: () => setStatusFilter("active"),
     },
     {
       label: "Clienti inattivi",
       value: "inactive",
-      active: false,
+      active: statusFilter === "inactive",
+      onClick: () => setStatusFilter("inactive"),
     },
     {
       label: "In attesa",
       value: "pending",
-      active: false,
+      active: statusFilter === "pending",
+      onClick: () => setStatusFilter("pending"),
     },
   ];
-
-  // Get unique client names for filters
-  const uniqueClients = useMemo(() => {
-    return clients.slice(0, 10).map((client, idx) => ({
-      label: `Cliente N. ${idx + 1}`,
-      value: client.id,
-      active: false,
-    }));
-  }, [clients]);
-
-  const assigneeFilters = useMemo(
-    () => [
-      {
-        triggerLabel: "Cliente N.",
-        values: uniqueClients,
-      },
-    ],
-    [uniqueClients],
-  );
-
-  // State for assignee filter values
-  const initialFilterValues = useMemo(
-    () =>
-      Object.fromEntries(
-        assigneeFilters.map((filter) => [
-          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
-          filter.triggerLabel,
-        ]),
-      ),
-    [assigneeFilters],
-  );
-
-  const [assigneeFilterValues, setAssigneeFilterValues] =
-    useState<Record<string, string>>(initialFilterValues);
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -255,6 +252,7 @@ export default function Clienti({ clients }: ClientiProps) {
               {statusFilters.map((filter) => (
                 <button
                   key={filter.value}
+                  onClick={filter.onClick}
                   className={cn(
                     "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
                     !filter.active &&
@@ -265,43 +263,8 @@ export default function Clienti({ clients }: ClientiProps) {
                 </button>
               ))}
             </div>
-            {/* Header - Assignee Filters */}
-            <div className="flex w-full flex-0 items-center justify-center gap-1.25">
-              {assigneeFilters.map((filter) => {
-                const filterKey = filter.triggerLabel
-                  .toLowerCase()
-                  .replace(/\s+/g, "-");
-
-                return (
-                  <Select
-                    key={filter.triggerLabel}
-                    value={
-                      assigneeFilterValues[filterKey] ?? filter.triggerLabel
-                    }
-                    onValueChange={(value) => {
-                      setAssigneeFilterValues((prev) => ({
-                        ...prev,
-                        [filterKey]: value,
-                      }));
-                    }}
-                  >
-                    <SelectTrigger className="w-auto font-medium">
-                      <SelectValue placeholder={filter.triggerLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={filter.triggerLabel}>
-                        {filter.triggerLabel}
-                      </SelectItem>
-                      {filter.values.map((value) => (
-                        <SelectItem key={value.value} value={value.value}>
-                          {value.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                );
-              })}
-            </div>
+            {/* Header - Assignee Filters removed */}
+            <div className="flex w-full flex-0 items-center justify-center gap-1.25" />
           </div>
           {/* Header - Search */}
           <div className="absolute right-0 flex items-center justify-center">
@@ -311,6 +274,8 @@ export default function Clienti({ clients }: ClientiProps) {
             >
               <input
                 placeholder="Nome, email, cliente..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
               />
               <SearchIcon className="text-search-placeholder" />
@@ -403,14 +368,14 @@ export default function Clienti({ clients }: ClientiProps) {
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {clients.length === 0 ? (
+            {filteredClients.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
                   Nessun cliente trovato
                 </p>
               </div>
             ) : (
-              clients.map((client) => {
+              filteredClients.map((client) => {
                 const statusVisual = clientStatusStyles[client.status];
 
                 return (
