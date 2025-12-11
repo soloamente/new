@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   ArrowUpRightIcon,
   CheckIcon,
-  ClientsIcon,
+  HalfStatusIcon,
   SearchIcon,
   UserCircleIcon,
   XIcon,
@@ -18,74 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
-import type { ClientRow, ClientStatus } from "@/lib/clients-utils";
+import type { UserRow } from "@/lib/users-utils";
+import { CreateAdminDialog } from "@/components/create-admin-dialog";
 
-interface ClientiProps {
-  clients: ClientRow[];
+interface UtentiProps {
+  users: UserRow[];
 }
 
-// Component to show tooltip only when text is truncated
-function EmailWithTooltip({ email }: { email: string }) {
-  const textRef = useRef<HTMLSpanElement>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-
-  useEffect(() => {
-    const checkTruncation = () => {
-      if (textRef.current) {
-        setIsTruncated(
-          textRef.current.scrollWidth > textRef.current.clientWidth,
-        );
-      }
-    };
-
-    requestAnimationFrame(() => {
-      checkTruncation();
-    });
-
-    window.addEventListener("resize", checkTruncation);
-
-    return () => {
-      window.removeEventListener("resize", checkTruncation);
-    };
-  }, [email]);
-
-  const emailSpan = (
-    <span ref={textRef} className="block w-full truncate text-left">
-      {email}
-    </span>
-  );
-
-  if (!isTruncated) {
-    return emailSpan;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          ref={textRef}
-          className="block w-full cursor-help truncate text-left"
-        >
-          {email}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={4} className="max-w-md">
-        <p className="">{email}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-const clientStatusStyles: Record<
-  ClientStatus,
+const userStatusStyles: Record<
+  string,
   {
     label: string;
     accent: string;
@@ -110,105 +54,97 @@ const clientStatusStyles: Record<
   },
   pending: {
     label: "In attesa",
-    accent: "var(--status-assigned-accent)",
-    background: "var(--status-assigned-background)",
-    icon: <UserCircleIcon />,
-    iconColor: "var(--status-assigned-icon)",
+    accent: "var(--status-in-progress-accent)",
+    background: "var(--status-in-progress-background)",
+    icon: <HalfStatusIcon />,
+    iconColor: "var(--status-in-progress-icon)",
   },
 };
 
-export default function Clienti({ clients }: ClientiProps) {
-  // State for selected clients
-  const [selectedClients, setSelectedClients] = useState<Set<string>>(
-    new Set(),
-  );
+export default function Utenti({ users }: UtentiProps) {
+  // State for selected users
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
-  // Calculate statistics from clients
-  const totalClients = clients.length;
-  const activeCount = clients.filter((c) => c.status === "active").length;
-  const inactiveCount = clients.filter((c) => c.status === "inactive").length;
-  const pendingCount = clients.filter((c) => c.status === "pending").length;
-  const totalPractices = clients.reduce(
-    (sum, client) => sum + client.practicesCount,
-    0,
-  );
+  // State for create admin dialog
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Calculate statistics from users
+  const totalUsers = users.length;
+  const datawebCount = users.filter((u) => u.role === "DATAWEB").length;
+  const adminCount = users.filter(
+    (u) => u.role === "AMMINISTRATORE_STUDIO",
+  ).length;
+  const operatorCount = users.filter((u) => u.role === "OPERATORE").length;
+  const activeUsers = users.filter((u) => u.status === "active").length;
 
   // Calculate select all checkbox state
   const allSelected = useMemo(
-    () => totalClients > 0 && selectedClients.size === totalClients,
-    [totalClients, selectedClients.size],
+    () => totalUsers > 0 && selectedUsers.size === totalUsers,
+    [totalUsers, selectedUsers.size],
   );
 
   const someSelected = useMemo(
-    () => selectedClients.size > 0 && selectedClients.size < totalClients,
-    [totalClients, selectedClients.size],
+    () => selectedUsers.size > 0 && selectedUsers.size < totalUsers,
+    [totalUsers, selectedUsers.size],
   );
 
   // Handlers for checkbox selection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedClients(new Set(clients.map((c) => c.id)));
+      setSelectedUsers(new Set(users.map((u) => u.id)));
     } else {
-      setSelectedClients(new Set());
+      setSelectedUsers(new Set());
     }
   };
 
-  const handleSelectClient = (clientId: string, checked: boolean) => {
-    const newSelected = new Set(selectedClients);
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUsers);
     if (checked) {
-      newSelected.add(clientId);
+      newSelected.add(userId);
     } else {
-      newSelected.delete(clientId);
+      newSelected.delete(userId);
     }
-    setSelectedClients(newSelected);
+    setSelectedUsers(newSelected);
   };
 
-  const activePercentage =
-    totalClients > 0 ? Math.round((activeCount / totalClients) * 100) : 0;
-  const previousActivePercentage =
-    totalClients > 0 ? Math.round(((activeCount - 1) / totalClients) * 100) : 0;
-  const activeTrend = activePercentage - previousActivePercentage;
-
-  const statusFilters = [
-    {
-      label: "Tutti i clienti",
-      value: "all",
-      active: true,
-    },
-    {
-      label: "Clienti attivi",
-      value: "active",
-      active: false,
-    },
-    {
-      label: "Clienti inattivi",
-      value: "inactive",
-      active: false,
-    },
-    {
-      label: "In attesa",
-      value: "pending",
-      active: false,
-    },
-  ];
-
-  // Get unique client names for filters
-  const uniqueClients = useMemo(() => {
-    return clients.slice(0, 10).map((client, idx) => ({
-      label: `Cliente N. ${idx + 1}`,
-      value: client.id,
+  // Get unique roles and studios from users for filters
+  const uniqueRoles = useMemo(() => {
+    const roles = new Set(users.map((u) => u.role).filter(Boolean));
+    return Array.from(roles).map((role) => ({
+      label: role,
+      value: role.toLowerCase().replace(/\s+/g, "-"),
       active: false,
     }));
-  }, [clients]);
+  }, [users]);
+
+  const uniqueStudios = useMemo(() => {
+    const studios = new Set(users.map((u) => u.studio).filter(Boolean));
+    return Array.from(studios).map((studio) => ({
+      label: studio,
+      value: studio.toLowerCase().replace(/\s+/g, "-"),
+      active: false,
+    }));
+  }, [users]);
 
   const assigneeFilters = useMemo(
     () => [
       {
-        triggerLabel: "Cliente N.",
-        values: uniqueClients,
+        triggerLabel: "Ruolo",
+        values: uniqueRoles,
+      },
+      {
+        triggerLabel: "Studio",
+        values: uniqueStudios,
+      },
+      {
+        triggerLabel: "Utente N.",
+        values: users.slice(0, 10).map((u, idx) => ({
+          label: `Utente N. ${idx + 1}`,
+          value: u.id,
+        })),
       },
     ],
-    [uniqueClients],
+    [uniqueRoles, uniqueStudios, users],
   );
 
   // State for assignee filter values
@@ -233,15 +169,18 @@ export default function Clienti({ clients }: ClientiProps) {
         {/* Header - Title and Export Button */}
         <div className="flex items-center justify-between gap-2.5">
           <h1 className="flex items-center justify-center gap-3.5">
-            <ClientsIcon />
-            <span>Clienti</span>
+            <UserCircleIcon />
+            <span>Utenti</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
             <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
               Esporta
               <FaChevronDown size={15} className="text-button-secondary" />
             </button>
-            <button className="bg-background cursor-pointer flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
+            >
               Aggiungi
               <FaPlus className="text-button-secondary" />
             </button>
@@ -250,21 +189,6 @@ export default function Clienti({ clients }: ClientiProps) {
         {/* Header - Filters & Search Container */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex w-full items-center justify-start gap-1.25">
-            {/* Header - StatusFilters */}
-            <div className="flex items-center justify-center">
-              {statusFilters.map((filter) => (
-                <button
-                  key={filter.value}
-                  className={cn(
-                    "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
-                    !filter.active &&
-                      "bg-button-inactive text-button-inactive-foreground",
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
             {/* Header - Assignee Filters */}
             <div className="flex w-full flex-0 items-center justify-center gap-1.25">
               {assigneeFilters.map((filter) => {
@@ -285,7 +209,7 @@ export default function Clienti({ clients }: ClientiProps) {
                       }));
                     }}
                   >
-                    <SelectTrigger className="w-auto font-medium">
+                    <SelectTrigger className="w-auto">
                       <SelectValue placeholder={filter.triggerLabel} />
                     </SelectTrigger>
                     <SelectContent>
@@ -310,7 +234,8 @@ export default function Clienti({ clients }: ClientiProps) {
               className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200"
             >
               <input
-                placeholder="Nome, email, cliente..."
+                id="search"
+                placeholder="Nome, email, ruolo, studio..."
                 className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
               />
               <SearchIcon className="text-search-placeholder" />
@@ -323,59 +248,32 @@ export default function Clienti({ clients }: ClientiProps) {
         {/* Body Header */}
         {/* Body Header - Stats */}
         <div className="flex shrink-0 items-start gap-25.5">
-          {/* Stats - Totale clienti */}
+          {/* Stats - Totale utenti */}
           <div className="flex flex-col items-start justify-center gap-2.5">
             <h3 className="text-stats-title text-sm font-medium">
-              Totale clienti
+              Totale utenti
             </h3>
             <div className="flex items-center justify-start gap-3.75">
-              <AnimateNumber className="text-xl">{totalClients}</AnimateNumber>
+              <AnimateNumber className="text-xl">{totalUsers}</AnimateNumber>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
-              {/* Stats - Totale clienti - Status Counts */}
+              {/* Stats - Totale utenti - Role Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
+                  <UserCircleIcon size={24} className="text-stats-secondary" />
+                  <AnimateNumber>{datawebCount}</AnimateNumber>
+                </div>
+                <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{activeCount}</AnimateNumber>
+                  <AnimateNumber>{adminCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{inactiveCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{pendingCount}</AnimateNumber>
+                  <AnimateNumber>{operatorCount}</AnimateNumber>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Stats - Clienti attivi */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Clienti attivi
-            </h3>
-            <div className="flex items-center justify-start gap-2.5 text-xl">
-              <AnimateNumber suffix="%">{activePercentage}</AnimateNumber>
-              {activeTrend !== 0 && (
-                <>
-                  <ArrowUpRightIcon size={24} />
-                  <h4 className="flex items-center justify-center gap-1.25">
-                    <AnimateNumber
-                      prefix={activeTrend > 0 ? "+" : ""}
-                      suffix="%"
-                      className={activeTrend > 0 ? "text-green" : ""}
-                    >
-                      {activeTrend}
-                    </AnimateNumber>{" "}
-                    rispetto al mese precedente
-                  </h4>
-                </>
-              )}
-              {activeTrend === 0 && (
-                <h4>Stabile rispetto al mese precedente</h4>
-              )}
-            </div>
-          </div>
+        
         </div>
 
         {/* Table */}
@@ -385,86 +283,73 @@ export default function Clienti({ clients }: ClientiProps) {
             <div className="text-table-header-foreground grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-sm font-medium">
               <div className="flex items-center gap-2.5">
                 <Checkbox
-                  aria-label="Seleziona tutti i clienti"
+                  aria-label="Seleziona tutti gli utenti"
                   labelClassName="items-center"
                   checked={allSelected}
                   indeterminate={someSelected}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
-                <span>Cliente N.</span>
+                <span>Utente N.</span>
               </div>
               <div>Nome</div>
               <div>Email</div>
-              <div>Telefono</div>
-              <div>Pratiche</div>
-              <div>Ultima attività</div>
+              <div>Ruolo</div>
+              <div>Studio</div>
               <div>Stato</div>
             </div>
           </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
-            {clients.length === 0 ? (
+            {users.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
-                  Nessun cliente trovato
+                  Nessun utente trovato
                 </p>
               </div>
             ) : (
-              clients.map((client) => {
-                const statusVisual = clientStatusStyles[client.status];
+              users.map((user) => {
+                const statusKey = user.status.toLowerCase();
+                const statusVisual =
+                  userStatusStyles[statusKey] ||
+                  userStatusStyles[user.status] || {
+                    label: user.status,
+                    accent: "var(--status-assigned-accent)",
+                    background: "var(--status-assigned-background)",
+                    icon: <UserCircleIcon />,
+                    iconColor: "var(--status-assigned-icon)",
+                  };
 
                 return (
                   <div
-                    key={client.id}
+                    key={user.id}
                     className="border-checkbox-border/70 hover:bg-muted border-b px-3 py-5 transition-colors last:border-b-0"
                   >
                     <div className="grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-base">
                       <div className="flex items-center gap-2.5">
-                        <Checkbox
-                          aria-label={`Seleziona ${client.clientNumber}`}
-                          labelClassName="items-center"
-                          checked={selectedClients.has(client.id)}
-                          onChange={(e) =>
-                            handleSelectClient(client.id, e.target.checked)
-                          }
-                        />
-                        <span className="font-semibold">
-                          {client.clientNumber}
-                        </span>
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            aria-label={`Seleziona ${user.name}`}
+                            labelClassName="items-center"
+                            checked={selectedUsers.has(user.id)}
+                            onChange={(e) =>
+                              handleSelectUser(user.id, e.target.checked)
+                            }
+                          />
+                        </div>
+                        <span className="font-semibold">{user.id}</span>
                       </div>
                       <div className="flex items-center gap-2 truncate">
                         <Avatar aria-hidden className="bg-background">
-                          <AvatarFallback placeholderSeed={client.name} />
+                          <AvatarFallback placeholderSeed={user.name} />
                         </Avatar>
-                        <div className="flex flex-col truncate">
-                          <span className="truncate font-medium">
-                            {client.name}
-                          </span>
-                          {client.company && (
-                            <span className="text-stats-title truncate text-sm">
-                              {client.company}
-                            </span>
-                          )}
-                        </div>
+                        <span className="truncate">{user.name}</span>
                       </div>
-                      <div className="truncate">
-                        {client.email ? (
-                          <EmailWithTooltip email={client.email} />
-                        ) : (
-                          <span className="text-stats-title">
-                            Nessuna email
-                          </span>
-                        )}
-                      </div>
-                      <div className="truncate">
-                        {client.phone || (
-                          <span className="text-stats-title">
-                            Nessun telefono
-                          </span>
-                        )}
-                      </div>
-                      <div className="truncate">{client.practicesCount}</div>
-                      <div className="truncate">{client.lastActivity}</div>
+                      <div className="truncate">{user.email}</div>
+                      <div className="truncate">{user.role}</div>
+                      <div className="truncate">{user.studio}</div>
                       <div>
                         <span
                           className="inline-flex items-center justify-center gap-2 rounded-full py-1.25 pr-3 pl-2.5 text-base font-medium"
@@ -493,6 +378,12 @@ export default function Clienti({ clients }: ClientiProps) {
           </div>
         </div>
       </div>
+
+      <CreateAdminDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </main>
   );
 }
+

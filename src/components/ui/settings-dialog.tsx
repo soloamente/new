@@ -125,7 +125,7 @@ export function SettingsDialog({
               <div className="border-border flex items-center justify-between border-b px-6 py-4">
                 <h2
                   id="settings-dialog-title"
-                  className="text-lg font-semibold"
+                  className="text-lg font-semibold "
                 >
                   Impostazioni
                 </h2>

@@ -102,6 +102,21 @@ export interface CreateUserInput {
   status?: string;
 }
 
+/**
+ * Create a new Admin user with Studio (SuperAdmin only)
+ * Creates both the admin user and the studio together
+ * Returns the created user or null if error occurs
+ */
+export interface CreateAdminWithStudioInput {
+  name: string;
+  email: string;
+  password: string;
+  role_id: 2; // Must be 2 = AMMINISTRATORE_STUDIO
+  studio_name: string; // Obbligatorio: Crea il nuovo studio
+  studio_city?: string; // Opzionale
+  studio_vat_number?: string; // Opzionale
+}
+
 export async function createUser(input: CreateUserInput): Promise<User | null> {
   try {
     const user = (await apiFetch("/api/users", {
@@ -122,6 +137,41 @@ export async function createUser(input: CreateUserInput): Promise<User | null> {
       console.error("Failed to create user:", error.message);
     } else {
       console.error("Failed to create user:", error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Create a new Admin user with Studio (SuperAdmin only)
+ * Creates both the admin user and the studio together
+ * Returns the created user or null if error occurs
+ * 
+ * Note: This endpoint creates an Admin (role_id: 2) and automatically creates
+ * the associated Studio. It's not possible to associate an Admin to an existing Studio.
+ */
+export async function createAdminWithStudio(
+  input: CreateAdminWithStudioInput,
+): Promise<User | null> {
+  try {
+    const user = (await apiFetch("/api/users", {
+      method: "POST",
+      body: JSON.stringify(input),
+    })) as User;
+    return user;
+  } catch (error: unknown) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 429
+    ) {
+      return null;
+    }
+
+    if (error instanceof Error) {
+      console.error("Failed to create admin with studio:", error.message);
+    } else {
+      console.error("Failed to create admin with studio:", error);
     }
     return null;
   }

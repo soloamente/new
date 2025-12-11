@@ -78,9 +78,9 @@
   --color-status-completed-accent: var(--status-completed-accent);
   --color-status-completed-background: var(--status-completed-background);
   --color-status-completed-icon: var(--status-completed-icon);
-  --color-status-cancelled-accent: var(--status-cancelled-accent);
-  --color-status-cancelled-background: var(--status-cancelled-background);
-  --color-status-cancelled-icon: var(--status-cancelled-icon);
+  --color-status-suspended-accent: var(--status-suspended-accent);
+  --color-status-suspended-background: var(--status-suspended-background);
+  --color-status-suspended-icon: var(--status-suspended-icon);
   --color-avatar-placeholder-icon: var(--avatar-placeholder-icon);
   --color-avatar-placeholder-bg: var(--avatar-placeholder-bg);
 }
@@ -156,9 +156,9 @@
   --status-completed-accent: oklch(0.65 0.2 140);
   --status-completed-background: oklch(0.95 0.02 140);
   --status-completed-icon: oklch(0.65 0.2 140);
-  --status-cancelled-accent: oklch(0.65 0.2 25);
-  --status-cancelled-background: oklch(0.97 0.02 25);
-  --status-cancelled-icon: oklch(0.65 0.2 25);
+  --status-suspended-accent: oklch(0.65 0.2 25);
+  --status-suspended-background: oklch(0.97 0.02 25);
+  --status-suspended-icon: oklch(0.65 0.2 25);
 }
 
 .dark {
@@ -231,9 +231,9 @@
   --status-completed-accent: oklch(0.7621 0.1806 148.62);
   --status-completed-background: oklch(0.3057 0.0379 155.53);
   --status-completed-icon: oklch(0.7621 0.1806 148.62);
-  --status-cancelled-accent: oklch(0.6656 0.2213 25.57);
-  --status-cancelled-background: oklch(0.2807 0.0388 17.23);
-  --status-cancelled-icon: oklch(0.6656 0.2213 25.57);
+  --status-suspended-accent: oklch(0.6656 0.2213 25.57);
+  --status-suspended-background: oklch(0.2807 0.0388 17.23);
+  --status-suspended-icon: oklch(0.6656 0.2213 25.57);
 }
 
 @layer base {

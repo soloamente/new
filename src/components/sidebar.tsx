@@ -11,6 +11,7 @@ import {
   PraticheIcon,
   GearIcon,
   HelpIcon,
+  UserCircleIcon,
 } from "./icons";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -61,8 +62,10 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
   // Role-based visibility
   switch (role) {
     case "DATAWEB":
-      // Super Admin: Dashboard only (can add Studi management later)
-      return href === "/dashboard";
+      // Super Admin: Dashboard, Studi, Utenti
+      return (
+        href === "/dashboard" || href === "/studi" || href === "/utenti"
+      );
     case "AMMINISTRATORE_STUDIO":
       // Admin: Dashboard, Pratiche, Clienti, Operatori
       return (
@@ -72,8 +75,10 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
         href === "/operatori"
       );
     case "OPERATORE":
-      // Operator: Dashboard, Pratiche (filtered to their own)
-      return href === "/dashboard" || href === "/pratiche";
+      // Operator: Dashboard, Pratiche (filtered to their own), Clienti
+      return (
+        href === "/dashboard" || href === "/pratiche" || href === "/clienti"
+      );
     default:
       return false;
   }
@@ -104,6 +109,16 @@ export default function Sidebar({ user }: SidebarProps) {
       icon: OperatoriIcon,
       label: "Operatori",
       href: "/operatori",
+    },
+    {
+      icon: GearIcon,
+      label: "Studi",
+      href: "/studi",
+    },
+    {
+      icon: UserCircleIcon,
+      label: "Utenti",
+      href: "/utenti",
     },
   ];
 
@@ -169,7 +184,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   setIsSettingsOpen(true);
                 }
               }}
-              className="text-sidebar-secondary hover:text-sidebar-primary flex items-center gap-3.5"
+              className="text-sidebar-secondary hover:text-sidebar-primary flex cursor-pointer items-center gap-3.5"
             >
               <item.icon size={24} />
               {item.label}

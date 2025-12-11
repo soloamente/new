@@ -10,7 +10,7 @@ import Preferences from "@/components/ui/preferences";
  * LayoutContent Component (Client Component)
  *
  * Handles pathname-based conditional rendering of sidebar and preferences.
- * Fetches user data on mount using server action.
+ * Fetches user data on mount and when pathname changes (e.g., after login redirect).
  */
 export default function LayoutContent({
   children,
@@ -18,12 +18,12 @@ export default function LayoutContent({
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
 
-  // Fetch user on mount
+  // Fetch user on mount and when pathname changes (after login redirect)
   useEffect(() => {
     getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null));
-  }, []);
+  }, [pathname]);
 
   // List of paths where the sidebar should be hidden
   const hideSidebarPaths: string[] = [];
@@ -34,6 +34,8 @@ export default function LayoutContent({
     "/pratiche",
     "/clienti",
     "/operatori",
+    "/studi",
+    "/utenti",
   ];
 
   const hidePreferencesPaths: string[] = [];

@@ -29,11 +29,20 @@ export interface Practice {
 
 /**
  * Get all practices for the current user
+ * @param assigned_to_me - If true, returns only practices assigned to the current user (OPERATORE role only)
  * Returns empty array if error occurs
  */
-export async function getPractices(): Promise<Practice[]> {
+export async function getPractices(
+  assigned_to_me?: boolean,
+): Promise<Practice[]> {
   try {
-    const practices = (await apiFetch("/api/practices", {
+    // Build endpoint with optional query parameter
+    let endpoint = "/api/practices";
+    if (assigned_to_me === true) {
+      endpoint += "?assigned_to_me=true";
+    }
+
+    const practices = (await apiFetch(endpoint, {
       method: "GET",
     })) as Practice[];
     return practices;

@@ -1,13 +1,16 @@
 "use server";
 
 import { apiFetch } from "@lib/api";
+import type { User } from "./auth-actions";
 
 // Studio type based on backend schema
 export interface Studio {
   id: number;
   name: string;
-  city: string;
-  vat_number: string;
+  city: string | null;
+  vat_number: string | null;
+  admin?: User; // Amministratore dello studio
+  operators?: User[]; // Array di operatori dello studio
 }
 
 /**
@@ -72,9 +75,9 @@ export async function getStudio(id: number): Promise<Studio | null> {
  * Returns the created studio or null if error occurs
  */
 export interface CreateStudioInput {
-  name: string;
-  city: string;
-  vat_number: string;
+  name: string; // Obbligatorio, Univoco
+  city?: string; // Opzionale
+  vat_number?: string; // Opzionale
 }
 
 export async function createStudio(

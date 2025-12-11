@@ -7,7 +7,6 @@ import { useForm } from "@tanstack/react-form";
 import z from "zod";
 import { motion, AnimatePresence } from "motion/react";
 import { Spinner } from "./ui/spinner";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginForm({
@@ -15,7 +14,6 @@ export default function LoginForm({
 }: {
   onSwitchToSignUp: () => void;
 }) {
-  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm({

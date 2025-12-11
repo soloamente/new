@@ -17,7 +17,7 @@ interface ActivityRow {
   pratica: string;
   operator: string;
   duration: string;
-  status: "completed" | "in_progress" | "cancelled";
+  status: "completed" | "in_progress" | "suspended";
 }
 
 const mockActivities: ActivityRow[] = [
@@ -59,7 +59,7 @@ const mockActivities: ActivityRow[] = [
     pratica: "P-10139",
     operator: "Sofia Bianchi",
     duration: "20 giorni",
-    status: "cancelled",
+    status: "suspended",
   },
 ];
 
@@ -233,8 +233,8 @@ export default function DashboardPage() {
       className: "text-destructive",
       icon: <XIcon size={16} />,
     },
-    cancelled: {
-      label: "Annullata",
+    suspended: {
+      label: "Sospesa",
       className: "text-stats-title",
       icon: <XIcon size={16} />,
     },
@@ -586,8 +586,8 @@ export default function DashboardPage() {
                         "Pratica completata con successo"}
                       {activity.status === "in_progress" &&
                         "In attesa di documentazione"}
-                      {activity.status === "cancelled" &&
-                        "Annullata su richiesta cliente"}
+                      {activity.status === "suspended" &&
+                        "Sospesa su richiesta cliente"}
                     </div>
                   </div>
                 );

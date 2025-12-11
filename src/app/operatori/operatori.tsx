@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -19,6 +20,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
@@ -27,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { OperatorRow, OperatorStatus } from "@/lib/operators-utils";
+import { createUser } from "@/app/actions/users-actions";
 
 // Component to show tooltip only when text is truncated
 function EmailWithTooltip({ email }: { email: string }) {
@@ -99,10 +112,10 @@ const operatorStatusStyles: Record<
   },
   inactive: {
     label: "Inattivo",
-    accent: "var(--status-cancelled-accent)",
-    background: "var(--status-cancelled-background)",
+    accent: "var(--status-suspended-accent)",
+    background: "var(--status-suspended-background)",
     icon: <XIcon />,
-    iconColor: "var(--status-cancelled-icon)",
+    iconColor: "var(--status-suspended-icon)",
   },
   on_leave: {
     label: "In ferie",
@@ -118,10 +131,19 @@ interface OperatoriProps {
 }
 
 export default function Operatori({ operators }: OperatoriProps) {
+  const router = useRouter();
   // State for selected operators
   const [selectedOperators, setSelectedOperators] = useState<Set<string>>(
     new Set(),
   );
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
   // Calculate statistics from actual operators
   const totalOperators = operators.length;
@@ -246,7 +268,11 @@ export default function Operatori({ operators }: OperatoriProps) {
               Esporta
               <FaChevronDown size={15} className="text-button-secondary" />
             </button>
-            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
+            <button
+              type="button"
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
+            >
               Aggiungi
               <FaPlus className="text-button-secondary" />
             </button>
@@ -323,6 +349,166 @@ export default function Operatori({ operators }: OperatoriProps) {
           </div>
         </div>
       </div>
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !isSubmitting) {
+            setCreateForm({ name: "", email: "", password: "" });
+            setCreateError(null);
+          }
+          setIsCreateDialogOpen(open);
+        }}
+      >
+        <DialogContent showCloseButton={false} className="sm:max-w-[480px]">
+          <DialogHeader className="space-y-0">
+            <DialogTitle className="text-2xl text-center">Crea operatore</DialogTitle>
+            <DialogDescription className="text-center">
+              Compila i campi obbligatori per creare un nuovo operatore dello
+              studio (ruolo impostato automaticamente).
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setCreateError(null);
+              const name = createForm.name.trim();
+              const email = createForm.email.trim();
+              const password = createForm.password.trim();
+              if (!name || !email || !password) {
+                setCreateError("Nome, email e password sono obbligatori.");
+                return;
+              }
+              setIsSubmitting(true);
+              try {
+                const created = await createUser({
+                  name,
+                  email,
+                  password,
+                  role_id: 3,
+                  status: "active",
+                });
+                if (!created) {
+                  setCreateError("Errore nella creazione dell'operatore.");
+                  return;
+                }
+                setCreateForm({ name: "", email: "", password: "" });
+                setIsCreateDialogOpen(false);
+                router.refresh();
+              } catch (error) {
+                setCreateError(
+                  error instanceof Error
+                    ? error.message
+                    : "Errore nella creazione dell'operatore.",
+                );
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+          >
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="operator-name"
+                  className="text-sm font-medium leading-none"
+                >
+                  Nome completo <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="operator-name"
+                  value={createForm.name}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  required
+                  disabled={isSubmitting}
+                  placeholder="Mario Rossi"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="operator-email"
+                  className="text-sm font-medium leading-none"
+                >
+                  Email <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="operator-email"
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  required
+                  disabled={isSubmitting}
+                  placeholder="mario@studio.it"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="operator-password"
+                  className="text-sm font-medium leading-none"
+                >
+                  Password <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="operator-password"
+                  type="password"
+                  value={createForm.password}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
+                  required
+                  disabled={isSubmitting}
+                  placeholder="••••••••"
+                  className="w-full"
+                />
+              </div>
+            </div>
+            {createError ? (
+              <p className="text-destructive text-sm">{createError}</p>
+            ) : null}
+            <DialogFooter className="flex w-full items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isSubmitting}
+                className="cursor-pointer"
+              >
+                Annulla
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  isSubmitting ||
+                  !createForm.name.trim() ||
+                  !createForm.email.trim() ||
+                  !createForm.password.trim()
+                }
+                className="cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Creazione...
+                  </>
+                ) : (
+                  "Crea operatore"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       {/* Body Wrapper */}
       <div className="bg-background flex min-h-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
         {/* Body Header */}

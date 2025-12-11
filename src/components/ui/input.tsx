@@ -1,6 +1,6 @@
 "use client"; // @NOTE: Add in case you are using Next.js
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { AnimatePresence, type Variants, motion } from "motion/react";
 
@@ -14,9 +14,16 @@ export function Input({
   placeholder,
   onChange,
   className,
+  value,
   ...props
 }: InputProps) {
-  const [fieldState, setFieldState] = useState<FieldState>("idle");
+  const [fieldState, setFieldState] = useState<FieldState>(
+    value && String(value).length > 0 ? "filled" : "idle"
+  );
+
+  useEffect(() => {
+    setFieldState(value && String(value).length > 0 ? "filled" : "idle");
+  }, [value]);
 
   const animatedPlaceholderVariants: Variants = {
     show: {
@@ -34,21 +41,23 @@ export function Input({
   return (
     <div
       className={cn(
-        "bg-main-secondary focus-within:border-primary/20 text-primary data-[filled=true]:border-border bg-background relative inline-flex h-12 w-64 items-center overflow-hidden rounded-xl shadow-xs transition-colors ease-out",
+        " focus-within:border-primary/20 text-primary data-[filled=true]:border-border bg-card relative inline-flex h-12 w-64 items-center overflow-hidden rounded-xl shadow-xs transition-colors ease-out",
         "has-disabled:opacity-80 has-disabled:*:cursor-not-allowed",
-        className,
+        className
       )}
       data-filled={fieldState === "filled"}
     >
       <input
         {...props}
+        value={value}
         className={cn(
-          "peer caret-primary h-full w-full flex-1 bg-transparent px-3 py-2 outline-none placeholder:sr-only",
-          "text-primary font-sans text-sm/5.5 font-normal",
+          "peer caret-primary h-full w-full flex-1 bg-transparent px-4 py-2 outline-none placeholder:sr-only",
+          "text-primary font-sf-pro-rounded text-sm/5.5 font-normal"
         )}
         placeholder={placeholder}
         onChange={(event) => {
-          setFieldState(event.target.value.length > 0 ? "filled" : "idle");
+          const newState = event.target.value.length > 0 ? "filled" : "idle";
+          setFieldState(newState);
           onChange?.(event);
         }}
       />
@@ -56,8 +65,8 @@ export function Input({
         {fieldState !== "filled" && (
           <motion.span
             className={cn(
-              "pointer-events-none absolute left-3 w-full",
-              "text-muted-foreground font-sans text-sm/5.5 font-medium",
+              "pointer-events-none absolute left-4 w-full",
+              "text-muted-foreground font-sf-pro-rounded text-sm/5.5 font-medium"
             )}
             variants={animatedPlaceholderVariants}
             initial="hidden"

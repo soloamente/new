@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -29,9 +29,13 @@ import { cn } from "@/lib/utils";
 import { FaChevronDown, FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { PracticeRow } from "@/lib/practices-utils";
+import { CreatePracticeDialog } from "@/components/create-practice-dialog";
+import { getCurrentUser, type User } from "@/app/actions/auth-actions";
 
 interface PraticheProps {
   practices: PracticeRow[];
+  userRoleId?: number;
+  currentUserId?: number;
 }
 
 // Component to show tooltip only when text is truncated
@@ -118,17 +122,36 @@ const practiceStatusStyles: Record<
     icon: <CheckIcon />,
     iconColor: "var(--status-completed-icon)",
   },
-  cancelled: {
-    label: "Annullata",
-    accent: "var(--status-cancelled-accent)",
-    background: "var(--status-cancelled-background)",
+  suspended: {
+    label: "Sospesa",
+    accent: "var(--status-suspended-accent)",
+    background: "var(--status-suspended-background)",
     icon: <XIcon />,
-    iconColor: "var(--status-cancelled-icon)",
+    iconColor: "var(--status-suspended-icon)",
   },
 };
 
-export default function Pratiche({ practices }: PraticheProps) {
+export default function Pratiche({
+  practices,
+  userRoleId,
+  currentUserId,
+}: PraticheProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isOperator = userRoleId === 3;
+  const assignedToMe = searchParams.get("assigned_to_me") === "true";
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Handler for filter toggle (OPERATORE only)
+  const handleFilterToggle = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (assignedToMe) {
+      params.delete("assigned_to_me");
+    } else {
+      params.set("assigned_to_me", "true");
+    }
+    router.push(`/pratiche?${params.toString()}`);
+  };
 
   // State for selected practices
   const [selectedPractices, setSelectedPractices] = useState<Set<string>>(
@@ -144,8 +167,8 @@ export default function Pratiche({ practices }: PraticheProps) {
     (p) => p.status === "in_progress",
   ).length;
   const assignedCount = practices.filter((p) => p.status === "assigned").length;
-  const cancelledCount = practices.filter(
-    (p) => p.status === "cancelled",
+  const suspendedCount = practices.filter(
+    (p) => p.status === "suspended",
   ).length;
 
   // Calculate select all checkbox state
@@ -185,33 +208,42 @@ export default function Pratiche({ practices }: PraticheProps) {
       : 0;
 
   // For month-over-month comparison
-  const activePractices = totalPractices - cancelledCount;
+  const activePractices = totalPractices - suspendedCount;
   const previousMonthCompletion =
     activePractices > 0
       ? Math.round(((completedCount - 1) / activePractices) * 100)
       : 0;
   const monthOverMonthChange = completionPercentage - previousMonthCompletion;
 
+  // Status filters - for OPERATORE, first filter is dynamic (Tutte/Mie)
   const statusFilters = [
     {
-      label: "Tutte le pratiche",
+      label: isOperator
+        ? assignedToMe
+          ? "Mie pratiche"
+          : "Tutte le pratiche"
+        : "Tutte le pratiche",
       value: "all",
       active: true,
+      onClick: isOperator ? handleFilterToggle : undefined,
     },
     {
       label: "Pratiche assegnate",
       value: "assigned",
       active: false,
+      onClick: undefined,
     },
     {
       label: "Pratiche in lavorazione",
       value: "in_progress",
       active: false,
+      onClick: undefined,
     },
     {
       label: "Pratiche concluse",
       value: "completed",
       active: false,
+      onClick: undefined,
     },
   ];
 
@@ -287,7 +319,10 @@ export default function Pratiche({ practices }: PraticheProps) {
               Esporta
               <FaChevronDown size={15} className="text-button-secondary" />
             </button>
-            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
+            >
               Aggiungi
               <FaPlus className="text-button-secondary" />
             </button>
@@ -301,6 +336,7 @@ export default function Pratiche({ practices }: PraticheProps) {
               {statusFilters.map((filter) => (
                 <button
                   key={filter.value}
+                  onClick={filter.onClick}
                   className={cn(
                     "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
                     !filter.active &&
@@ -395,7 +431,7 @@ export default function Pratiche({ practices }: PraticheProps) {
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{cancelledCount}</AnimateNumber>
+                  <AnimateNumber>{suspendedCount}</AnimateNumber>
                 </div>
               </div>
             </div>
@@ -569,6 +605,13 @@ export default function Pratiche({ practices }: PraticheProps) {
           </div>
         </div>
       </div>
+
+      {/* Create Practice Dialog */}
+      <CreatePracticeDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        currentUserId={currentUserId}
+      />
     </main>
   );
 }

@@ -52,12 +52,12 @@ const practiceStatusStyles: Record<
     icon: <CheckIcon />,
     iconColor: "var(--status-completed-icon)",
   },
-  cancelled: {
-    label: "Annullata",
-    accent: "var(--status-cancelled-accent)",
-    background: "var(--status-cancelled-background)",
+  suspended: {
+    label: "Sospesa",
+    accent: "var(--status-suspended-accent)",
+    background: "var(--status-suspended-background)",
     icon: <XIcon />,
-    iconColor: "var(--status-cancelled-icon)",
+    iconColor: "var(--status-suspended-icon)",
   },
 };
 

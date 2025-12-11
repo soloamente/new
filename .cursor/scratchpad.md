@@ -63,6 +63,9 @@
 - [x] Task 19: Run lint/tests covering updated icons + pratiche page.
 - [x] Task 20: Introduce avatar placeholder CSS variables for icon + background tones.
 - [x] Task 21: Apply the new palette inside `AvatarFallback` without breaking overrides.
+- [x] Task 22: Match the select content width to its trigger in `create-practice-dialog`.
+- [x] Task 23: Align practice statuses with API wording (use “sospesa” instead of “annullata”) and update dependent styling.
+- [x] Task 24: Add operator creation flow per API (`/api/users` with `role_id=3`) and surface dialog in Operatori page.
 
 ## Current Status / Progress Tracking
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
@@ -77,6 +80,9 @@
 - `pnpm exec eslint` over the icons directory, avatar utilities, and pratiche page completes cleanly after the updates.
 - Need to add the requested `oklch` palette for avatar placeholders and wire it through `AvatarFallback`.
 - `globals.css` defines `--avatar-placeholder-icon` (`oklch(0.5693 0 0)`) and `--avatar-placeholder-bg` (`oklch(0.36 0 0)`), and `AvatarFallback` now consumes them while preserving any consumer-provided inline styles.
+- Select dropdown content in `create-practice-dialog` now uses the Radix trigger width CSS variable to stay equal in width to its trigger.
+- Practice status taxonomy now matches the API: UI types use “suspended” for the `sospesa` state, labels render “Sospesa,” and all color tokens map to `status-suspended` variables (light/dark). Related dashboards and list/status badges updated accordingly.
+- Operatori page now includes a “Crea operatore” dialog that posts to `/api/users` via the existing `createUser` server action (role_id fixed to 3), with validation, loading state, and page refresh on success.
 
 ## Executor's Feedback or Assistance Requests
 - None; awaiting review/validation.

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { API_BASE_URL } from "@/lib/api";
 
 /**
  * Proxy function for Next.js 16
@@ -35,40 +36,49 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    // Convert NextRequest headers to Headers object for Better Auth
-    // This is necessary because auth.api.getSession expects a Headers object
-    const headers = new Headers();
-    request.headers.forEach((value, key) => {
-      headers.set(key, value);
-    });
+    // Check for access token in cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
 
-    // Get full session with database validation
-    // This uses Node.js runtime which is available in Next.js 16 proxy
-    const session = await auth.api.getSession({
-      headers: headers,
-    });
-
-    // Debug logging (remove in production)
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[Proxy] Path: ${pathname}, Session: ${session ? "exists" : "none"}`,
-      );
-    }
-
-    // If no session, redirect to login
-    if (!session) {
+    // If no token, redirect to login
+    if (!token) {
       const loginUrl = new URL("/login", request.url);
       // Preserve the original URL for redirect after login
       loginUrl.searchParams.set("redirect", pathname);
 
       if (process.env.NODE_ENV === "development") {
-        console.log(`[Proxy] Redirecting to: ${loginUrl.toString()}`);
+        console.log(`[Proxy] No token found, redirecting to: ${loginUrl.toString()}`);
+      }
+
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Validate token with external API
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // If token is invalid, redirect to login
+    if (!response.ok) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(`[Proxy] Token invalid, redirecting to: ${loginUrl.toString()}`);
       }
 
       return NextResponse.redirect(loginUrl);
     }
 
     // User is authenticated, allow the request to proceed
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[Proxy] Path: ${pathname}, Session: valid`);
+    }
+
     return NextResponse.next();
   } catch (error) {
     // If there's an error checking the session, redirect to login

@@ -1,7 +1,7 @@
 import type { Practice } from "@/app/actions/practices-actions";
 
 // UI status type
-export type PracticeStatus = "assigned" | "in_progress" | "completed" | "cancelled";
+export type PracticeStatus = "assigned" | "in_progress" | "completed" | "suspended";
 
 // Map API status to UI status
 export function mapApiStatusToUI(
@@ -15,7 +15,7 @@ export function mapApiStatusToUI(
     case "conclusa":
       return "completed";
     case "sospesa":
-      return "cancelled";
+      return "suspended";
     default:
       return "assigned";
   }
