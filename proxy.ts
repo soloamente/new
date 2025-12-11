@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers, cookies } from "next/headers";
-import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 /**
  * Proxy function for Next.js 16
