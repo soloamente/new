@@ -16,7 +16,7 @@ Il sistema è **multi-tenant** basato su "Studi". Ogni utente appartiene a uno S
 GUIDA_API.md
 3 KB
 Sandro — 13:17
-URL BASE : https://cruscotto-pratiche-api.onrender.com/
+URL BASE : https://cruscotto-pratiche-api-production.up.railway.app/
 Sandro — 14:28
 Utenti di Test (Seeder)
 Tutti gli utenti hanno password: password

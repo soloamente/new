@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-export const API_BASE_URL = "https://cruscotto-pratiche-api.onrender.com";
+export const API_BASE_URL = "https://cruscotto-pratiche-api-production.up.railway.app";
 
 type FetchOptions = RequestInit & {
   headers?: HeadersInit;

@@ -1,6 +1,6 @@
 # API Documentation - AMMINISTRATORE STUDIO
 
-**Base URL**: `https://cruscotto-pratiche-api.onrender.com/`
+**Base URL**: `https://cruscotto-pratiche-api-production.up.railway.app/`
 
 ## 1. Autenticazione
 Tutte le chiamate richiedono header: `Authorization: Bearer <token>` (eccetto Login).
