@@ -354,7 +354,9 @@ export function DateRangeFilter({
     // Custom range display
     const formatShortDate = (date: Date) => {
       const day = date.getDate();
-      const month = monthNames[date.getMonth()].slice(0, 3);
+      // `Date#getMonth()` is always 0-11, but TS can't guarantee the array index exists.
+      // Fallback keeps the UI resilient and fixes build-time type error.
+      const month = (monthNames[date.getMonth()] ?? "").slice(0, 3);
       const year = date.getFullYear();
       return `${day} ${month} ${year}`;
     };
