@@ -59,6 +59,8 @@ export interface PracticeRow {
   id: string;
   praticaNumber: string;
   date: string;
+  /** Raw date string from API for filtering purposes */
+  rawDate: string | null;
   internalOperator: string;
   client: string;
   type: string;
@@ -71,6 +73,7 @@ export function convertPracticeToRow(practice: Practice): PracticeRow {
     id: practice.id.toString(),
     praticaNumber: practice.practice_number,
     date: formatDate(practice.created_at),
+    rawDate: practice.created_at ?? null,
     internalOperator: practice.operator?.name ?? "Non assegnato",
     client: practice.client?.name ?? "Cliente sconosciuto",
     type: practice.type,

@@ -29,7 +29,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FaChevronDown, FaPlus } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { OperatorRow, OperatorStatus } from "@/lib/operators-utils";
 import { createUser } from "@/app/actions/users-actions";
@@ -273,10 +273,6 @@ export default function Operatori({ operators }: OperatoriProps) {
             <span>Operatori</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
-            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
-              Esporta
-              <FaChevronDown size={15} className="text-button-secondary" />
-            </button>
             <button
               type="button"
               onClick={() => setIsCreateDialogOpen(true)}

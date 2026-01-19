@@ -32,7 +32,7 @@ interface ApiError {
 export async function login(formData: FormData) {
   const email = formData.get("username") as string; // Form field is named 'username' but API expects 'email'
   const password = formData.get("password") as string;
-  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard";
+  let redirectTo = (formData.get("redirectTo") as string) || "/dashboard";
 
   if (!email || !password) {
     return { error: "Email e password sono obbligatori" };
@@ -67,11 +67,38 @@ export async function login(formData: FormData) {
       maxAge: expiresIn,
       path: "/",
     });
+
+    // If redirecting to dashboard (default), check user role and redirect operators to /mie-pratiche
+    if (redirectTo === "/dashboard") {
+      try {
+        // Fetch user data directly using the token we just received
+        // This avoids cache issues with getCurrentUser()
+        const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (userResponse.ok) {
+          const user = (await userResponse.json()) as User;
+          // Operators (role_id === 3) should be redirected to "Le mie pratiche"
+          if (user?.role_id === 3) {
+            redirectTo = "/mie-pratiche";
+          }
+        }
+      } catch (error) {
+        // If we can't get user info, fall back to default redirect
+        console.error("Failed to get user after login:", error);
+      }
+    }
   } catch (error: unknown) {
     console.error("Login error:", error);
     return { error: "Errore durante il login. Riprova più tardi." };
   }
 
+  // Redirect must be called outside of try-catch because it throws a special exception
   redirect(redirectTo);
 }
 

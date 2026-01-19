@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FaChevronDown, FaPlus } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { UserRow } from "@/lib/users-utils";
 import { CreateAdminDialog } from "@/components/create-admin-dialog";
@@ -216,10 +216,6 @@ export default function Utenti({ users }: UtentiProps) {
             <span>Utenti</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
-            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
-              Esporta
-              <FaChevronDown size={15} className="text-button-secondary" />
-            </button>
             <button
               onClick={() => setIsCreateDialogOpen(true)}
               className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"

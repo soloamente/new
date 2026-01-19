@@ -13,20 +13,18 @@ import {
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DateRangeFilter,
+  type DateRange,
+} from "@/components/ui/date-range-filter";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FaChevronDown, FaPlus } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { PracticeRow } from "@/lib/practices-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
@@ -155,6 +153,7 @@ export default function Pratiche({
     PracticeRow["status"] | "all"
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
 
   // State for selected practices
@@ -274,7 +273,7 @@ export default function Pratiche({
     });
   }, [assigneeFilters]);
 
-  // Derived filtered practices for UI (status + selects + search)
+  // Derived filtered practices for UI (status + selects + search + date)
   const filteredPractices = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const operatorFilter = assigneeFilterValues[normalizeValue("Operatore")];
@@ -307,14 +306,33 @@ export default function Pratiche({
           .filter(Boolean)
           .some((field) => field.toLowerCase().includes(normalizedSearch));
 
+      // Date filter - check if practice date is within the selected range
+      const matchesDate = (() => {
+        if (!dateFilter || (!dateFilter.from && !dateFilter.to)) {
+          return true;
+        }
+        if (!practice.rawDate) {
+          return false;
+        }
+        const practiceDate = new Date(practice.rawDate);
+        if (dateFilter.from && practiceDate < dateFilter.from) {
+          return false;
+        }
+        if (dateFilter.to && practiceDate > dateFilter.to) {
+          return false;
+        }
+        return true;
+      })();
+
       return (
         matchesStatus &&
         matchesOperator &&
         matchesClient &&
-        matchesSearch
+        matchesSearch &&
+        matchesDate
       );
     });
-  }, [assigneeFilterValues, practices, searchTerm, statusFilter]);
+  }, [assigneeFilterValues, dateFilter, practices, searchTerm, statusFilter]);
 
   // Calculate statistics from filtered practices to mirror visible rows
   const totalPractices = filteredPractices.length;
@@ -396,10 +414,6 @@ export default function Pratiche({
             <span>{pageTitle}</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
-            <button className="bg-background flex items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm">
-              Esporta
-              <FaChevronDown size={15} className="text-button-secondary" />
-            </button>
             <button
               onClick={() => setIsCreateDialogOpen(true)}
               className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
@@ -434,36 +448,46 @@ export default function Pratiche({
                 const filterKey = filter.triggerLabel
                   .toLowerCase()
                   .replace(/\s+/g, "-");
+                const isClientFilter = filter.triggerLabel === "Cliente";
+                const isOperatorFilter = filter.triggerLabel === "Operatore";
 
+                // Use SearchableSelect for both client and operator filters
                 return (
-                  <Select
+                  <SearchableSelect
                     key={filter.triggerLabel}
-                    value={
-                      assigneeFilterValues[filterKey] ?? filter.triggerLabel
-                    }
+                    placeholder={filter.triggerLabel}
+                    value={assigneeFilterValues[filterKey] ?? filter.triggerLabel}
                     onValueChange={(value) => {
                       setAssigneeFilterValues((prev) => ({
                         ...prev,
                         [filterKey]: value,
                       }));
                     }}
-                  >
-                    <SelectTrigger className="w-auto">
-                      <SelectValue placeholder={filter.triggerLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={filter.triggerLabel}>
-                        {filter.triggerLabel}
-                      </SelectItem>
-                      {filter.values.map((value) => (
-                        <SelectItem key={value.value} value={value.value}>
-                          {value.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={filter.values}
+                    searchPlaceholder={
+                      isClientFilter
+                        ? "Cerca cliente..."
+                        : isOperatorFilter
+                          ? "Cerca operatore..."
+                          : "Cerca..."
+                    }
+                    showAllOption={true}
+                    allOptionLabel={
+                      isClientFilter
+                        ? "Tutti i clienti"
+                        : isOperatorFilter
+                          ? "Tutti gli operatori"
+                          : filter.triggerLabel
+                    }
+                  />
                 );
               })}
+              {/* Date Range Filter */}
+              <DateRangeFilter
+                value={dateFilter}
+                onValueChange={setDateFilter}
+                placeholder="Data"
+              />
             </div>
           </div>
           {/* Header - Search */}
@@ -552,7 +576,14 @@ export default function Pratiche({
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl">
           {/* Body Head */}
           <div className="bg-table-header shrink-0 rounded-xl px-3 py-2.25">
-            <div className="text-table-header-foreground grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-sm font-medium">
+            <div
+              className={cn(
+                "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
+                isMineView
+                  ? "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr]"
+                  : "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr]",
+              )}
+            >
               <div className="flex items-center gap-2.5">
                 <Checkbox
                   aria-label="Seleziona tutte le pratiche"
@@ -564,7 +595,7 @@ export default function Pratiche({
                 <span>Pratica N.</span>
               </div>
               <div>Data</div>
-              <div>Operatore Interno</div>
+              {!isMineView && <div>Operatore Interno</div>}
               <div>Cliente</div>
               <div>Tipologia</div>
               <div>Note</div>
@@ -612,7 +643,14 @@ export default function Pratiche({
                       }
                     }}
                   >
-                    <div className="grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-base">
+                    <div
+                      className={cn(
+                        "grid items-center gap-4 text-base",
+                        isMineView
+                          ? "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr]"
+                          : "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr]",
+                      )}
+                    >
                       <div className="flex items-center gap-2.5">
                         <div
                           onClick={(e) => e.stopPropagation()}
@@ -635,16 +673,18 @@ export default function Pratiche({
                         </span>
                       </div>
                       <div>{practice.date}</div>
-                      <div className="flex items-center gap-2 truncate">
-                        <Avatar aria-hidden className="bg-background">
-                          <AvatarFallback
-                            placeholderSeed={practice.internalOperator}
-                          />
-                        </Avatar>
-                        <span className="truncate">
-                          {practice.internalOperator}
-                        </span>
-                      </div>
+                      {!isMineView && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Avatar aria-hidden className="bg-background">
+                            <AvatarFallback
+                              placeholderSeed={practice.internalOperator}
+                            />
+                          </Avatar>
+                          <span className="truncate">
+                            {practice.internalOperator}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 truncate">
                         <Avatar aria-hidden className="bg-background">
                           <AvatarFallback placeholderSeed={practice.client} />

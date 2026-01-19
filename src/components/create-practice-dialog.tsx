@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -23,9 +23,11 @@ import {
   createPractice,
   type CreatePracticeInput,
 } from "@/app/actions/practices-actions";
+import { searchClients, type Client } from "@/app/actions/clients-actions";
 import { Spinner } from "@/components/ui/spinner";
 import { motion, AnimatePresence } from "motion/react";
-import { getCurrentUser, type User } from "@/app/actions/auth-actions";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 interface CreatePracticeDialogProps {
   open: boolean;
@@ -50,6 +52,86 @@ export function CreatePracticeDialog({
     status: "assegnata",
     notes: "",
   });
+
+  // Client search autocomplete state
+  const [clientSearchResults, setClientSearchResults] = useState<Client[]>([]);
+  const [isSearchingClients, setIsSearchingClients] = useState(false);
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const clientInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced client search function
+  const searchClientsDebounced = useCallback(async (query: string) => {
+    // Clear any pending search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Don't search if query is too short
+    if (query.trim().length < 2) {
+      setClientSearchResults([]);
+      setShowClientDropdown(false);
+      return;
+    }
+
+    // Debounce the search by 300ms
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingClients(true);
+      try {
+        const results = await searchClients(query);
+        setClientSearchResults(results);
+        setShowClientDropdown(results.length > 0);
+      } catch (err) {
+        console.error("Client search error:", err);
+        setClientSearchResults([]);
+      } finally {
+        setIsSearchingClients(false);
+      }
+    }, 300);
+  }, []);
+
+  // Handle clicking outside the dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        clientInputRef.current &&
+        !clientInputRef.current.contains(event.target as Node)
+      ) {
+        setShowClientDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle selecting a client from the dropdown
+  const handleSelectClient = (client: Client) => {
+    setSelectedClientId(client.id);
+    setFormData((prev) => ({
+      ...prev,
+      client: client.name,
+      client_email: client.email || "",
+      client_phone: client.phone || "",
+    }));
+    setShowClientDropdown(false);
+    setClientSearchResults([]);
+    // Clear error when user makes a selection
+    if (error) setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,6 +186,10 @@ export function CreatePracticeDialog({
           status: "assegnata",
           notes: "",
         });
+        // Reset client search state
+        setClientSearchResults([]);
+        setShowClientDropdown(false);
+        setSelectedClientId(null);
         onOpenChange(false);
         // Refresh the page to show the new practice
         router.refresh();
@@ -124,10 +210,18 @@ export function CreatePracticeDialog({
   const handleInputChange = (
     field: keyof CreatePracticeInput,
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
     setFormData((prev) => ({
       ...prev,
-      [field]: e.target.value,
+      [field]: value,
     }));
+    
+    // If user is typing in the client field, trigger search and reset selected client
+    if (field === "client") {
+      setSelectedClientId(null);
+      searchClientsDebounced(value);
+    }
+    
     // Clear error when user starts typing
     if (error) setError(null);
   };
@@ -154,6 +248,11 @@ export function CreatePracticeDialog({
         notes: "",
       });
       setError(null);
+      // Reset client search state
+      setClientSearchResults([]);
+      setShowClientDropdown(false);
+      setSelectedClientId(null);
+      setIsSearchingClients(false);
     }
     onOpenChange(newOpen);
   };
@@ -171,23 +270,93 @@ export function CreatePracticeDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="relative space-y-2">
               <label
                 htmlFor="practice-client"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Nome Cliente <span className="text-destructive">*</span>
               </label>
-              <Input
-                id="practice-client"
-                type="text"
-                placeholder="Mario Rossi"
-                value={formData.client}
-                onChange={handleInputChange("client")}
-                required
-                disabled={isSubmitting}
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  ref={clientInputRef}
+                  id="practice-client"
+                  type="text"
+                  placeholder="Cerca cliente esistente..."
+                  value={formData.client}
+                  onChange={handleInputChange("client")}
+                  onFocus={() => {
+                    // Show dropdown if there are results when focusing
+                    if (clientSearchResults.length > 0) {
+                      setShowClientDropdown(true);
+                    }
+                  }}
+                  required
+                  disabled={isSubmitting}
+                  autoComplete="off"
+                  className="w-full"
+                />
+                {/* Loading spinner shown while searching */}
+                {isSearchingClients && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Spinner size="sm" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Client search dropdown */}
+              <AnimatePresence>
+                {showClientDropdown && clientSearchResults.length > 0 && (
+                  <motion.div
+                    ref={dropdownRef}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute z-50 w-full rounded-xl border border-border bg-popover shadow-lg"
+                    style={{ willChange: "opacity, transform" }}
+                  >
+                    <ul className="max-h-48 overflow-y-auto p-1">
+                      {clientSearchResults.map((client) => (
+                        <li key={client.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectClient(client)}
+                            className={cn(
+                              "flex w-full flex-col cursor-pointer items- justify-center px-2 py-2 rounded-lg text-left transition-colors hover:bg-muted",
+                              selectedClientId === client.id && "bg-muted"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 justify-start">
+                              <Avatar aria-hidden className="bg-background">  <AvatarFallback placeholderSeed={client.name} /></Avatar>
+                            <div className="flex flex-col">
+                            <span className="font-medium leading-none">{client.name}</span>
+                            {(client.email ) && (
+                              <span className="text-xs text-muted-foreground leading-none">
+                                {client.email}
+                              </span>
+                            )}
+                            </div>
+                            </div>
+                            
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Hint to show user can type a new name */}
+                    <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                      Seleziona un cliente o continua a digitare per crearne uno nuovo
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Show indicator if existing client is selected */}
+              {selectedClientId && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Cliente esistente selezionato
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

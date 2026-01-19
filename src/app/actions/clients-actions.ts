@@ -41,6 +41,44 @@ export async function getClients(): Promise<Client[]> {
 }
 
 /**
+ * Search clients by name (partial match, case-insensitive)
+ * Uses the /api/clients?search=<query> endpoint
+ * Returns empty array if error occurs
+ */
+export async function searchClients(searchQuery: string): Promise<Client[]> {
+  try {
+    // Build URL with search parameter
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    
+    const endpoint = `/api/clients${params.toString() ? `?${params.toString()}` : ""}`;
+    
+    const clients = (await apiFetch(endpoint, {
+      method: "GET",
+    })) as Client[];
+    return clients;
+  } catch (error: unknown) {
+    // Don't log rate limiting errors
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 429
+    ) {
+      return [];
+    }
+
+    if (error instanceof Error) {
+      console.error("Failed to search clients:", error.message);
+    } else {
+      console.error("Failed to search clients:", error);
+    }
+    return [];
+  }
+}
+
+/**
  * Get a single client by ID
  * Returns null if not found or error occurs
  */

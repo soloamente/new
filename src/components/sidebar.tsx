@@ -72,7 +72,7 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
       return (
         href === "/dashboard" ||
         href === "/pratiche" ||
-        href === "/clienti" ||
+        // href === "/clienti" ||
         href === "/operatori"
       );
     case "OPERATORE":
@@ -95,14 +95,14 @@ export default function Sidebar({ user }: SidebarProps) {
   // All possible navigation items
   const allNavigationItems: NavigationItem[] = [
     {
-      icon: DashboardIcon,
-      label: "Dashboard",
-      href: "/dashboard",
-    },
-    {
       icon: PraticheIcon,
       label: "Le mie pratiche",
       href: "/mie-pratiche",
+    },
+    {
+      icon: DashboardIcon,
+      label: "Dashboard",
+      href: "/dashboard",
     },
     {
       icon: PraticheIcon,
@@ -110,11 +110,11 @@ export default function Sidebar({ user }: SidebarProps) {
       href: "/pratiche",
     },
     
-    {
-      icon: ClientsIcon,
-      label: "Clienti",
-      href: "/clienti",
-    },
+    // {
+    //   icon: ClientsIcon,
+    //   label: "Clienti",
+    //   href: "/clienti",
+    // },
     {
       icon: OperatoriIcon,
       label: "Operatori",
