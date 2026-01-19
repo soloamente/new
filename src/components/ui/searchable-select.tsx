@@ -125,7 +125,9 @@ export function SearchableSelect({
         triggerRef.current?.focus();
       } else if (e.key === "Enter" && filteredOptions.length === 1) {
         // If there's only one filtered option, select it on Enter
-        handleSelect(filteredOptions[0].value);
+        // TS: array indexing can still be `undefined` even when length === 1.
+        const onlyOption = filteredOptions[0];
+        if (onlyOption) handleSelect(onlyOption.value);
       }
     },
     [filteredOptions, handleSelect]
