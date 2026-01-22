@@ -10,9 +10,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     // Ottieni l'IP del client dalla richiesta
+    // In Next.js, l'IP va estratto dagli header, non è disponibile direttamente su request
     const forwarded = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
-    const ip = forwarded?.split(",")[0] || realIp || request.ip || "";
+    const ip = forwarded?.split(",")[0] || realIp || "";
 
     // Usa ip-api.com (servizio gratuito, max 45 richieste/minuto)
     // Alternativa: usare ipapi.co o altri servizi simili
