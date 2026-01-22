@@ -266,7 +266,7 @@ export default function Clienti({ clients }: ClientiProps) {
           <div className="absolute right-0 flex items-center justify-center">
             <label
               htmlFor="search"
-              className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200"
+              className="bg-background flex w-60 items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-[width,box-shadow] duration-300 ease-out focus-within:w-84"
             >
               <input
                 placeholder="Nome, email, cliente..."

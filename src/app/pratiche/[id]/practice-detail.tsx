@@ -10,11 +10,13 @@ import {
   UserCircleIcon,
   XIcon,
   ArrowUpRightIcon,
+  MsgSmile2Icon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDate, mapApiStatusToUI } from "@/lib/practices-utils";
+import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { updatePractice } from "@/app/actions/practices-actions";
 
 interface PracticeDetailProps {
@@ -257,7 +259,22 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
               {practice.operator ? (
                 <div className="flex items-center gap-3">
                   <Avatar aria-hidden className="bg-background">
-                    <AvatarFallback placeholderSeed={practice.operator.name} />
+                    <AvatarFallback
+                      aria-label={`Operatore: ${practice.operator.name}`}
+                      placeholderSeed={practice.operator.email || practice.operator.id?.toString() || practice.operator.name}
+                      style={getOperatorAvatarColors(
+                        practice.operator.email ||
+                          practice.operator.id?.toString() ||
+                          practice.operator.name,
+                      )}
+                    >
+                      {/* Operator placeholder icon per spec */}
+                      <MsgSmile2Icon
+                        aria-hidden="true"
+                        size={16}
+                        className="text-primary"
+                      />
+                    </AvatarFallback>
                   </Avatar>
                   <span className="font-semibold">{practice.operator.name}</span>
                 </div>

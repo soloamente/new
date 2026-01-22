@@ -19,6 +19,9 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { SettingsDialog } from "./ui/settings-dialog";
 import type { User, UserRole } from "@/app/actions/auth-actions";
 import HouseUserIcon from "./icons/house-user";
+import OpenRectArrowOutIcon from "./icons/open-rect-arrow-out";
+import { logout } from "@/app/actions/auth-actions";
+import { WeatherWidget } from "./weather-widget";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -144,8 +147,8 @@ export default function Sidebar({ user }: SidebarProps) {
       label: "Supporto",
     },
     {
-      icon: GearIcon as IconComponent,
-      label: "Impostazioni",
+      icon: OpenRectArrowOutIcon as IconComponent,
+      label: "Esci dall'account",
     },
   ];
 
@@ -163,6 +166,9 @@ export default function Sidebar({ user }: SidebarProps) {
       <div className="flex h-full flex-col justify-between">
         {/* Navigation Group Wrapper */}
         <div className="flex flex-col gap-6 pt-2">
+          {/* Weather Widget */}
+          <WeatherWidget className="mb-2" />
+          
           {/* Navigation Group */}
           <div className="flex gap-7">
             {/* Dashboard Navigation */}
@@ -190,8 +196,8 @@ export default function Sidebar({ user }: SidebarProps) {
             <button
               key={item.label}
               onClick={() => {
-                if (item.label === "Impostazioni") {
-                  setIsSettingsOpen(true);
+                if (item.label === "Esci dall'account") {
+                  logout();
                 }
               }}
               className="text-sidebar-secondary hover:text-sidebar-primary flex cursor-pointer items-center gap-3.5"

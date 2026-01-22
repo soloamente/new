@@ -5,10 +5,12 @@ import {
   ArrowUpRightIcon,
   CheckIcon,
   HalfStatusIcon,
+  MsgSmile2Icon,
   XIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { getOperatorAvatarColors } from "@/lib/operators-utils";
 
 // Mock data for recent activities
 interface ActivityRow {
@@ -568,7 +570,18 @@ export default function DashboardPage() {
                     <div className="font-semibold">{activity.pratica}</div>
                     <div className="flex items-center gap-2">
                       <Avatar aria-hidden className="bg-background size-6">
-                        <AvatarFallback placeholderSeed={activity.operator} />
+                        <AvatarFallback
+                          aria-label={`Operatore: ${activity.operator}`}
+                          placeholderSeed={activity.operator}
+                          style={getOperatorAvatarColors(activity.operator)}
+                        >
+                          {/* Operator placeholder icon per spec */}
+                          <MsgSmile2Icon
+                            aria-hidden="true"
+                            size={14}
+                            className="text-primary"
+                          />
+                        </AvatarFallback>
                       </Avatar>
                       <span className="truncate">{activity.operator}</span>
                     </div>

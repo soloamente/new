@@ -247,6 +247,26 @@
     @apply bg-background text-foreground h-full overflow-hidden;
   }
 
+  /* Button press animation */
+  button {
+    cursor: pointer;
+    transition: transform 150ms ease;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+
+    button:active {
+      transform: none;
+    }
+  }
+
   /* Text selection highlight */
   ::selection {
     background-color: white;

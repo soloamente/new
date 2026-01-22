@@ -18,6 +18,10 @@ export { default as XIcon } from "./x-icon";
 export { default as IconBrightnessDecrease } from "./brightness-decrease-icon";
 export { default as IconMoonFill18 } from "./moon-fill-icon";
 export { default as IconMonitorSettingsFill18 } from "./monitor-settings-fill-icon";
+export { default as IconPersonFill18 } from "./person";
+export { default as IconPersonDress } from "./person-dress";
+// Operator avatar fallback icon (requested)
+export { default as MsgSmile2Icon } from "./msg-smile-2";
 export * from "./placeholders";
 
 

@@ -126,9 +126,11 @@
 - Sidebar now shows “Tutte le pratiche” and “Le mie pratiche” for OPERATORE; lint (`pnpm exec eslint` on sidebar + pratiche pages) passes.
 - Added “Pratiche sospese” status filter button in the shared Pratiche client; targeted ESLint on the file passes.
 - Sidebar now also renders on `/mie-pratiche` by adding the route to `visibleSidebarPaths`; lint on `layout-content.tsx` passes.
+- New request (avatars): operator avatar fallbacks now use `MsgSmile2` icon and a deterministic per-operator background color (stable per operator id/email/name) across Operatori list, Pratiche (operator column), Practice detail (operator card), and Dashboard activity table; lint checks for touched files pass.
+- Follow-up: operator avatar `MsgSmile2` icon now renders with `text-primary` (primary color token) while backgrounds remain deterministic per operator; lint checks still pass.
 
 ## Executor's Feedback or Assistance Requests
-- None; awaiting review/validation.
+- Please sanity-check visually: operator avatars should now show the `MsgSmile2` icon with different background colors per operator (stable across reloads). If you want a specific palette (e.g. brand colors), tell me which colors to use and I’ll swap the `OPERATOR_AVATAR_PALETTE`.
 
 ## Lessons
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.

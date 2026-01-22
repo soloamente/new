@@ -69,9 +69,11 @@ function AvatarFallback({
     );
 
   const fallbackStyle = {
-    ...inlineStyle,
+    // Default palette for placeholder avatars. Consumers may override this by passing
+    // `style={{ backgroundColor, color }}` (used for operator avatars, for example).
     backgroundColor: "var(--avatar-placeholder-bg)",
     color: "var(--avatar-placeholder-icon)",
+    ...inlineStyle,
   };
 
   return (

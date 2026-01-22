@@ -184,14 +184,14 @@ export function SearchableSelect({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-popover absolute left-0 top-full z-50 mt-1 min-w-48 overflow-hidden rounded-2xl shadow-xl"
+            className="bg-popover absolute left-0 top-full z-50 mt-1 min-w-48 overflow-hidden rounded-[1.3rem] shadow-xl"
             style={{ willChange: "opacity, transform" }}
             role="listbox"
             onKeyDown={handleKeyDown}
           >
             {/* Search Input */}
-            <div className="border-border border-b p-2">
-              <div className="bg-background flex items-center gap-2 rounded-xl px-3 py-2">
+            <div className="pt-2 px-2">
+              <label className="bg-background flex items-center gap-2 rounded-xl px-3 py-2">
                 <SearchIcon className="text-muted-foreground size-4 shrink-0" />
                 <input
                   ref={searchInputRef}
@@ -202,11 +202,11 @@ export function SearchableSelect({
                   className="placeholder:text-muted-foreground w-full bg-transparent text-sm outline-none"
                   aria-label="Cerca nelle opzioni"
                 />
-              </div>
+              </label>
             </div>
 
             {/* Options List */}
-            <div className="max-h-60 overflow-y-auto p-1">
+            <div className="max-h-60 overflow-y-auto px-2 py-2 flex flex-col">
               {/* "All" option to reset selection */}
               {showAllOption && (
                 <button
@@ -214,7 +214,7 @@ export function SearchableSelect({
                   onClick={() => handleSelect(placeholder)}
                   className={cn(
                     "hover:bg-accent flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
-                    value === placeholder && "bg-accent"
+                    value === placeholder && "bg-accent mb-1"
                   )}
                   role="option"
                   aria-selected={value === placeholder}

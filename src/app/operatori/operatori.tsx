@@ -8,6 +8,7 @@ import {
   OperatoriIcon,
   SearchIcon,
   UserCircleIcon,
+  MsgSmile2Icon,
   XIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { OperatorRow, OperatorStatus } from "@/lib/operators-utils";
+import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { createUser } from "@/app/actions/users-actions";
 
 // Component to show tooltip only when text is truncated
@@ -309,7 +311,7 @@ export default function Operatori({ operators }: OperatoriProps) {
           <div className="absolute right-0 flex items-center justify-center">
             <label
               htmlFor="search"
-              className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200"
+              className="bg-background flex w-60 items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-[width,box-shadow] duration-300 ease-out focus-within:w-84"
             >
               <input
                 placeholder="Nome, email, operatore..."
@@ -618,8 +620,19 @@ export default function Operatori({ operators }: OperatoriProps) {
                             <div className="flex cursor-help items-center gap-2 truncate">
                               <Avatar aria-hidden className="bg-background">
                                 <AvatarFallback
-                                  placeholderSeed={operator.name}
-                                />
+                                  aria-label={`Operatore: ${operator.name}`}
+                                  placeholderSeed={operator.email || operator.id || operator.name}
+                                  style={getOperatorAvatarColors(
+                                    operator.email || operator.id || operator.name,
+                                  )}
+                                >
+                                  {/* Operator placeholder icon per spec */}
+                                  <MsgSmile2Icon
+                                    aria-hidden="true"
+                                    size={16}
+                                    className="text-primary"
+                                  />
+                                </AvatarFallback>
                               </Avatar>
                               <span className="truncate font-medium">
                                 {operator.name}
@@ -635,8 +648,19 @@ export default function Operatori({ operators }: OperatoriProps) {
                               <div className="flex items-center gap-3">
                                 <Avatar className="bg-background size-16 rounded-lg">
                                   <AvatarFallback
-                                    placeholderSeed={operator.name}
-                                  />
+                                    aria-label={`Operatore: ${operator.name}`}
+                                    placeholderSeed={operator.email || operator.id || operator.name}
+                                    style={getOperatorAvatarColors(
+                                      operator.email || operator.id || operator.name,
+                                    )}
+                                  >
+                                    {/* Same operator placeholder icon, larger in tooltip */}
+                                    <MsgSmile2Icon
+                                      aria-hidden="true"
+                                      size={22}
+                                      className="text-primary"
+                                    />
+                                  </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col gap-0.5">
                                   <h4 className="text-sm font-semibold">

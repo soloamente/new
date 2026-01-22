@@ -9,6 +9,7 @@ import {
   PraticheIcon,
   SearchIcon,
   UserCircleIcon,
+  MsgSmile2Icon,
   XIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { PracticeRow } from "@/lib/practices-utils";
+import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
 
 type PracticeView = "all" | "mine";
@@ -494,7 +496,7 @@ export default function Pratiche({
           <div className="absolute right-0 flex items-center justify-center">
             <label
               htmlFor="search"
-              className="bg-background flex w-xs items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-all duration-200"
+              className="bg-background flex w-60 items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-[width,box-shadow] duration-300 ease-out focus-within:w-84"
             >
               <input
                 placeholder="Numero pratica, stato, cliente..."
@@ -580,8 +582,10 @@ export default function Pratiche({
               className={cn(
                 "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
                 isMineView
-                  ? "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr]"
-                  : "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr]",
+                  ? // Keep "Data" tighter so names (Cliente) can breathe on smaller screens
+                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(160px,1fr)_minmax(180px,1.6fr)_minmax(140px,max-content)]"
+                  : // Keep "Data" tighter so "Operatore" can show the full name
+                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.3fr)_minmax(140px,max-content)]",
               )}
             >
               <div className="flex items-center gap-2.5">
@@ -647,8 +651,8 @@ export default function Pratiche({
                       className={cn(
                         "grid items-center gap-4 text-base",
                         isMineView
-                          ? "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr]"
-                          : "grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr]",
+                          ? "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(160px,1fr)_minmax(180px,1.6fr)_minmax(140px,max-content)]"
+                          : "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.3fr)_minmax(140px,max-content)]",
                       )}
                     >
                       <div className="flex items-center gap-2.5">
@@ -672,13 +676,23 @@ export default function Pratiche({
                           {practice.praticaNumber}
                         </span>
                       </div>
-                      <div>{practice.date}</div>
+                      {/* Keep the date compact so the operator name can fit */}
+                      <div className="truncate tabular-nums">{practice.date}</div>
                       {!isMineView && (
                         <div className="flex items-center gap-2 truncate">
                           <Avatar aria-hidden className="bg-background">
                             <AvatarFallback
+                              aria-label={`Operatore: ${practice.internalOperator}`}
                               placeholderSeed={practice.internalOperator}
-                            />
+                              style={getOperatorAvatarColors(practice.internalOperator)}
+                            >
+                              {/* Operator placeholder icon per spec */}
+                              <MsgSmile2Icon
+                                aria-hidden="true"
+                                size={16}
+                                className="text-primary"
+                              />
+                            </AvatarFallback>
                           </Avatar>
                           <span className="truncate">
                             {practice.internalOperator}
