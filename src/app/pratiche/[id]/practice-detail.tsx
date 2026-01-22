@@ -261,10 +261,9 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
                   <Avatar aria-hidden className="bg-background">
                     <AvatarFallback
                       aria-label={`Operatore: ${practice.operator.name}`}
-                      placeholderSeed={practice.operator.email || practice.operator.id?.toString() || practice.operator.name}
+                      placeholderSeed={practice.operator.id?.toString() || practice.operator.name}
                       style={getOperatorAvatarColors(
-                        practice.operator.email ||
-                          practice.operator.id?.toString() ||
+                        practice.operator.id?.toString() ||
                           practice.operator.name,
                       )}
                     >
