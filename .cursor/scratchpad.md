@@ -10,6 +10,7 @@
 - New feedback: redistribute the Utenti table column widths so ID, name, email, role, studio, and status have balanced space without crowding or overflow.
 - New request: refactor the Impostazioni dialog to use the shared `src/components/ui/dialog.tsx` primitives for consistency with other dialogs.
 - New request: simplify the Dashboard UI to 4 practice-focused cards and add a small trend chart for andamento.
+- Follow-up: apply the simplified Dashboard layout everywhere a Dashboard exists and publish to main.
 
 ## Key Challenges and Analysis
 - Ensure new components follow existing icon component conventions (typed props, optional `size`, `currentColor` fills, no hard-coded grays).
@@ -96,8 +97,8 @@
 - [x] Task 40: Retitle Pratiche page to “Tutte le pratiche” and keep all data.
 - [x] Task 41: Expose both pages in sidebar for OPERATORE with correct routing.
 - [x] Task 42: Add suspended practices filter button to Pratiche views.
-- [ ] Task 43: Simplify Dashboard to 4 practice cards + trend chart.
-- [ ] Task 44: Run targeted lint on Dashboard page.
+- [x] Task 43: Simplify Dashboard to 4 practice cards + trend chart.
+- [x] Task 44: Run targeted lint on Dashboard page.
 
 ## Current Status / Progress Tracking
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
@@ -131,11 +132,12 @@
 - Sidebar now also renders on `/mie-pratiche` by adding the route to `visibleSidebarPaths`; lint on `layout-content.tsx` passes.
 - New request (avatars): operator avatar fallbacks now use `MsgSmile2` icon and a deterministic per-operator background color (stable per operator id/email/name) across Operatori list, Pratiche (operator column), Practice detail (operator card), and Dashboard activity table; lint checks for touched files pass.
 - Follow-up: operator avatar `MsgSmile2` icon now renders with `text-primary` (primary color token) while backgrounds remain deterministic per operator; lint checks still pass.
-- Dashboard page has been simplified to 4 practice status cards and a small trend chart; awaiting visual verification before linting.
+- Dashboard page has been simplified to 4 practice status cards and a small trend chart; targeted lint on `src/app/dashboard/page.tsx` is clean.
+- Searched the app for other dashboards; only `/dashboard` exists in this repo and it already uses the simplified layout.
 
 ## Executor's Feedback or Assistance Requests
 - Please sanity-check visually: operator avatars should now show the `MsgSmile2` icon with different background colors per operator (stable across reloads). If you want a specific palette (e.g. brand colors), tell me which colors to use and I’ll swap the `OPERATOR_AVATAR_PALETTE`.
-- Please verify the simplified Dashboard layout (4 cards + small andamento chart). Once confirmed, I will run the targeted lint step.
+- User confirmed publishing; proceeding to merge the simplified dashboard into `main`.
 
 ## Lessons
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.
