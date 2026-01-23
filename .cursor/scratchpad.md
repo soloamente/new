@@ -113,6 +113,8 @@
 - [ ] Task 46: Update Sidebar for mobile drawer + close button.
 - [ ] Task 47: Add overlay/backdrop for mobile drawer.
 - [ ] Task 48: Verify mobile layout + run targeted lint.
+- [ ] Task 49: Add solid sidebar background for mobile drawer.
+- [ ] Task 50: Enable scrolling inside main content on mobile.
 
 ## Current Status / Progress Tracking
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
@@ -149,6 +151,7 @@
 - Dashboard page has been simplified to 4 practice status cards and a small trend chart; targeted lint on `src/app/dashboard/page.tsx` is clean.
 - Mobile responsiveness work queued: need to add a mobile drawer sidebar with toggle, overlay, and close behaviors while keeping desktop layout unchanged.
 - Added mobile sidebar state + a top-left toggle button in `LayoutContent`; sidebar now slides in/out on small screens, desktop layout unchanged (overlay/close button still pending).
+- Sidebar now has a solid background surface and the main content wrapper is scrollable; pending mobile verification.
 - Searched the app for other dashboards; only `/dashboard` exists in this repo and it already uses the simplified layout.
 
 ## Executor's Feedback or Assistance Requests
@@ -156,6 +159,7 @@
 - User confirmed publishing; proceeding to merge the simplified dashboard into `main`.
 - Please confirm desired breakpoint for “mobile” (suggested: `md` < 768px) and whether a top-left floating menu button is acceptable.
 - Please verify the mobile toggle button + sliding sidebar behavior. Once confirmed, I will add the close button and overlay.
+- Please verify two fixes: (1) sidebar drawer now has a visible background, (2) main content scrolls on mobile. Once confirmed, I’ll mark tasks 49–50 complete and proceed with close button + overlay.
 
 ## Lessons
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.

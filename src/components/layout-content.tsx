@@ -96,7 +96,8 @@ export default function LayoutContent({
           </div>
         </>
       )}
-      <div className="min-w-0 flex-1">{children}</div>
+      {/* Allow the main content area to scroll on smaller screens. */}
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</div>
       {shouldPreferences && <Preferences />}
     </div>
   );

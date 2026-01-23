@@ -160,7 +160,9 @@ export default function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       aria-label="Sidebar"
-      className="h-full w-full min-w-60.5 flex-0 px-6.5 py-6 font-medium"
+      id="app-sidebar"
+      // Ensure the drawer has an opaque surface on mobile.
+      className="bg-sidebar text-sidebar-foreground h-full w-full min-w-60.5 flex-0 px-6.5 py-6 font-medium"
     >
       {/* Sidebar Groups Wrapper */}
       <div className="flex h-full flex-col justify-between">
