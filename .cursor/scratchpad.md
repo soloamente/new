@@ -11,6 +11,7 @@
 - New request: refactor the Impostazioni dialog to use the shared `src/components/ui/dialog.tsx` primitives for consistency with other dialogs.
 - New request: simplify the Dashboard UI to 4 practice-focused cards and add a small trend chart for andamento.
 - Follow-up: apply the simplified Dashboard layout everywhere a Dashboard exists and publish to main.
+- New request: make the entire UI responsive on mobile by collapsing the sidebar into a closed drawer that opens via a button, while preserving the desktop layout.
 
 ## Key Challenges and Analysis
 - Ensure new components follow existing icon component conventions (typed props, optional `size`, `currentColor` fills, no hard-coded grays).
@@ -24,6 +25,8 @@
 - Adding avatars into the clients column must not break the 12-column layout or introduce dead interaction zones; we need to keep truncation + keyboard navigation accessible.
 - The new placeholder palette requires centralized custom properties (light/dark) and `AvatarFallback` must consume them without overriding any consumer-provided inline styles.
 - Utenti grid needs a stable column template that prioritizes name/email while keeping ID/role/studio/status readable and aligned across header/body.
+- The mobile experience currently hides content because the sidebar occupies full width; we must introduce a mobile-only drawer without changing the desktop layout.
+- We need to add an accessible toggle (button + overlay + close affordance) and ensure navigation closes the drawer on mobile.
 
 ## High-level Task Breakdown
 1. Convert each new SVG asset into a typed React component (CheckIcon, HalfStatusIcon, UserCircleIcon) mirroring the structure of existing icons.
@@ -53,6 +56,13 @@
 21. Rename/retitle the existing Pratiche page to “Tutte le pratiche” while keeping full dataset.
 22. Update navigation visibility for OPERATORE to surface both “Tutte le pratiche” and “Le mie pratiche” entries and route correctly.
 23. Add explicit status filter for “Pratiche sospese” alongside other practice filters.
+24. Add a mobile sidebar state in `LayoutContent` and a top-left toggle button for small screens.
+   - Success: Sidebar hidden on mobile by default; tapping button opens it.
+25. Update `Sidebar` to support mobile drawer behavior (className + onNavigate) and render a close button on mobile.
+   - Success: Clicking a nav link or close button dismisses the drawer.
+26. Add a mobile overlay/backdrop that closes the sidebar when tapped.
+   - Success: Tapping outside closes the drawer; desktop layout unchanged.
+27. Validate responsive layout on common pages (dashboard, pratiche, clienti, operatori) and run targeted lint.
 
 ## Project Status Board
 - [x] Task 1: Add `CheckIcon` component.
@@ -99,6 +109,10 @@
 - [x] Task 42: Add suspended practices filter button to Pratiche views.
 - [x] Task 43: Simplify Dashboard to 4 practice cards + trend chart.
 - [x] Task 44: Run targeted lint on Dashboard page.
+- [x] Task 45: Add mobile sidebar toggle + state in LayoutContent.
+- [ ] Task 46: Update Sidebar for mobile drawer + close button.
+- [ ] Task 47: Add overlay/backdrop for mobile drawer.
+- [ ] Task 48: Verify mobile layout + run targeted lint.
 
 ## Current Status / Progress Tracking
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
@@ -133,11 +147,15 @@
 - New request (avatars): operator avatar fallbacks now use `MsgSmile2` icon and a deterministic per-operator background color (stable per operator id/email/name) across Operatori list, Pratiche (operator column), Practice detail (operator card), and Dashboard activity table; lint checks for touched files pass.
 - Follow-up: operator avatar `MsgSmile2` icon now renders with `text-primary` (primary color token) while backgrounds remain deterministic per operator; lint checks still pass.
 - Dashboard page has been simplified to 4 practice status cards and a small trend chart; targeted lint on `src/app/dashboard/page.tsx` is clean.
+- Mobile responsiveness work queued: need to add a mobile drawer sidebar with toggle, overlay, and close behaviors while keeping desktop layout unchanged.
+- Added mobile sidebar state + a top-left toggle button in `LayoutContent`; sidebar now slides in/out on small screens, desktop layout unchanged (overlay/close button still pending).
 - Searched the app for other dashboards; only `/dashboard` exists in this repo and it already uses the simplified layout.
 
 ## Executor's Feedback or Assistance Requests
 - Please sanity-check visually: operator avatars should now show the `MsgSmile2` icon with different background colors per operator (stable across reloads). If you want a specific palette (e.g. brand colors), tell me which colors to use and I’ll swap the `OPERATOR_AVATAR_PALETTE`.
 - User confirmed publishing; proceeding to merge the simplified dashboard into `main`.
+- Please confirm desired breakpoint for “mobile” (suggested: `md` < 768px) and whether a top-left floating menu button is acceptable.
+- Please verify the mobile toggle button + sliding sidebar behavior. Once confirmed, I will add the close button and overlay.
 
 ## Lessons
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.

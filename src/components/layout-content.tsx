@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getCurrentUser, type User } from "@/app/actions/auth-actions";
 import Sidebar from "./sidebar";
 import Preferences from "@/components/ui/preferences";
+import { cn } from "@/lib/utils";
 
 /**
  * LayoutContent Component (Client Component)
@@ -17,12 +18,19 @@ export default function LayoutContent({
 }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  // Track the mobile drawer state so the sidebar can stay collapsed on small screens.
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Fetch user on mount and when pathname changes (after login redirect)
   useEffect(() => {
     getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null));
+  }, [pathname]);
+
+  useEffect(() => {
+    // Close the mobile drawer on navigation to keep the UI predictable.
+    setIsMobileSidebarOpen(false);
   }, [pathname]);
 
   // List of paths where the sidebar should be hidden
@@ -59,9 +67,36 @@ export default function LayoutContent({
   );
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {shouldShowSidebar && <Sidebar user={user} />}
-      {children}
+    <div className="relative flex h-screen overflow-hidden">
+      {shouldShowSidebar && (
+        <>
+          {/* Mobile toggle button for the sidebar drawer. */}
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+            aria-controls="app-sidebar"
+            aria-expanded={isMobileSidebarOpen}
+            className={cn(
+              "bg-background text-foreground fixed left-4 top-4 z-50 flex items-center gap-2 rounded-full px-4 py-2 text-sm shadow-sm",
+              "focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none",
+              "select-none lg:hidden",
+            )}
+          >
+            Menu
+          </button>
+          {/* Sidebar wrapper handles mobile sliding without affecting desktop layout. */}
+          <div
+            className={cn(
+              "fixed left-0 top-0 z-40 h-full w-[min(85vw,280px)] transition-transform duration-200 ease-out",
+              isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+              "lg:static lg:translate-x-0 lg:transition-none lg:w-auto",
+            )}
+          >
+            <Sidebar user={user} />
+          </div>
+        </>
+      )}
+      <div className="min-w-0 flex-1">{children}</div>
       {shouldPreferences && <Preferences />}
     </div>
   );
