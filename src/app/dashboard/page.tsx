@@ -459,31 +459,31 @@ export default async function DashboardPage({
 
         {/* Header - Filters & Legend (above the card, like other pages) */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Left side: Legend badges (same style as Pratiche status filters) */}
+          {/* Left side: Legend badges (stesso dato del grafico: operatore selezionato o totale studio) */}
           <div className="flex items-center">
             {[
               {
                 key: "assigned",
                 label: "Assegnata",
-                value: studioTotal.assegnata,
+                value: chartStats.assegnata,
                 accent: "var(--status-assigned-accent)",
               },
               {
                 key: "in-progress",
                 label: "In lavorazione",
-                value: studioTotal["in lavorazione"],
+                value: chartStats["in lavorazione"],
                 accent: "var(--status-in-progress-accent)",
               },
               {
                 key: "completed",
                 label: "Conclusa",
-                value: studioTotal.conclusa,
+                value: chartStats.conclusa,
                 accent: "var(--status-completed-accent)",
               },
               {
                 key: "suspended",
                 label: "Sospesa",
-                value: studioTotal.sospesa,
+                value: chartStats.sospesa,
                 accent: "var(--status-suspended-accent)",
               },
             ].map((item) => (
