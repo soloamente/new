@@ -75,9 +75,7 @@ const OPERATOR_AVATAR_BG_PALETTE: string[] = [
   "oklch(0.42 0.12 25)", // orange
   "oklch(0.42 0.12 340)", // magenta
   "oklch(0.40 0.06 280)", // violet (lower chroma)
-];
-
-/**
+];/**
  * Deterministically pick an operator avatar color from a small palette.
  * This keeps each operator recognizable without relying on uploaded images.
  */
@@ -85,17 +83,11 @@ export function getOperatorAvatarColors(
   seed?: string | null,
 ): CSSProperties {
   const normalizedSeed = seed?.trim().toLowerCase();
-  if (!normalizedSeed) return { backgroundColor: OPERATOR_AVATAR_BG_PALETTE[0]! };
-
-  // Simple stable hash (same approach used by avatar placeholder icons).
+  if (!normalizedSeed) return { backgroundColor: OPERATOR_AVATAR_BG_PALETTE[0]! };  // Simple stable hash (same approach used by avatar placeholder icons).
   let hash = 0;
   for (let index = 0; index < normalizedSeed.length; index += 1) {
     hash = (hash * 31 + normalizedSeed.charCodeAt(index)) >>> 0;
-  }
-
-  const paletteIndex = hash % OPERATOR_AVATAR_BG_PALETTE.length;
-
-  return {
+  }  const paletteIndex = hash % OPERATOR_AVATAR_BG_PALETTE.length;  return {
     backgroundColor: OPERATOR_AVATAR_BG_PALETTE[paletteIndex]!,
   };
 }

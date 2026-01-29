@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { FaChevronDown } from "react-icons/fa";
 import { CheckIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -55,6 +62,45 @@ export function SearchableSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
+
+  const updateDropdownPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    // NOTE:
+    // When the trigger sits near the right edge and the selected label is short
+    // (e.g. only the placeholder), the old `left-0` absolute positioning would
+    // push the menu outside the viewport to the right.
+    //
+    // We compute a fixed (viewport-based) position and clamp it inside the window,
+    // keeping behavior consistent across pages/containers.
+    const triggerRect = trigger.getBoundingClientRect();
+
+    const viewportPadding = 8; // keep a small gutter from screen edges
+    const triggerToMenuGap = 4; // matches Tailwind `mt-1`
+    const preferredWidth = Math.max(triggerRect.width, 192); // matches old `min-w-48`
+    const maxWidth = Math.max(0, window.innerWidth - viewportPadding * 2);
+    const width =
+      maxWidth > 0 ? Math.min(preferredWidth, maxWidth) : preferredWidth;
+
+    const maxLeft = window.innerWidth - width - viewportPadding;
+    const clampedLeft = Math.min(
+      Math.max(triggerRect.left, viewportPadding),
+      maxLeft,
+    );
+
+    setDropdownPosition({
+      left: clampedLeft,
+      top: triggerRect.bottom + triggerToMenuGap,
+      width,
+    });
+  }, []);
+
   // Find the current option label for display
   const currentLabel = useMemo(() => {
     if (value === placeholder || !value) {
@@ -71,7 +117,7 @@ export function SearchableSelect({
     }
     const normalizedSearch = searchTerm.toLowerCase().trim();
     return options.filter((option) =>
-      option.label.toLowerCase().includes(normalizedSearch)
+      option.label.toLowerCase().includes(normalizedSearch),
     );
   }, [options, searchTerm]);
 
@@ -95,6 +141,31 @@ export function SearchableSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  // Keep the dropdown anchored to the trigger and inside the viewport.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    updateDropdownPosition();
+  }, [isOpen, updateDropdownPosition]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+
+    const handleReposition = () => updateDropdownPosition();
+
+    window.addEventListener("resize", handleReposition);
+    // Capture scroll events from nested containers too.
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [isOpen, updateDropdownPosition]);
+
   // Focus search input when dropdown opens
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -113,7 +184,7 @@ export function SearchableSelect({
       setIsOpen(false);
       setSearchTerm("");
     },
-    [onValueChange]
+    [onValueChange],
   );
 
   // Handle keyboard navigation
@@ -130,7 +201,7 @@ export function SearchableSelect({
         if (onlyOption) handleSelect(onlyOption.value);
       }
     },
-    [filteredOptions, handleSelect]
+    [filteredOptions, handleSelect],
   );
 
   // Toggle dropdown
@@ -155,13 +226,13 @@ export function SearchableSelect({
         aria-expanded={isOpen}
         className={cn(
           "bg-background flex w-fit items-center justify-between gap-2 rounded-full border-0 px-3.75 py-1.75 text-sm font-normal whitespace-nowrap transition-colors outline-none focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          triggerClassName
+          triggerClassName,
         )}
       >
         <span
           className={cn(
             "line-clamp-1",
-            value === placeholder && "text-muted-foreground"
+            value === placeholder && "text-muted-foreground",
           )}
         >
           {currentLabel}
@@ -170,7 +241,7 @@ export function SearchableSelect({
           size={14}
           className={cn(
             "text-button-secondary transition-transform duration-200",
-            isOpen && "rotate-180"
+            isOpen && "rotate-180",
           )}
         />
       </button>
@@ -184,13 +255,21 @@ export function SearchableSelect({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-popover absolute left-0 top-full z-50 mt-1 min-w-48 overflow-hidden rounded-[1.3rem] shadow-xl"
-            style={{ willChange: "opacity, transform" }}
+            className="bg-popover fixed z-50 overflow-hidden rounded-[1.3rem] shadow-xl"
+            style={{
+              // We animate `opacity` and `transform` only (compositor-friendly).
+              willChange: "transform, opacity",
+              left: dropdownPosition?.left ?? 0,
+              top: dropdownPosition?.top ?? 0,
+              width: dropdownPosition?.width,
+              // Prevent a one-frame flash at (0,0) while we compute the position.
+              visibility: dropdownPosition ? "visible" : "hidden",
+            }}
             role="listbox"
             onKeyDown={handleKeyDown}
           >
             {/* Search Input */}
-            <div className="pt-2 px-2">
+            <div className="px-2 pt-2">
               <label className="bg-background flex items-center gap-2 rounded-xl px-3 py-2">
                 <SearchIcon className="text-muted-foreground size-4 shrink-0" />
                 <input
@@ -206,7 +285,7 @@ export function SearchableSelect({
             </div>
 
             {/* Options List */}
-            <div className="max-h-60 overflow-y-auto px-2 py-2 flex flex-col">
+            <div className="flex max-h-60 flex-col overflow-y-auto px-2 py-2">
               {/* "All" option to reset selection */}
               {showAllOption && (
                 <button
@@ -214,7 +293,7 @@ export function SearchableSelect({
                   onClick={() => handleSelect(placeholder)}
                   className={cn(
                     "hover:bg-accent flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
-                    value === placeholder && "bg-accent mb-1"
+                    value === placeholder && "bg-accent mb-1",
                   )}
                   role="option"
                   aria-selected={value === placeholder}
@@ -239,7 +318,7 @@ export function SearchableSelect({
                     onClick={() => handleSelect(option.value)}
                     className={cn(
                       "hover:bg-accent flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
-                      value === option.value && "bg-accent"
+                      value === option.value && "bg-accent",
                     )}
                     role="option"
                     aria-selected={value === option.value}

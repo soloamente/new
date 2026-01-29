@@ -209,14 +209,15 @@ export function WeatherWidget({ className }: WeatherWidgetProps) {
         const IconComponent = getWeatherIcon(data.weather[0].icon);
         const condition = translateCondition(data.weather[0].description);
 
-        // Converti da Celsius a Fahrenheit
-        const tempFahrenheit = Math.round((data.main.temp * 9) / 5 + 32);
+        // L'API restituisce già la temperatura in Celsius (units=metric)
+        // Arrotondiamo il valore per la visualizzazione
+        const tempCelsius = Math.round(data.main.temp);
 
         setWeather({
           day,
           date,
           condition,
-          temperature: tempFahrenheit,
+          temperature: tempCelsius,
           icon: data.weather[0].icon,
           city: data.name || "Posizione sconosciuta",
         });
@@ -232,7 +233,7 @@ export function WeatherWidget({ className }: WeatherWidgetProps) {
           day,
           date,
           condition: "—",
-          temperature: 0, // 0°F nel fallback
+          temperature: 0, // 0°C nel fallback
           icon: "01d",
           city: "Posizione sconosciuta",
         });

@@ -1,4 +1,5 @@
 ## Background and Motivation
+
 - Design team delivered three new SVG assets (`check`, `half-status`, `user-circle`) that must be exposed as reusable React icon components under `src/components/icons` so UI work can consume them consistently without inlining raw SVG.
 - Product now needs the existing `arrow-up-right.svg` asset exposed as a typed React icon component so screens like `pratiche` can reference it without inlining SVG markup.
 - Latest UI review flagged the `Body Head` wrapper on `src/app/pratiche/page.tsx` requiring an exact 12px gap expressed in rem units to align spacing tokens.
@@ -11,8 +12,12 @@
 - New request: refactor the Impostazioni dialog to use the shared `src/components/ui/dialog.tsx` primitives for consistency with other dialogs.
 - New request: simplify the Dashboard UI to 4 practice-focused cards and add a small trend chart for andamento.
 - Follow-up: apply the simplified Dashboard layout everywhere a Dashboard exists and publish to main.
+- New request: on Dashboard bar chart, make the columns (bars) fill the full card height.
+- New request: apply `GET /api/statistics/studio` (JWT, role AMMINISTRATORE_STUDIO) to the Dashboard “API Statistiche” chart and use `studio_total` to power the 4 status cards.
+- New request: align the Dashboard bar chart with the provided reference (inactive charcoal pill bars, one active warm gradient pill, subtle glow, snappy 200ms transitions, keyboard focus).
 
 ## Key Challenges and Analysis
+
 - Ensure new components follow existing icon component conventions (typed props, optional `size`, `currentColor` fills, no hard-coded grays).
 - Keep API flexible by extending `SVGProps<SVGSVGElement>` so consumers can set aria-label, className, etc.
 - Update `index.ts` so new icons are discoverable via barrel exports.
@@ -26,6 +31,7 @@
 - Utenti grid needs a stable column template that prioritizes name/email while keeping ID/role/studio/status readable and aligned across header/body.
 
 ## High-level Task Breakdown
+
 1. Convert each new SVG asset into a typed React component (CheckIcon, HalfStatusIcon, UserCircleIcon) mirroring the structure of existing icons.
    - Default `size` to 15 to match source dimensions.
    - Replace static fills with `currentColor`.
@@ -55,6 +61,7 @@
 23. Add explicit status filter for “Pratiche sospese” alongside other practice filters.
 
 ## Project Status Board
+
 - [x] Task 1: Add `CheckIcon` component.
 - [x] Task 2: Add `HalfStatusIcon` component.
 - [x] Task 3: Add `UserCircleIcon` component.
@@ -99,8 +106,13 @@
 - [x] Task 42: Add suspended practices filter button to Pratiche views.
 - [x] Task 43: Simplify Dashboard to 4 practice cards + trend chart.
 - [x] Task 44: Run targeted lint on Dashboard page.
+- [x] Task 45: Make Dashboard bar chart columns fill full card height.
+- [x] Task 46: Wire Dashboard “API Statistiche” chart to `/api/statistics/studio` and use `studio_total` for the 4 status cards (handle 401/403 + non-admin roles).
+- [x] Task 47: Fix `SearchableSelect` dropdown overflow (when placeholder selected) so the menu never goes off-screen to the right.
+- [x] Task 48: Match Dashboard bar chart UI to the reference (pill bars + active gradient + hover/focus + 200ms transitions, reduced motion).
 
 ## Current Status / Progress Tracking
+
 - All three SVGs converted to typed components, exports updated, and `pnpm exec eslint src/components/icons` ran cleanly (Next 16 CLI lacks `next lint`, so we linted via ESLint directly).
 - Added `ArrowUpRightIcon` with configurable colors + size, updated the icons barrel, and `npx eslint src/components/icons` passed.
 - `Body Head` wrapper now uses `gap-3` (12px / 0.75rem) with an inline comment documenting the spec-driven spacing.
@@ -133,13 +145,30 @@
 - New request (avatars): operator avatar fallbacks now use `MsgSmile2` icon and a deterministic per-operator background color (stable per operator id/email/name) across Operatori list, Pratiche (operator column), Practice detail (operator card), and Dashboard activity table; lint checks for touched files pass.
 - Follow-up: operator avatar `MsgSmile2` icon now renders with `text-primary` (primary color token) while backgrounds remain deterministic per operator; lint checks still pass.
 - Dashboard page has been simplified to 4 practice status cards and a small trend chart; targeted lint on `src/app/dashboard/page.tsx` is clean.
+- New request (dashboard): replace the small trend chart with a simple, reference-inspired bar chart card and place the 4 status cards underneath it; ESLint on `src/app/dashboard/page.tsx` remains clean after the change.
 - Searched the app for other dashboards; only `/dashboard` exists in this repo and it already uses the simplified layout.
+- Updated Dashboard header markup to match the standard page header pattern used elsewhere (e.g. Studi/Pratiche), using the shared “Header - Info Container” structure; ESLint on `src/app/dashboard/page.tsx` remains clean after the change.
+- Updated `RevenueBarChart` to use a `flex-1` bar area with percentage bar heights so each month column stretches to fill the chart card height; `pnpm exec eslint src/app/dashboard/page.tsx` passes.
+- Follow-up fix: removed `border` from bar “pills” and used `ring-inset` on inactive bars only to eliminate a thin 1px bottom line artifact (subpixel AA) reported in UI; lints are clean.
+- Added a typed API wrapper `getStudioStatistics()` and wired the Dashboard chart (“API Statistiche”) to `GET /api/statistics/studio` (role-gated to AMMINISTRATORE_STUDIO), powering the 4 cards from `studio_total` and rendering a stacked per-operator bar chart with 401/403/error states.
+- (Outdated) Adjusted the Dashboard “API Statistiche” chart rendering to show **separate bars per status** (one above another) instead of a single stacked bar.
+- Added an operator filter (top-right) to the “API Statistiche” card using the same `SearchableSelect` pattern as Pratiche; selection is URL-backed via `operator_id`, and when selected, other operators' columns are rendered in neutral grey to focus on the chosen operator.
+- New bug report: when no operator is selected (placeholder shown), the `SearchableSelect` dropdown can overflow off-screen to the right (trigger is near the right edge and the label is short).
+  - Implemented viewport-safe dropdown positioning in `src/components/ui/searchable-select.tsx` by switching the menu to `position: fixed` and clamping its `left/top/width` within the window.
+- New request (dashboard bar chart reference): updated `RevenueBarChart` to render a single “pill” per operator (height = total), with inactive charcoal styling and an active warm gradient (`--chart-4` → `--chart-5`) + glow; hover/focus affordances and 200ms transitions are enabled (and disabled under `prefers-reduced-motion`). Targeted lint on `src/app/dashboard/page.tsx` is clean.
 
 ## Executor's Feedback or Assistance Requests
+
 - Please sanity-check visually: operator avatars should now show the `MsgSmile2` icon with different background colors per operator (stable across reloads). If you want a specific palette (e.g. brand colors), tell me which colors to use and I’ll swap the `OPERATOR_AVATAR_PALETTE`.
 - User confirmed publishing; proceeding to merge the simplified dashboard into `main`.
+- Please verify visually: Dashboard header should now look identical in structure to other pages (icon + title styling/spacing) without changing the rest of the Dashboard layout.
+- (Outdated) Please verify visually: Dashboard bar chart month columns should now stretch to use the full card height (no “short” bar area inside the card).
+- Confirmed by user: the thin bottom line artifact is fixed.
+- Please verify visually: in Dashboard, the “API Statistiche” card now shows one pill bar per operator (height = total) and the 4 cards below it use real totals (`studio_total`). Also confirm the error message for non-admin studio roles (or expired session) is acceptable.
+- Please verify visually: when the operator filter shows the placeholder (“Operatore”), opening the dropdown should **not** go off-screen to the right anymore (it should stay within the viewport even at the far-right of the header).
+- Please verify visually: the active bar matches the reference (warm gradient + glow), inactive bars are charcoal pills with subtle ring, and hover/focus transitions feel immediate (200ms).
 
 ## Lessons
+
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.
 - Next 16 CLI no longer exposes `next lint`; run ESLint directly (e.g. `pnpm exec eslint <paths>`) for targeted linting.
-

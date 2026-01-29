@@ -60,9 +60,6 @@ function getRoleName(roleId: number): UserRole {
 function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
   if (!role) return false;
 
-  // Dashboard is visible to all roles
-  if (href === "/dashboard") return true;
-
   // Role-based visibility
   switch (role) {
     case "DATAWEB":
@@ -79,9 +76,8 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
         href === "/operatori"
       );
     case "OPERATORE":
-      // Operator: Dashboard, Tutte le pratiche, Mie pratiche, Clienti
+      // Operator: Tutte le pratiche, Mie pratiche, Clienti (NO Dashboard)
       return (
-        href === "/dashboard" ||
         href === "/pratiche" ||
         href === "/mie-pratiche" ||
         href === "/clienti"

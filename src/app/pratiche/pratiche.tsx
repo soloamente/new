@@ -229,17 +229,22 @@ export default function Pratiche({
   }, [practices]);
 
   const assigneeFilters = useMemo(
-    () => [
-      {
-        triggerLabel: "Operatore",
-        values: uniqueOperators,
-      },
-      {
+    () => {
+      // In "mie-pratiche" view, don't show operator filter (all practices are already filtered by current user)
+      const filters = [];
+      if (!isMineView) {
+        filters.push({
+          triggerLabel: "Operatore",
+          values: uniqueOperators,
+        });
+      }
+      filters.push({
         triggerLabel: "Cliente",
         values: uniqueClients,
-      },
-    ],
-    [uniqueOperators, uniqueClients],
+      });
+      return filters;
+    },
+    [uniqueOperators, uniqueClients, isMineView],
   );
 
   // State for assignee filter values
@@ -278,15 +283,19 @@ export default function Pratiche({
   // Derived filtered practices for UI (status + selects + search + date)
   const filteredPractices = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    const operatorFilter = assigneeFilterValues[normalizeValue("Operatore")];
+    // In "mie-pratiche" view, skip operator filter (all practices are already filtered by current user)
+    const operatorFilter = isMineView
+      ? null
+      : assigneeFilterValues[normalizeValue("Operatore")];
     const clientFilter = assigneeFilterValues[normalizeValue("Cliente")];
 
     return practices.filter((practice) => {
       const matchesStatus =
         statusFilter === "all" ? true : practice.status === statusFilter;
 
+      // Skip operator filter in "mie-pratiche" view
       const matchesOperator =
-        !operatorFilter || operatorFilter === "Operatore"
+        isMineView || !operatorFilter || operatorFilter === "Operatore"
           ? true
           : normalizeValue(practice.internalOperator) === operatorFilter;
 
@@ -334,7 +343,7 @@ export default function Pratiche({
         matchesDate
       );
     });
-  }, [assigneeFilterValues, dateFilter, practices, searchTerm, statusFilter]);
+  }, [assigneeFilterValues, dateFilter, practices, searchTerm, statusFilter, isMineView]);
 
   // Calculate statistics from filtered practices to mirror visible rows
   const totalPractices = filteredPractices.length;
@@ -527,19 +536,43 @@ export default function Pratiche({
               {/* Stats - Totale pratiche - Status Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <CheckIcon size={24} className="text-stats-secondary" />
+                  <CheckIcon
+                    size={24}
+                    style={{
+                      color: practiceStatusStyles.completed.iconColor,
+                    }}
+                    suppressHydrationWarning
+                  />
                   <AnimateNumber>{completedCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <HalfStatusIcon size={24} className="text-stats-secondary" />
+                  <HalfStatusIcon
+                    size={24}
+                    style={{
+                      color: practiceStatusStyles.in_progress.iconColor,
+                    }}
+                    suppressHydrationWarning
+                  />
                   <AnimateNumber>{inProgressCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <UserCircleIcon size={24} className="text-stats-secondary" />
+                  <UserCircleIcon
+                    size={24}
+                    style={{
+                      color: practiceStatusStyles.assigned.iconColor,
+                    }}
+                    suppressHydrationWarning
+                  />
                   <AnimateNumber>{assignedCount}</AnimateNumber>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <XIcon size={24} className="text-stats-secondary" />
+                  <XIcon
+                    size={24}
+                    style={{
+                      color: practiceStatusStyles.suspended.iconColor,
+                    }}
+                    suppressHydrationWarning
+                  />
                   <AnimateNumber>{suspendedCount}</AnimateNumber>
                 </div>
               </div>
@@ -583,9 +616,9 @@ export default function Pratiche({
                 "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
                 isMineView
                   ? // Keep "Data" tighter so names (Cliente) can breathe on smaller screens
-                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(160px,1fr)_minmax(180px,1.6fr)_minmax(140px,max-content)]"
+                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(180px,1.6fr)_minmax(220px,max-content)]"
                   : // Keep "Data" tighter so "Operatore" can show the full name
-                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.3fr)_minmax(140px,max-content)]",
+                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(120px,0.8fr)_minmax(180px,1.3fr)_minmax(220px,max-content)]",
               )}
             >
               <div className="flex items-center gap-2.5">
@@ -651,8 +684,8 @@ export default function Pratiche({
                       className={cn(
                         "grid items-center gap-4 text-base",
                         isMineView
-                          ? "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(160px,1fr)_minmax(180px,1.6fr)_minmax(140px,max-content)]"
-                          : "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.3fr)_minmax(140px,max-content)]",
+                          ? "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(180px,1.6fr)_minmax(220px,max-content)]"
+                          : "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(120px,0.8fr)_minmax(180px,1.3fr)_minmax(220px,max-content)]",
                       )}
                     >
                       <div className="flex items-center gap-2.5">
