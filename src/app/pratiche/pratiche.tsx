@@ -36,10 +36,6 @@ interface PraticheProps {
   userRoleId?: number;
   currentUserId?: number;
   view?: PracticeView;
-  paths?: {
-    all: string;
-    mine: string;
-  };
 }
 
 const normalizeValue = (value: string) =>
@@ -80,7 +76,6 @@ export default function Pratiche({
   userRoleId,
   currentUserId,
   view = "all",
-  paths = { all: "/pratiche", mine: "/mie-pratiche" },
 }: PraticheProps) {
   const router = useRouter();
   const isOperator = userRoleId === 3;
@@ -113,13 +108,8 @@ export default function Pratiche({
         : "Tutte le pratiche",
       value: "all",
       active: statusFilter === "all",
-      onClick: isOperator
-        ? () => {
-            setStatusFilter("all");
-            // Operators jump between full studio list and personal list via dedicated routes
-            router.push(isMineView ? paths.all : paths.mine);
-          }
-        : () => setStatusFilter("all"),
+      // Status filter only — switching between /pratiche and /mie-pratiche is via sidebar nav, not this select.
+      onClick: () => setStatusFilter("all"),
     },
     {
       label: "Pratiche assegnate",

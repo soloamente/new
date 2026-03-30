@@ -18,7 +18,6 @@ export default async function MiePratichePage() {
       userRoleId={currentUser?.role_id}
       currentUserId={currentUser?.id}
       view="mine"
-      paths={{ all: "/pratiche", mine: "/mie-pratiche" }}
     />
   );
 }
