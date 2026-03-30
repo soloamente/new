@@ -9,7 +9,6 @@ import {
   UserCircleIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   DateRangeFilter,
@@ -46,9 +45,9 @@ interface PraticheProps {
 const normalizeValue = (value: string) =>
   value.toLowerCase().trim().replace(/\s+/g, "-");
 
-/** Same 6-column layout for both list views; on Tutte le pratiche the operator is only in group headers, not per row. */
+/** Six columns: pratica #, date, client, phone, type, status (no row selection column). */
 const PRATICHE_TABLE_GRID_CLASS =
-  "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
+  "grid-cols-[minmax(100px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
 
 const practiceStatusStyles: Record<
   PracticeRow["status"],
@@ -88,9 +87,10 @@ export default function Pratiche({
   const isMineView = isOperator && view === "mine";
   const shouldGroupByOperator = view === "all";
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  // Tutte le pratiche: default to "assegnate"; Le mie pratiche: default to full list.
   const [statusFilter, setStatusFilter] = useState<
     PracticeRow["status"] | "all"
-  >("all");
+  >(() => (view === "all" ? "assigned" : "all"));
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
@@ -98,10 +98,6 @@ export default function Pratiche({
   /** Respect OS “reduce motion”; collapse/expand stays instant when enabled. */
   const prefersReducedMotion = useReducedMotion();
 
-  // State for selected practices
-  const [selectedPractices, setSelectedPractices] = useState<Set<string>>(
-    new Set(),
-  );
   // Track collapsed operator sections (empty set means all expanded by default).
   const [collapsedOperatorGroups, setCollapsedOperatorGroups] = useState<
     Set<string>
@@ -253,15 +249,6 @@ export default function Pratiche({
     });
   }, [groupedPractices, shouldGroupByOperator]);
 
-  const visiblePractices = useMemo(() => {
-    if (!shouldGroupByOperator) {
-      return filteredPractices;
-    }
-    return groupedPractices.flatMap((group) =>
-      collapsedOperatorGroups.has(group.operatorName) ? [] : group.rows,
-    );
-  }, [collapsedOperatorGroups, filteredPractices, groupedPractices, shouldGroupByOperator]);
-
   // Calculate statistics from filtered practices to mirror visible rows
   const totalPractices = filteredPractices.length;
   const completedCount = filteredPractices.filter(
@@ -269,20 +256,6 @@ export default function Pratiche({
   ).length;
   const assignedCount = filteredPractices.filter((p) => p.status === "assigned")
     .length;
-
-  // Handlers for checkbox selection (optional scopeRows = one operator group when grouped)
-  const handleSelectAll = (checked: boolean, scopeRows?: PracticeRow[]) => {
-    const rows = scopeRows ?? visiblePractices;
-    setSelectedPractices((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        rows.forEach((p) => next.add(p.id));
-      } else {
-        rows.forEach((p) => next.delete(p.id));
-      }
-      return next;
-    });
-  };
 
   const toggleOperatorGroup = (operatorName: string) => {
     setCollapsedOperatorGroups((prev) => {
@@ -296,31 +269,11 @@ export default function Pratiche({
     });
   };
 
-  const handleSelectPractice = (practiceId: string, checked: boolean) => {
-    const newSelected = new Set(selectedPractices);
-    if (checked) {
-      newSelected.add(practiceId);
-    } else {
-      newSelected.delete(practiceId);
-    }
-    setSelectedPractices(newSelected);
-  };
-
   const renderPracticeRow = (practice: PracticeRow) => {
     const statusVisual = practiceStatusStyles[practice.status];
 
-    const handleRowClick = (e: React.MouseEvent) => {
-      // Don't navigate if clicking on checkbox or its label.
-      const target = e.target as HTMLElement;
-      const isCheckboxClick = Boolean(
-        target.closest('[role="checkbox"]') ??
-          target.closest('input[type="checkbox"]') ??
-          target.closest("label"),
-      );
-
-      if (!isCheckboxClick) {
-        router.push(`/pratiche/${practice.id}`);
-      }
+    const handleRowClick = () => {
+      router.push(`/pratiche/${practice.id}`);
     };
 
     return (
@@ -345,16 +298,6 @@ export default function Pratiche({
           )}
         >
           <div className="flex items-center gap-2.5">
-            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-              <Checkbox
-                aria-label={`Seleziona ${practice.praticaNumber}`}
-                labelClassName="items-center"
-                checked={selectedPractices.has(practice.id)}
-                onChange={(e) =>
-                  handleSelectPractice(practice.id, e.target.checked)
-                }
-              />
-            </div>
             <span className="font-semibold">{practice.praticaNumber}</span>
           </div>
           <div className="truncate tabular-nums">{practice.date}</div>
@@ -399,15 +342,7 @@ export default function Pratiche({
     );
   };
 
-  const renderTableHeader = (scopeRows?: PracticeRow[]) => {
-    const rowsScope = scopeRows ?? visiblePractices;
-    const scopeAllSelected =
-      rowsScope.length > 0 &&
-      rowsScope.every((p) => selectedPractices.has(p.id));
-    const scopeSomeSelected =
-      rowsScope.some((p) => selectedPractices.has(p.id)) && !scopeAllSelected;
-
-    return (
+  const renderTableHeader = () => (
     <div className="bg-table-header shrink-0 rounded-none px-3 py-2.25">
       <div
         className={cn(
@@ -416,14 +351,6 @@ export default function Pratiche({
         )}
       >
         <div className="flex items-center gap-2.5">
-          <Checkbox
-            /* One stable label for SSR + hydration (group scope is handled in onChange only). */
-            aria-label="Seleziona tutte le pratiche"
-            labelClassName="items-center"
-            checked={scopeAllSelected}
-            indeterminate={scopeSomeSelected}
-            onChange={(e) => handleSelectAll(e.target.checked, scopeRows)}
-          />
           <span>Pratica N.</span>
         </div>
         <div>Data</div>
@@ -433,8 +360,7 @@ export default function Pratiche({
         <div>Stato</div>
       </div>
     </div>
-    );
-  };
+  );
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -635,7 +561,7 @@ export default function Pratiche({
                       inert={isCollapsed ? true : undefined}
                     >
                       <div className="border-checkbox-border/70 border-t">
-                        {renderTableHeader(group.rows)}
+                        {renderTableHeader()}
                         <div className="divide-checkbox-border/70 divide-y">
                           {group.rows.map((practice) => renderPracticeRow(practice))}
                         </div>

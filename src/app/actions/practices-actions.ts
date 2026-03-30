@@ -1,6 +1,125 @@
 "use server";
 
+import type { Client } from "@/app/actions/clients-actions";
 import { apiFetch } from "@lib/api";
+
+/**
+ * Some API responses omit nested `client` on GET /api/practices/:id but still send
+ * `client_id` or flat fields (`client_name`, …). We normalize so the UI can render.
+ */
+type PracticeApiFlatClient = {
+  client_name?: string | null;
+  client_email?: string | null;
+  client_phone?: string | null;
+};
+
+function buildClientFromFlatFields(
+  practice: Practice,
+  raw: PracticeApiFlatClient,
+): Practice["client"] | undefined {
+  const name = raw.client_name?.trim();
+  if (!name) return undefined;
+  return {
+    id: practice.client_id,
+    name,
+    email: raw.client_email?.trim() || undefined,
+    phone: raw.client_phone?.trim() || undefined,
+  };
+}
+
+/**
+ * Best-effort GET /api/clients/:id for practice hydration.
+ * Uses `apiFetch` directly (not `getClient`) so failures never hit `console.error` in clients-actions.
+ */
+async function fetchClientForPracticeHydration(
+  practiceId: number,
+  clientId: number,
+): Promise<Practice["client"] | null> {
+  try {
+    const c = (await apiFetch(`/api/clients/${clientId}`, {
+      method: "GET",
+    })) as Client;
+    if (!c?.name) {
+      console.log("[practice hydrate client] GET /api/clients/%s — response has no usable name", clientId, {
+        practiceId,
+        clientId,
+        raw: c,
+      });
+      return null;
+    }
+    const normalized = {
+      id: c.id,
+      name: c.name,
+      email: c.email ?? undefined,
+      phone: c.phone ?? undefined,
+    };
+    console.log("[practice hydrate client] GET /api/clients/%s — OK", clientId, {
+      practiceId,
+      client: normalized,
+    });
+    return normalized;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status =
+      error instanceof Error && "status" in error
+        ? (error as Error & { status?: number }).status
+        : undefined;
+    console.log("[practice hydrate client] GET /api/clients/%s — failed", clientId, {
+      practiceId,
+      status,
+      message,
+    });
+    return null;
+  }
+}
+
+/** Ensures `practice.client` when the backend only links by `client_id` or flat keys. */
+async function hydratePracticeClient(practice: Practice): Promise<Practice> {
+  const raw = practice as Practice & PracticeApiFlatClient;
+
+  if (practice.client?.name) {
+    console.log("[practice hydrate client] using nested client from GET /api/practices/:id", {
+      practiceId: practice.id,
+      client: practice.client,
+    });
+    return practice;
+  }
+
+  console.log("[practice hydrate client] no nested client on practice payload — will try flat fields + /api/clients/:id", {
+    practiceId: practice.id,
+    client_id: practice.client_id,
+    flat: {
+      client_name: raw.client_name ?? null,
+      client_email: raw.client_email ?? null,
+      client_phone: raw.client_phone ?? null,
+    },
+  });
+
+  const fromFlat = buildClientFromFlatFields(practice, raw);
+  if (fromFlat) {
+    console.log("[practice hydrate client] built client from flat fields", {
+      practiceId: practice.id,
+      client: fromFlat,
+    });
+    return { ...practice, client: fromFlat };
+  }
+
+  if (practice.client_id > 0) {
+    const client = await fetchClientForPracticeHydration(
+      practice.id,
+      practice.client_id,
+    );
+    if (client) {
+      return { ...practice, client };
+    }
+  }
+
+  console.log("[practice hydrate client] still no client after hydration — UI may show “Cliente non disponibile”", {
+    practiceId: practice.id,
+    client_id: practice.client_id,
+  });
+  return practice;
+}
 
 // Practice types based on backend schema
 export interface Practice {
@@ -76,7 +195,7 @@ export async function getPractice(id: number): Promise<Practice | null> {
     const practice = (await apiFetch(`/api/practices/${id}`, {
       method: "GET",
     })) as Practice;
-    return practice;
+    return await hydratePracticeClient(practice);
   } catch (error: unknown) {
     if (
       error instanceof Error &&

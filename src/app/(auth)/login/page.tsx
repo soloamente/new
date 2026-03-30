@@ -82,7 +82,8 @@ export default function LoginPage() {
 
   return (
     <main
-      className="flex items-center justify-center md:justify-end gap-2 w-full bg-cover bg-center relative transition-all duration-500"
+      /* LayoutContent wraps pages in a flex column (h-screen); flex-1 fills height so inner % heights work. */
+      className="relative flex min-h-0 flex-1 w-full items-center justify-center gap-2 bg-cover bg-center transition-all duration-500 md:justify-end"
       style={{
         backgroundImage: `url(${backgroundImage})`,
       }}
