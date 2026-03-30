@@ -38,8 +38,9 @@ export function convertOperatorToRow(
   );
 
   const practicesCount = operatorPractices.length;
+  // Practices use is_concluded instead of a status string (API migration).
   const completedPractices = operatorPractices.filter(
-    (p) => p.status === "conclusa",
+    (p) => p.is_concluded === true,
   ).length;
 
   // Get last activity from the most recent practice

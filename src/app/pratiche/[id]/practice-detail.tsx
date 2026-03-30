@@ -268,7 +268,8 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
               <div className="flex flex-col gap-2">
                 {statusOptions.map((option) => (
                   <Button
-                    key={option.value}
+                    /* React keys must be string | number; boolean state is not a valid Key type. */
+                    key={option.value ? "conclusa" : "assegnata"}
                     variant={
                       practice.is_concluded === option.value
                         ? "default"
