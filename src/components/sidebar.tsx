@@ -6,10 +6,8 @@ import { useState } from "react";
 
 import { DashboardIcon } from "@/components/icons/dashboard-icon";
 import {
-  ClientsIcon,
   OperatoriIcon,
   PraticheIcon,
-  GearIcon,
   HelpIcon,
   UserCircleIcon,
 } from "./icons";
@@ -22,6 +20,8 @@ import HouseUserIcon from "./icons/house-user";
 import OpenRectArrowOutIcon from "./icons/open-rect-arrow-out";
 import { logout } from "@/app/actions/auth-actions";
 import { WeatherWidget } from "./weather-widget";
+import { useMobileSidebar } from "./mobile-sidebar-context";
+import { X } from "lucide-react";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -90,6 +90,7 @@ function isNavigationItemVisible(href: string, role: UserRole | null): boolean {
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { isMobileSidebarOpen, closeMobileSidebar } = useMobileSidebar();
 
   // All possible navigation items
   const allNavigationItems: NavigationItem[] = [
@@ -156,12 +157,30 @@ export default function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       aria-label="Sidebar"
-      className="h-full w-full min-w-60.5 flex-0 px-6.5 py-6 font-medium"
+      className={cn(
+        "h-full px-6.5 py-6 font-medium",
+        /* Desktop: fixed-width column — do NOT use lg:w-full or the flex item steals the full row and hides main content. */
+        "lg:relative lg:z-auto lg:w-auto lg:min-w-60.5 lg:max-w-none lg:flex-shrink-0 lg:translate-x-0",
+        "max-lg:fixed max-lg:top-0 max-lg:left-0 max-lg:z-50 max-lg:h-full max-lg:w-[min(17rem,85vw)] max-lg:min-w-0 max-lg:overflow-y-auto max-lg:shadow-xl",
+        "max-lg:transition-transform max-lg:duration-200 max-lg:ease-out max-lg:motion-reduce:transition-none",
+        isMobileSidebarOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
+      )}
     >
       {/* Sidebar Groups Wrapper */}
       <div className="flex h-full flex-col justify-between">
         {/* Navigation Group Wrapper */}
         <div className="flex flex-col gap-6 pt-2">
+          {/* Mobile: explicit close so users aren’t forced to use backdrop only */}
+          <div className="flex items-center justify-end lg:hidden">
+            <button
+              type="button"
+              onClick={closeMobileSidebar}
+              className="text-sidebar-secondary hover:text-sidebar-primary flex size-10 items-center justify-center rounded-full"
+              aria-label="Chiudi menu"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
           {/* Weather Widget */}
           <WeatherWidget className="mb-2" />
           
@@ -173,6 +192,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={closeMobileSidebar}
                   className={cn(
                     "text-sidebar-secondary hover:text-sidebar-primary flex items-center gap-3.5",
                     isActiveItem(item.href) && "text-sidebar-primary",
@@ -193,7 +213,8 @@ export default function Sidebar({ user }: SidebarProps) {
               key={item.label}
               onClick={() => {
                 if (item.label === "Esci dall'account") {
-                  logout();
+                  // Server action returns a Promise; explicitly void so ESLint accepts fire-and-forget.
+                  void logout();
                 }
               }}
               className="text-sidebar-secondary hover:text-sidebar-primary flex cursor-pointer items-center gap-3.5"
@@ -203,7 +224,8 @@ export default function Sidebar({ user }: SidebarProps) {
             </button>
           ))}
 
-          <div className="hover:bg-card flex cursor-pointer items-center gap-3.5 rounded-full">
+          {/* p-1 pr-2: tight padding + extra right so hover pill breathes next to the edge */}
+          <div className="hover:bg-card flex cursor-pointer items-center gap-3.5 rounded-full p-1 pr-2">
             <Avatar className="size-9">
               <AvatarFallback placeholderSeed={user?.name ?? "User"} />
             </Avatar>

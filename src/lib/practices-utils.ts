@@ -1,27 +1,33 @@
 import type { Practice } from "@/app/actions/practices-actions";
 
-// UI status type
-export type PracticeStatus = "assigned" | "in_progress" | "completed" | "suspended";
+// UI status type derived from the new binary API state.
+export type PracticeStatus = "assigned" | "completed";
 
-// Map API status to UI status
-export function mapApiStatusToUI(
-  apiStatus: Practice["status"],
-): PracticeStatus {
-  switch (apiStatus) {
-    case "assegnata":
-      return "assigned";
-    case "in lavorazione":
-      return "in_progress";
-    case "conclusa":
-      return "completed";
-    case "sospesa":
-      return "suspended";
-    default:
-      return "assigned";
-  }
+// Map API boolean state to UI status key.
+export function mapApiStatusToUI(isConcluded: Practice["is_concluded"]): PracticeStatus {
+  return isConcluded ? "completed" : "assigned";
 }
 
-// Format date to Italian format
+// Format date to Italian format (date only, no time)
+/**
+ * Initials for a person/entity display name (first + last word, or two chars of a single word).
+ * Used for avatar fallbacks instead of whimsical placeholder icons.
+ */
+export function getDisplayNameInitials(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "?";
+  if (trimmed === "Non assegnato") return "NA";
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    const w = parts[0];
+    if (!w) return "?";
+    return w.length >= 2 ? w.slice(0, 2).toUpperCase() : w.slice(0, 1).toUpperCase();
+  }
+  const first = parts[0]?.[0] ?? "";
+  const last = parts[parts.length - 1]?.[0] ?? "";
+  return `${first}${last}`.toUpperCase();
+}
+
 export function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return "Data non disponibile";
 
@@ -45,10 +51,7 @@ export function formatDate(dateString: string | null | undefined): string {
     const day = date.getDate();
     const month = months[date.getMonth()];
     const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-
-    return `${day} ${month} ${year}, ${hours}:${minutes}`;
+    return `${day} ${month} ${year}`;
   } catch {
     return "Data non valida";
   }
@@ -63,9 +66,11 @@ export interface PracticeRow {
   rawDate: string | null;
   internalOperator: string;
   client: string;
+  clientPhone: string;
   type: string;
   note: string | undefined;
   status: PracticeStatus;
+  isConcluded: boolean;
 }
 
 export function convertPracticeToRow(practice: Practice): PracticeRow {
@@ -76,9 +81,11 @@ export function convertPracticeToRow(practice: Practice): PracticeRow {
     rawDate: practice.created_at ?? null,
     internalOperator: practice.operator?.name ?? "Non assegnato",
     client: practice.client?.name ?? "Cliente sconosciuto",
+    clientPhone: practice.client?.phone ?? "N/D",
     type: practice.type,
     note: practice.notes ?? undefined,
-    status: mapApiStatusToUI(practice.status),
+    status: mapApiStatusToUI(practice.is_concluded),
+    isConcluded: practice.is_concluded,
   };
 }
 

@@ -5,25 +5,31 @@ import { useEffect, useState } from "react";
 import { getCurrentUser, type User } from "@/app/actions/auth-actions";
 import Sidebar from "./sidebar";
 import Preferences from "@/components/ui/preferences";
+import { cn } from "@/lib/utils";
+import { MobileSidebarProvider, useMobileSidebar } from "./mobile-sidebar-context";
+import { MobileMenuOpenButton } from "./mobile-menu-open-button";
 
 /**
- * LayoutContent Component (Client Component)
- *
- * Handles pathname-based conditional rendering of sidebar and preferences.
- * Fetches user data on mount and when pathname changes (e.g., after login redirect).
+ * Inner shell: subscribes to mobile sidebar context and closes the drawer on route change.
  */
-export default function LayoutContent({
+function LayoutContentInner({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const { closeMobileSidebar, isMobileSidebarOpen } = useMobileSidebar();
 
-  // Fetch user on mount and when pathname changes (after login redirect)
+  // Fetch user on mount and when pathname changes (e.g. after login redirect)
   useEffect(() => {
     getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null));
   }, [pathname]);
+
+  // After any navigation, collapse the mobile drawer so the new page uses full width.
+  useEffect(() => {
+    closeMobileSidebar();
+  }, [pathname, closeMobileSidebar]);
 
   // List of paths where the sidebar should be hidden
   const hideSidebarPaths: string[] = [];
@@ -59,10 +65,39 @@ export default function LayoutContent({
   );
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="relative flex h-screen overflow-hidden">
       {shouldShowSidebar && <Sidebar user={user} />}
-      {children}
+      <div
+        className={cn(
+          "relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+          shouldShowSidebar &&
+            "transition-transform duration-200 ease-out motion-reduce:transition-none max-lg:motion-reduce:transform-none",
+          shouldShowSidebar &&
+            isMobileSidebarOpen &&
+            "max-lg:translate-x-[min(17rem,85vw)]",
+        )}
+      >
+        {children}
+      </div>
+      {/* No fullscreen scrim: a dark overlay sat above the whole viewport and dimmed the sidebar too. */}
+      {shouldShowSidebar && <MobileMenuOpenButton />}
       {shouldPreferences && <Preferences />}
     </div>
+  );
+}
+
+/**
+ * LayoutContent Component (Client Component)
+ *
+ * Handles pathname-based conditional rendering of sidebar and preferences.
+ * Fetches user data on mount and when pathname changes (e.g. after login redirect).
+ */
+export default function LayoutContent({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <MobileSidebarProvider>
+      <LayoutContentInner>{children}</LayoutContentInner>
+    </MobileSidebarProvider>
   );
 }

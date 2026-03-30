@@ -47,8 +47,8 @@ export function convertOperatorToRow(
     operatorPractices.length > 0
       ? operatorPractices.sort(
           (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime(),
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime(),
         )[0]?.created_at ?? null
       : null;
 
@@ -75,19 +75,41 @@ const OPERATOR_AVATAR_BG_PALETTE: string[] = [
   "oklch(0.42 0.12 25)", // orange
   "oklch(0.42 0.12 340)", // magenta
   "oklch(0.40 0.06 280)", // violet (lower chroma)
-];/**
+];
+
+export interface GetOperatorAvatarColorsOptions {
+  /**
+   * When rendering initials on a colored badge, set a near-white foreground so
+   * text reads at full brightness (default placeholder icon color is muted gray).
+   */
+  withInitialsForeground?: boolean;
+}
+
+/**
  * Deterministically pick an operator avatar color from a small palette.
  * This keeps each operator recognizable without relying on uploaded images.
  */
 export function getOperatorAvatarColors(
   seed?: string | null,
+  options?: GetOperatorAvatarColorsOptions,
 ): CSSProperties {
   const normalizedSeed = seed?.trim().toLowerCase();
-  if (!normalizedSeed) return { backgroundColor: OPERATOR_AVATAR_BG_PALETTE[0]! };  // Simple stable hash (same approach used by avatar placeholder icons).
-  let hash = 0;
-  for (let index = 0; index < normalizedSeed.length; index += 1) {
-    hash = (hash * 31 + normalizedSeed.charCodeAt(index)) >>> 0;
-  }  const paletteIndex = hash % OPERATOR_AVATAR_BG_PALETTE.length;  return {
-    backgroundColor: OPERATOR_AVATAR_BG_PALETTE[paletteIndex]!,
-  };
+  // Simple stable hash (same approach used by avatar placeholder icons).
+  let paletteIndex = 0;
+  if (normalizedSeed) {
+    let hash = 0;
+    for (let index = 0; index < normalizedSeed.length; index += 1) {
+      hash = (hash * 31 + normalizedSeed.charCodeAt(index)) >>> 0;
+    }
+    paletteIndex = hash % OPERATOR_AVATAR_BG_PALETTE.length;
+  }
+  const backgroundColor = OPERATOR_AVATAR_BG_PALETTE[paletteIndex]!;
+  if (options?.withInitialsForeground) {
+    return {
+      backgroundColor,
+      // Full-luminance foreground on saturated chips (AvatarFallback default would stay gray).
+      color: "oklch(0.99 0 0)",
+    };
+  }
+  return { backgroundColor };
 }

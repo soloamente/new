@@ -5,10 +5,8 @@ import { useState } from "react";
 import type { Practice } from "@/app/actions/practices-actions";
 import {
   CheckIcon,
-  HalfStatusIcon,
   PraticheIcon,
   UserCircleIcon,
-  XIcon,
   ArrowUpRightIcon,
   MsgSmile2Icon,
 } from "@/components/icons";
@@ -40,26 +38,12 @@ const practiceStatusStyles: Record<
     icon: <UserCircleIcon />,
     iconColor: "var(--status-assigned-icon)",
   },
-  in_progress: {
-    label: "In lavorazione",
-    accent: "var(--status-in-progress-accent)",
-    background: "var(--status-in-progress-background)",
-    icon: <HalfStatusIcon />,
-    iconColor: "var(--status-in-progress-icon)",
-  },
   completed: {
     label: "Conclusa",
     accent: "var(--status-completed-accent)",
     background: "var(--status-completed-background)",
     icon: <CheckIcon />,
     iconColor: "var(--status-completed-icon)",
-  },
-  suspended: {
-    label: "Sospesa",
-    accent: "var(--status-suspended-accent)",
-    background: "var(--status-suspended-background)",
-    icon: <XIcon />,
-    iconColor: "var(--status-suspended-icon)",
   },
 };
 
@@ -75,24 +59,22 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
     text: string;
   } | null>(null);
 
-  const status = mapApiStatusToUI(practice.status);
+  const status = mapApiStatusToUI(practice.is_concluded);
   const statusVisual = practiceStatusStyles[status];
 
   const handleBack = () => {
     router.push("/pratiche");
   };
 
-  const handleStatusChange = async (
-    newStatus: Practice["status"],
-  ) => {
-    if (newStatus === practice.status) return;
+  const handleStatusChange = async (newIsConcluded: boolean) => {
+    if (newIsConcluded === practice.is_concluded) return;
 
     setIsUpdating(true);
     setUpdateMessage(null);
     
     try {
       const result = await updatePractice(practice.id, {
-        status: newStatus,
+        is_concluded: newIsConcluded,
       });
 
       if (result) {
@@ -110,7 +92,7 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
           text: "Errore durante l'aggiornamento dello stato",
         });
       }
-    } catch (error) {
+    } catch {
       setUpdateMessage({
         type: "error",
         text: "Errore durante l'aggiornamento dello stato",
@@ -121,13 +103,11 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
   };
 
   const statusOptions: Array<{
-    value: Practice["status"];
+    value: boolean;
     label: string;
   }> = [
-    { value: "assegnata", label: "Assegnata" },
-    { value: "in lavorazione", label: "In lavorazione" },
-    { value: "conclusa", label: "Conclusa" },
-    { value: "sospesa", label: "Sospesa" },
+    { value: false, label: "Assegnata" },
+    { value: true, label: "Conclusa" },
   ];
 
   return (
@@ -290,11 +270,13 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
                   <Button
                     key={option.value}
                     variant={
-                      practice.status === option.value ? "default" : "outline"
+                      practice.is_concluded === option.value
+                        ? "default"
+                        : "outline"
                     }
                     size="sm"
                     onClick={() => handleStatusChange(option.value)}
-                    disabled={isUpdating || practice.status === option.value}
+                    disabled={isUpdating || practice.is_concluded === option.value}
                     className="justify-start"
                   >
                     {option.label}

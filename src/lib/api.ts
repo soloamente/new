@@ -9,14 +9,13 @@ type FetchOptions = RequestInit & {
 
 /**
  * Statistiche pratiche per studio.
- * NOTE: le chiavi includono anche lo stato con spazio ("in lavorazione") e
- * i conteggi includono gli zeri (come da specifica API).
+ * Modello stato pratiche aggiornato:
+ * - assegnata (is_concluded = false)
+ * - conclusa (is_concluded = true)
  */
 export interface PracticeStatusStats {
   assegnata: number;
-  "in lavorazione": number;
   conclusa: number;
-  sospesa: number;
 }
 
 export interface StudioStatisticsOperator {
@@ -43,9 +42,7 @@ function isPracticeStatusStats(value: unknown): value is PracticeStatusStats {
 
   return (
     isFiniteNumber(value.assegnata) &&
-    isFiniteNumber(value["in lavorazione"]) &&
-    isFiniteNumber(value.conclusa) &&
-    isFiniteNumber(value.sospesa)
+    isFiniteNumber(value.conclusa)
   );
 }
 
@@ -93,7 +90,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -104,17 +101,25 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   if (!response.ok) {
     // Handle rate limiting (429) gracefully
     if (response.status === 429) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData: unknown = await response.json().catch(() => ({}));
+      const rateLimitMessage =
+        isRecord(errorData) && typeof errorData.message === "string"
+          ? errorData.message
+          : undefined;
       const error = new Error(
-        errorData.message || "Troppe richieste. Riprova tra qualche istante.",
+        rateLimitMessage ?? "Troppe richieste. Riprova tra qualche istante.",
       );
       (error as Error & { status?: number }).status = 429;
       throw error;
     }
 
-    const errorData = await response.json().catch(() => ({}));
+    const errorData: unknown = await response.json().catch(() => ({}));
+    const apiErrorMessage =
+      isRecord(errorData) && typeof errorData.message === "string"
+        ? errorData.message
+        : undefined;
     const error = new Error(
-      errorData.message || `API Error: ${response.statusText}`,
+      apiErrorMessage ?? `API Error: ${response.statusText}`,
     );
     (error as Error & { status?: number }).status = response.status;
     throw error;
@@ -125,7 +130,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
     return null;
   }
 
-  return response.json();
+  return (await response.json()) as unknown;
 }
 
 /**
@@ -133,11 +138,11 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
  * Requisiti backend: JWT Bearer + ruolo AMMINISTRATORE_STUDIO.
  */
 export async function getStudioStatistics(): Promise<StudioStatisticsResponse> {
-  const json = (await apiFetch("/api/statistics/studio", {
+  const json = await apiFetch("/api/statistics/studio", {
     method: "GET",
     // We want fresh data in the dashboard (no stale caching for operational stats).
     cache: "no-store",
-  })) as unknown;
+  });
 
   return parseStudioStatisticsResponse(json);
 }

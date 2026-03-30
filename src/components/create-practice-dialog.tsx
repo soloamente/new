@@ -13,13 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   createPractice,
   type CreatePracticeInput,
 } from "@/app/actions/practices-actions";
@@ -44,12 +37,11 @@ export function CreatePracticeDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreatePracticeInput>({
-    assigned_to: currentUserId || 0,
+    assigned_to: currentUserId ?? 0,
     client: "",
     client_email: "",
     client_phone: "",
     type: "",
-    status: "assegnata",
     notes: "",
   });
 
@@ -77,7 +69,9 @@ export function CreatePracticeDialog({
     }
 
     // Debounce the search by 300ms
-    searchTimeoutRef.current = setTimeout(async () => {
+    searchTimeoutRef.current = setTimeout(() => {
+      // Fire and forget inside the timer while preserving proper error handling.
+      void (async () => {
       setIsSearchingClients(true);
       try {
         const results = await searchClients(query);
@@ -89,6 +83,7 @@ export function CreatePracticeDialog({
       } finally {
         setIsSearchingClients(false);
       }
+      })();
     }, 300);
   }, []);
 
@@ -124,8 +119,8 @@ export function CreatePracticeDialog({
     setFormData((prev) => ({
       ...prev,
       client: client.name,
-      client_email: client.email || "",
-      client_phone: client.phone || "",
+      client_email: client.email ?? "",
+      client_phone: client.phone ?? "",
     }));
     setShowClientDropdown(false);
     setClientSearchResults([]);
@@ -141,10 +136,9 @@ export function CreatePracticeDialog({
     try {
       // Clean up empty optional fields
       const payload: CreatePracticeInput = {
-        assigned_to: formData.assigned_to || currentUserId || 0,
+        assigned_to: formData.assigned_to || (currentUserId ?? 0),
         client: formData.client.trim(),
         type: formData.type.trim(),
-        status: formData.status,
         ...(formData.client_email?.trim() && {
           client_email: formData.client_email.trim(),
         }),
@@ -178,12 +172,12 @@ export function CreatePracticeDialog({
       if (result) {
         // Reset form and close dialog
         setFormData({
-          assigned_to: currentUserId || 0,
+          assigned_to: currentUserId ?? 0,
+          // Reset to the default assigned operator in dialog state.
           client: "",
           client_email: "",
           client_phone: "",
           type: "",
-          status: "assegnata",
           notes: "",
         });
         // Reset client search state
@@ -219,19 +213,10 @@ export function CreatePracticeDialog({
     // If user is typing in the client field, trigger search and reset selected client
     if (field === "client") {
       setSelectedClientId(null);
-      searchClientsDebounced(value);
+      void searchClientsDebounced(value);
     }
     
     // Clear error when user starts typing
-    if (error) setError(null);
-  };
-
-  const handleSelectChange = (field: keyof CreatePracticeInput) => (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    // Clear error when user makes a selection
     if (error) setError(null);
   };
 
@@ -239,12 +224,11 @@ export function CreatePracticeDialog({
     if (!newOpen && !isSubmitting) {
       // Reset form when closing
       setFormData({
-        assigned_to: currentUserId || 0,
+        assigned_to: currentUserId ?? 0,
         client: "",
         client_email: "",
         client_phone: "",
         type: "",
-        status: "assegnata",
         notes: "",
       });
       setError(null);
@@ -389,7 +373,7 @@ export function CreatePracticeDialog({
                 id="practice-client-email"
                 type="email"
                 placeholder="mario.rossi@esempio.it"
-                value={formData.client_email || ""}
+                value={formData.client_email ?? ""}
                 onChange={handleInputChange("client_email")}
                 disabled={isSubmitting}
                 className="w-full"
@@ -407,36 +391,11 @@ export function CreatePracticeDialog({
                 id="practice-client-phone"
                 type="tel"
                 placeholder="333 1234567"
-                value={formData.client_phone || ""}
+                value={formData.client_phone ?? ""}
                 onChange={handleInputChange("client_phone")}
                 disabled={isSubmitting}
                 className="w-full"
               />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label
-                htmlFor="practice-status"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Stato <span className="text-destructive">*</span>
-              </label>
-              <Select
-                value={formData.status}
-                onValueChange={handleSelectChange("status")}
-                required
-                disabled={isSubmitting}
-              >
-                <SelectTrigger id="practice-status" className="w-full cursor-pointer bg-card px-3.75 py-3 rounded-xl">
-                  <SelectValue placeholder="Seleziona stato" />
-                </SelectTrigger>
-                <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
-                  <SelectItem value="assegnata" className="cursor-pointer">Assegnata</SelectItem>
-                  <SelectItem value="in lavorazione" className="cursor-pointer">In lavorazione</SelectItem>
-                  <SelectItem value="conclusa" className="cursor-pointer">Conclusa</SelectItem>
-                  <SelectItem value="sospesa" className="cursor-pointer">Sospesa</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -449,7 +408,7 @@ export function CreatePracticeDialog({
               <textarea
                 id="practice-notes"
                 placeholder="Note opzionali sulla pratica..."
-                value={formData.notes || ""}
+                value={formData.notes ?? ""}
                 onChange={handleInputChange("notes")}
                 disabled={isSubmitting}
                 rows={3}

@@ -4,6 +4,8 @@ import type { CSSProperties } from "react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { PracticeStatusStats } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { useDashboardChartLoading } from "./chart-loading-context";
 
 /** Una colonna del grafico: stato + valore (es. Assegnate, 12) */
 export interface StatusBarDatum {
@@ -13,7 +15,7 @@ export interface StatusBarDatum {
 }
 
 interface RevenueBarChartProps {
-  /** Le 4 colonne in ordine: Assegnate, In lavorazione, Concluse, Sospese */
+  /** Colonne stato pratiche (modello binario: Assegnate / Concluse) */
   data: StatusBarDatum[];
   /** Nome dell’operatore selezionato o "Totale studio" per l’accessibilità */
   dataSourceLabel: string;
@@ -62,21 +64,19 @@ function MouseTooltip({
 function getStatusAccentVar(key: keyof PracticeStatusStats): string {
   return key === "assegnata"
     ? "var(--status-assigned-accent)"
-    : key === "in lavorazione"
-      ? "var(--status-in-progress-accent)"
-      : key === "conclusa"
-        ? "var(--status-completed-accent)"
-        : "var(--status-suspended-accent)";
+    : "var(--status-completed-accent)";
 }
 
 /**
- * Grafico a barre verticali: 4 colonne fisse (Assegnate, In lavorazione, Concluse, Sospese).
- * I dati dipendono dal filtro operatore (operatore selezionato o totale studio).
+ * Grafico a barre verticali per il modello stato binario:
+ * Assegnate e Concluse. I dati dipendono dal filtro operatore
+ * (operatore selezionato o totale studio).
  */
 export function RevenueBarChart({
   data,
   dataSourceLabel,
 }: RevenueBarChartProps) {
+  const { isChartLoading } = useDashboardChartLoading();
   const [hoveredKey, setHoveredKey] = useState<
     keyof PracticeStatusStats | null
   >(null);
@@ -117,10 +117,19 @@ export function RevenueBarChart({
   return (
     <>
       <div
-        className="bg-muted/50 flex h-full w-full items-end justify-between gap-4 rounded-4xl p-6"
+        className="relative flex h-full w-full items-end justify-between gap-4 rounded-4xl bg-muted/50 p-6"
         role="img"
+        aria-busy={isChartLoading}
+        aria-live="polite"
         aria-label={`Grafico a barre: pratiche per stato. Dati: ${dataSourceLabel}.`}
       >
+        <div
+          className={cn(
+            "flex h-full w-full items-end justify-between gap-4",
+            isChartLoading &&
+              "pointer-events-none opacity-45 transition-opacity duration-200",
+          )}
+        >
         {data.map((item) => {
           const heightPercent = getBarHeightPercent(item.value);
           const accentVar = getStatusAccentVar(item.key);
@@ -155,11 +164,11 @@ export function RevenueBarChart({
                   title={`${item.label}: ${item.value}`}
                 >
                   <div
-                    className={[
-                      "h-full w-full cursor-pointer rounded-4xl",
+                    className={cn(
+                      "h-full w-full cursor-pointer rounded-4xl border border-foreground/5",
                       "transition-all duration-200 ease-out motion-reduce:transition-none",
-                      "border-foreground/5 border",
-                    ].join(" ")}
+                      isChartLoading && "animate-pulse motion-reduce:animate-none",
+                    )}
                     style={
                       {
                         backgroundColor: accentVar,
@@ -191,6 +200,17 @@ export function RevenueBarChart({
             </div>
           );
         })}
+        </div>
+        {isChartLoading ? (
+          <div
+            className="bg-background/35 pointer-events-none absolute inset-0 flex items-center justify-center rounded-4xl backdrop-blur-[2px]"
+            aria-hidden="true"
+          >
+            <span className="text-stats-title text-sm font-medium">
+              Aggiornamento dati…
+            </span>
+          </div>
+        ) : null}
       </div>
       <MouseTooltip
         x={mousePosition.x}

@@ -7,6 +7,7 @@ import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import { useDashboardChartLoading } from "./chart-loading-context";
 
 interface OperatorStatisticsFilterProps {
   operators: Array<{ id: number; name: string }>;
@@ -22,6 +23,7 @@ export function OperatorStatisticsFilter({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { setChartLoading } = useDashboardChartLoading();
 
   const placeholder = "Operatore";
 
@@ -46,6 +48,11 @@ export function OperatorStatisticsFilter({
     );
   }, [selectedOperatorId]);
 
+  // RSC finished refreshing: new props (selectedOperatorId) match the URL — hide chart loading.
+  useEffect(() => {
+    setChartLoading(false);
+  }, [selectedOperatorId, setChartLoading]);
+
   function handleValueChange(nextValue: string) {
     // Defensive: ensure we always persist an operator *id* in the URL.
     // `SearchableSelect` should emit `option.value`, but if a future refactor (or a consumer)
@@ -66,6 +73,8 @@ export function OperatorStatisticsFilter({
     }
 
     const query = params.toString();
+    // Show loading on the bar chart until the server page re-renders with new stats.
+    setChartLoading(true);
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });

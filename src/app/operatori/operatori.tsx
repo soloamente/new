@@ -3,7 +3,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRightIcon,
   CheckIcon,
   OperatoriIcon,
   SearchIcon,
@@ -173,10 +172,6 @@ export default function Operatori({ operators }: OperatoriProps) {
   const totalOperators = filteredOperators.length;
   const activeCount = filteredOperators.filter((o) => o.status === "active")
     .length;
-  const inactiveCount = filteredOperators.filter((o) => o.status === "inactive")
-    .length;
-  const onLeaveCount = filteredOperators.filter((o) => o.status === "on_leave")
-    .length;
   const totalPractices = filteredOperators.reduce(
     (sum, operator) => sum + operator.practicesCount,
     0,
@@ -224,13 +219,6 @@ export default function Operatori({ operators }: OperatoriProps) {
     }
     setSelectedOperators(newSelected);
   };
-
-  const activePercentage =
-    totalOperators > 0 ? Math.round((activeCount / totalOperators) * 100) : 0;
-  const previousActivePercentage = Math.round(
-    totalOperators > 0 ? ((activeCount - 1) / totalOperators) * 100 : 0,
-  );
-  const activeTrend = activePercentage - previousActivePercentage;
 
   const completionRate =
     totalPractices > 0
@@ -486,69 +474,34 @@ export default function Operatori({ operators }: OperatoriProps) {
       </Dialog>
       {/* Body Wrapper */}
       <div className="bg-background flex min-h-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
-        {/* Body Header */}
-        {/* Body Header - Stats */}
-        <div className="flex shrink-0 items-start gap-25.5">
-          {/* Stats - Totale operatori */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Totale operatori
-            </h3>
-            <div className="flex items-center justify-start gap-3.75">
-              <AnimateNumber className="text-xl">
-                {totalOperators}
-              </AnimateNumber>
-              <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
-              {/* Stats - Totale operatori - Status Counts */}
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <CheckIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{activeCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{inactiveCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{onLeaveCount}</AnimateNumber>
-                </div>
-              </div>
+        {/* Body Header - Stats (same card grid pattern as /pratiche) */}
+        <div className="grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Totale operatori</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <OperatoriIcon />
+              <AnimateNumber>{totalOperators}</AnimateNumber>
             </div>
           </div>
-          {/* Stats - Operatori attivi */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Operatori attivi
-            </h3>
-            <div className="flex items-center justify-start gap-2.5 text-xl">
-              <AnimateNumber suffix="%">{activePercentage}</AnimateNumber>
-              {activeTrend !== 0 && (
-                <>
-                  <ArrowUpRightIcon size={24} />
-                  <h4 className="flex items-center justify-center gap-1.25">
-                    <AnimateNumber
-                      prefix={activeTrend > 0 ? "+" : ""}
-                      suffix="%"
-                      className={activeTrend > 0 ? "text-green" : ""}
-                    >
-                      {activeTrend}
-                    </AnimateNumber>{" "}
-                    rispetto al mese precedente
-                  </h4>
-                </>
-              )}
-              {activeTrend === 0 && (
-                <h4>Stabile rispetto al mese precedente</h4>
-              )}
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Attivi</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <CheckIcon
+                size={24}
+                style={{ color: operatorStatusStyles.active.iconColor }}
+                suppressHydrationWarning
+              />
+              <AnimateNumber>{activeCount}</AnimateNumber>
             </div>
           </div>
-          {/* Stats - Tasso di completamento */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Tasso di completamento
-            </h3>
-            <div className="flex items-center justify-start gap-2.5 text-xl">
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Tasso di completamento</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <CheckIcon
+                size={24}
+                style={{ color: "var(--status-completed-icon)" }}
+                suppressHydrationWarning
+              />
               <AnimateNumber suffix="%">{completionRate}</AnimateNumber>
             </div>
           </div>

@@ -12,7 +12,9 @@ export interface Practice {
   year: number;
   number: number;
   type: string;
-  status: "assegnata" | "in lavorazione" | "conclusa" | "sospesa";
+  // Backend now exposes a binary status model:
+  // false = assegnata, true = conclusa
+  is_concluded: boolean;
   notes: string | null;
   created_at?: string | null;
   client?: {
@@ -103,7 +105,6 @@ export interface CreatePracticeInput {
   client_email?: string; // Opzionale
   client_phone?: string; // Opzionale
   type: string; // Tipo pratica
-  status: "assegnata" | "in lavorazione" | "conclusa" | "sospesa";
   notes?: string; // Opzionale
 }
 
@@ -144,7 +145,8 @@ export interface UpdatePracticeInput {
   client_email?: string;
   client_phone?: string;
   type?: string;
-  status?: "assegnata" | "in lavorazione" | "conclusa" | "sospesa";
+  // true = conclusa, false = assegnata/riaperta
+  is_concluded?: boolean;
   notes?: string;
 }
 

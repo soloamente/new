@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRightIcon,
   CheckIcon,
-  HalfStatusIcon,
   PraticheIcon,
   SearchIcon,
   UserCircleIcon,
-  MsgSmile2Icon,
-  XIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,14 +16,17 @@ import {
   type DateRange,
 } from "@/components/ui/date-range-filter";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { FaPlus } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
+import { motion, useReducedMotion } from "motion/react";
 import { AnimateNumber } from "motion-plus/react";
-import type { PracticeRow } from "@/lib/practices-utils";
+import { getDisplayNameInitials, type PracticeRow } from "@/lib/practices-utils";
 import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
 
@@ -47,58 +46,9 @@ interface PraticheProps {
 const normalizeValue = (value: string) =>
   value.toLowerCase().trim().replace(/\s+/g, "-");
 
-// Component to show tooltip only when text is truncated
-function NoteWithTooltip({ note }: { note: string }) {
-  const textRef = useRef<HTMLSpanElement>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-
-  useEffect(() => {
-    const checkTruncation = () => {
-      if (textRef.current) {
-        setIsTruncated(
-          textRef.current.scrollWidth > textRef.current.clientWidth,
-        );
-      }
-    };
-
-    // Use requestAnimationFrame to ensure DOM is fully rendered
-    requestAnimationFrame(() => {
-      checkTruncation();
-    });
-
-    window.addEventListener("resize", checkTruncation);
-
-    return () => {
-      window.removeEventListener("resize", checkTruncation);
-    };
-  }, [note]);
-
-  const noteSpan = (
-    <span ref={textRef} className="block w-full truncate text-left">
-      {note}
-    </span>
-  );
-
-  if (!isTruncated) {
-    return noteSpan;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          ref={textRef}
-          className="block w-full cursor-help truncate text-left"
-        >
-          {note}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={4} className="max-w-md">
-        <p className="">{note}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
+/** Same 6-column layout for both list views; on Tutte le pratiche the operator is only in group headers, not per row. */
+const PRATICHE_TABLE_GRID_CLASS =
+  "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
 
 const practiceStatusStyles: Record<
   PracticeRow["status"],
@@ -117,26 +67,12 @@ const practiceStatusStyles: Record<
     icon: <UserCircleIcon />,
     iconColor: "var(--status-assigned-icon)",
   },
-  in_progress: {
-    label: "In lavorazione",
-    accent: "var(--status-in-progress-accent)",
-    background: "var(--status-in-progress-background)",
-    icon: <HalfStatusIcon />,
-    iconColor: "var(--status-in-progress-icon)",
-  },
   completed: {
     label: "Conclusa",
     accent: "var(--status-completed-accent)",
     background: "var(--status-completed-background)",
     icon: <CheckIcon />,
     iconColor: "var(--status-completed-icon)",
-  },
-  suspended: {
-    label: "Sospesa",
-    accent: "var(--status-suspended-accent)",
-    background: "var(--status-suspended-background)",
-    icon: <XIcon />,
-    iconColor: "var(--status-suspended-icon)",
   },
 };
 
@@ -150,6 +86,7 @@ export default function Pratiche({
   const router = useRouter();
   const isOperator = userRoleId === 3;
   const isMineView = isOperator && view === "mine";
+  const shouldGroupByOperator = view === "all";
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<
     PracticeRow["status"] | "all"
@@ -158,10 +95,17 @@ export default function Pratiche({
   const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
 
+  /** Respect OS “reduce motion”; collapse/expand stays instant when enabled. */
+  const prefersReducedMotion = useReducedMotion();
+
   // State for selected practices
   const [selectedPractices, setSelectedPractices] = useState<Set<string>>(
     new Set(),
   );
+  // Track collapsed operator sections (empty set means all expanded by default).
+  const [collapsedOperatorGroups, setCollapsedOperatorGroups] = useState<
+    Set<string>
+  >(new Set());
 
   // Status filters - for OPERATORE, first filter is dynamic (Tutte/Mie)
   const statusFilters = [
@@ -188,37 +132,18 @@ export default function Pratiche({
       onClick: () => setStatusFilter("assigned"),
     },
     {
-      label: "Pratiche in lavorazione",
-      value: "in_progress",
-      active: statusFilter === "in_progress",
-      onClick: () => setStatusFilter("in_progress"),
-    },
-    {
       label: "Pratiche concluse",
       value: "completed",
       active: statusFilter === "completed",
       onClick: () => setStatusFilter("completed"),
     },
-    {
-      label: "Pratiche sospese",
-      value: "suspended",
-      active: statusFilter === "suspended",
-      onClick: () => setStatusFilter("suspended"),
-    },
   ];
+  const statusFilterOptions = statusFilters.map((filter) => ({
+    label: filter.label,
+    value: filter.value,
+  }));
 
-  // Get unique operators and clients from practices for filters
-  const uniqueOperators = useMemo(() => {
-    const operators = new Set(
-      practices.map((p) => p.internalOperator).filter(Boolean),
-    );
-    return Array.from(operators).map((name) => ({
-      label: name,
-      value: name.toLowerCase().replace(/\s+/g, "-"),
-      active: false,
-    }));
-  }, [practices]);
-
+  // Get unique clients from practices for filters
   const uniqueClients = useMemo(() => {
     const clients = new Set(practices.map((p) => p.client).filter(Boolean));
     return Array.from(clients).map((name) => ({
@@ -228,76 +153,16 @@ export default function Pratiche({
     }));
   }, [practices]);
 
-  const assigneeFilters = useMemo(
-    () => {
-      // In "mie-pratiche" view, don't show operator filter (all practices are already filtered by current user)
-      const filters = [];
-      if (!isMineView) {
-        filters.push({
-          triggerLabel: "Operatore",
-          values: uniqueOperators,
-        });
-      }
-      filters.push({
-        triggerLabel: "Cliente",
-        values: uniqueClients,
-      });
-      return filters;
-    },
-    [uniqueOperators, uniqueClients, isMineView],
-  );
-
-  // State for assignee filter values
-  const initialFilterValues = useMemo(
-    () =>
-      Object.fromEntries(
-        assigneeFilters.map((filter) => [
-          filter.triggerLabel.toLowerCase().replace(/\s+/g, "-"),
-          filter.triggerLabel,
-        ]),
-      ),
-    [assigneeFilters],
-  );
-
-  const [assigneeFilterValues, setAssigneeFilterValues] =
-    useState<Record<string, string>>(initialFilterValues);
-
-  // Ensure select filters always have default placeholders even if options change
-  useEffect(() => {
-    setAssigneeFilterValues((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      assigneeFilters.forEach((filter) => {
-        const key = normalizeValue(filter.triggerLabel);
-        if (!(key in next)) {
-          next[key] = filter.triggerLabel;
-          changed = true;
-        }
-      });
-
-      return changed ? next : prev;
-    });
-  }, [assigneeFilters]);
+  const [clientFilterValue, setClientFilterValue] = useState("Cliente");
 
   // Derived filtered practices for UI (status + selects + search + date)
   const filteredPractices = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    // In "mie-pratiche" view, skip operator filter (all practices are already filtered by current user)
-    const operatorFilter = isMineView
-      ? null
-      : assigneeFilterValues[normalizeValue("Operatore")];
-    const clientFilter = assigneeFilterValues[normalizeValue("Cliente")];
+    const clientFilter = clientFilterValue;
 
     return practices.filter((practice) => {
       const matchesStatus =
         statusFilter === "all" ? true : practice.status === statusFilter;
-
-      // Skip operator filter in "mie-pratiche" view
-      const matchesOperator =
-        isMineView || !operatorFilter || operatorFilter === "Operatore"
-          ? true
-          : normalizeValue(practice.internalOperator) === operatorFilter;
 
       const matchesClient =
         !clientFilter || clientFilter === "Cliente"
@@ -313,6 +178,7 @@ export default function Pratiche({
           practice.type,
           practice.status,
           practice.note ?? "",
+          practice.clientPhone,
         ]
           .filter(Boolean)
           .some((field) => field.toLowerCase().includes(normalizedSearch));
@@ -337,54 +203,94 @@ export default function Pratiche({
 
       return (
         matchesStatus &&
-        matchesOperator &&
         matchesClient &&
         matchesSearch &&
         matchesDate
       );
     });
-  }, [assigneeFilterValues, dateFilter, practices, searchTerm, statusFilter, isMineView]);
+  }, [clientFilterValue, dateFilter, practices, searchTerm, statusFilter]);
+
+  const groupedPractices = useMemo(() => {
+    if (!shouldGroupByOperator) {
+      return [];
+    }
+
+    const grouped = new Map<string, PracticeRow[]>();
+    for (const practice of filteredPractices) {
+      const key = practice.internalOperator?.trim() || "Non assegnato";
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)?.push(practice);
+    }
+
+    return Array.from(grouped.entries())
+      .map(([operatorName, rows]) => ({
+        operatorName,
+        rows,
+      }))
+      .sort((a, b) => {
+        if (a.operatorName === "Non assegnato") return 1;
+        if (b.operatorName === "Non assegnato") return -1;
+        return a.operatorName.localeCompare(b.operatorName, "it", {
+          sensitivity: "base",
+        });
+      });
+  }, [filteredPractices, shouldGroupByOperator]);
+
+  // Keep collapse state in sync with the currently visible operator groups.
+  useEffect(() => {
+    if (!shouldGroupByOperator) return;
+    setCollapsedOperatorGroups((prev) => {
+      const validGroups = new Set(groupedPractices.map((g) => g.operatorName));
+      const next = new Set<string>();
+      for (const name of prev) {
+        if (validGroups.has(name)) {
+          next.add(name);
+        }
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [groupedPractices, shouldGroupByOperator]);
+
+  const visiblePractices = useMemo(() => {
+    if (!shouldGroupByOperator) {
+      return filteredPractices;
+    }
+    return groupedPractices.flatMap((group) =>
+      collapsedOperatorGroups.has(group.operatorName) ? [] : group.rows,
+    );
+  }, [collapsedOperatorGroups, filteredPractices, groupedPractices, shouldGroupByOperator]);
 
   // Calculate statistics from filtered practices to mirror visible rows
   const totalPractices = filteredPractices.length;
   const completedCount = filteredPractices.filter(
     (p) => p.status === "completed",
   ).length;
-  const inProgressCount = filteredPractices.filter(
-    (p) => p.status === "in_progress",
-  ).length;
   const assignedCount = filteredPractices.filter((p) => p.status === "assigned")
     .length;
-  const suspendedCount = filteredPractices.filter(
-    (p) => p.status === "suspended",
-  ).length;
 
-  // Calculate select all checkbox state
-  const allSelected = useMemo(
-    () =>
-      filteredPractices.length > 0 &&
-      filteredPractices.every((practice) =>
-        selectedPractices.has(practice.id),
-      ),
-    [filteredPractices, selectedPractices],
-  );
-
-  const someSelected = useMemo(
-    () =>
-      filteredPractices.some((practice) =>
-        selectedPractices.has(practice.id),
-      ) && !allSelected,
-    [allSelected, filteredPractices, selectedPractices],
-  );
-
-  // Handlers for checkbox selection
-  const handleSelectAll = (checked: boolean) => {
+  // Handlers for checkbox selection (optional scopeRows = one operator group when grouped)
+  const handleSelectAll = (checked: boolean, scopeRows?: PracticeRow[]) => {
+    const rows = scopeRows ?? visiblePractices;
     setSelectedPractices((prev) => {
       const next = new Set(prev);
       if (checked) {
-        filteredPractices.forEach((p) => next.add(p.id));
+        rows.forEach((p) => next.add(p.id));
       } else {
-        filteredPractices.forEach((p) => next.delete(p.id));
+        rows.forEach((p) => next.delete(p.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleOperatorGroup = (operatorName: string) => {
+    setCollapsedOperatorGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(operatorName)) {
+        next.delete(operatorName);
+      } else {
+        next.add(operatorName);
       }
       return next;
     });
@@ -400,19 +306,135 @@ export default function Pratiche({
     setSelectedPractices(newSelected);
   };
 
-  // Calculate completion percentage
-  const completionPercentage =
-    totalPractices > 0
-      ? Math.round((completedCount / totalPractices) * 100)
-      : 0;
+  const renderPracticeRow = (practice: PracticeRow) => {
+    const statusVisual = practiceStatusStyles[practice.status];
 
-  // For month-over-month comparison
-  const activePractices = totalPractices - suspendedCount;
-  const previousMonthCompletion =
-    activePractices > 0
-      ? Math.round(((completedCount - 1) / activePractices) * 100)
-      : 0;
-  const monthOverMonthChange = completionPercentage - previousMonthCompletion;
+    const handleRowClick = (e: React.MouseEvent) => {
+      // Don't navigate if clicking on checkbox or its label.
+      const target = e.target as HTMLElement;
+      const isCheckboxClick = Boolean(
+        target.closest('[role="checkbox"]') ??
+          target.closest('input[type="checkbox"]') ??
+          target.closest("label"),
+      );
+
+      if (!isCheckboxClick) {
+        router.push(`/pratiche/${practice.id}`);
+      }
+    };
+
+    return (
+      <div
+        key={practice.id}
+        onClick={handleRowClick}
+        className="hover:bg-muted cursor-pointer px-3 py-5 transition-colors"
+        role="button"
+        tabIndex={0}
+        aria-label={`Visualizza dettagli pratica ${practice.praticaNumber}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            router.push(`/pratiche/${practice.id}`);
+          }
+        }}
+      >
+        <div
+          className={cn(
+            "grid items-center gap-4 text-base",
+            PRATICHE_TABLE_GRID_CLASS,
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+              <Checkbox
+                aria-label={`Seleziona ${practice.praticaNumber}`}
+                labelClassName="items-center"
+                checked={selectedPractices.has(practice.id)}
+                onChange={(e) =>
+                  handleSelectPractice(practice.id, e.target.checked)
+                }
+              />
+            </div>
+            <span className="font-semibold">{practice.praticaNumber}</span>
+          </div>
+          <div className="truncate tabular-nums">{practice.date}</div>
+          <div className="flex items-center gap-2 truncate">
+            <Avatar aria-hidden className="bg-background">
+              <AvatarFallback
+                aria-label={`Cliente: ${practice.client}`}
+                placeholderSeed={practice.client}
+              >
+                {/* Same initials logic as operator badges; default placeholder palette from AvatarFallback */}
+                <span className="text-[10px] font-semibold uppercase leading-none tracking-tight">
+                  {getDisplayNameInitials(practice.client)}
+                </span>
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate">{practice.client}</span>
+          </div>
+          <div className="truncate tabular-nums">{practice.clientPhone}</div>
+          <div className="truncate">{practice.type}</div>
+          <div>
+            <span
+              className="inline-flex items-center justify-center gap-2 rounded-full py-1.25 pr-3 pl-2.5 text-base font-medium"
+              style={{
+                backgroundColor: statusVisual.background,
+                color: statusVisual.accent,
+              }}
+              suppressHydrationWarning
+            >
+              <span
+                style={{
+                  color: statusVisual.iconColor,
+                }}
+                suppressHydrationWarning
+              >
+                {statusVisual.icon}
+              </span>
+              {statusVisual.label}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTableHeader = (scopeRows?: PracticeRow[]) => {
+    const rowsScope = scopeRows ?? visiblePractices;
+    const scopeAllSelected =
+      rowsScope.length > 0 &&
+      rowsScope.every((p) => selectedPractices.has(p.id));
+    const scopeSomeSelected =
+      rowsScope.some((p) => selectedPractices.has(p.id)) && !scopeAllSelected;
+
+    return (
+    <div className="bg-table-header shrink-0 rounded-none px-3 py-2.25">
+      <div
+        className={cn(
+          "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
+          PRATICHE_TABLE_GRID_CLASS,
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <Checkbox
+            /* One stable label for SSR + hydration (group scope is handled in onChange only). */
+            aria-label="Seleziona tutte le pratiche"
+            labelClassName="items-center"
+            checked={scopeAllSelected}
+            indeterminate={scopeSomeSelected}
+            onChange={(e) => handleSelectAll(e.target.checked, scopeRows)}
+          />
+          <span>Pratica N.</span>
+        </div>
+        <div>Data</div>
+        <div>Cliente</div>
+        <div>Telefono</div>
+        <div>Tipologia</div>
+        <div>Stato</div>
+      </div>
+    </div>
+    );
+  };
 
   return (
     <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
@@ -437,62 +459,42 @@ export default function Pratiche({
         {/* Header - Filters & Search Container */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex w-full items-center justify-start gap-1.25">
-            {/* Header - StatusFilters */}
-            <div className="flex items-center justify-center">
-              {statusFilters.map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={filter.onClick}
-                  className={cn(
-                    "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
-                    !filter.active &&
-                      "bg-button-inactive text-button-inactive-foreground",
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-            {/* Header - Assignee Filters */}
+            {/* Header - Status Select (replaces tabs) */}
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                const selectedFilter = statusFilters.find((f) => f.value === value);
+                if (selectedFilter) {
+                  selectedFilter.onClick();
+                }
+              }}
+            >
+              <SelectTrigger className="bg-background w-fit cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none">
+                <SelectValue placeholder="Stato pratiche" />
+              </SelectTrigger>
+              <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
+                {statusFilterOptions.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className="cursor-pointer"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {/* Header - Client + Date Filters */}
             <div className="flex w-full flex-0 items-center justify-center gap-1.25">
-              {assigneeFilters.map((filter) => {
-                const filterKey = filter.triggerLabel
-                  .toLowerCase()
-                  .replace(/\s+/g, "-");
-                const isClientFilter = filter.triggerLabel === "Cliente";
-                const isOperatorFilter = filter.triggerLabel === "Operatore";
-
-                // Use SearchableSelect for both client and operator filters
-                return (
-                  <SearchableSelect
-                    key={filter.triggerLabel}
-                    placeholder={filter.triggerLabel}
-                    value={assigneeFilterValues[filterKey] ?? filter.triggerLabel}
-                    onValueChange={(value) => {
-                      setAssigneeFilterValues((prev) => ({
-                        ...prev,
-                        [filterKey]: value,
-                      }));
-                    }}
-                    options={filter.values}
-                    searchPlaceholder={
-                      isClientFilter
-                        ? "Cerca cliente..."
-                        : isOperatorFilter
-                          ? "Cerca operatore..."
-                          : "Cerca..."
-                    }
-                    showAllOption={true}
-                    allOptionLabel={
-                      isClientFilter
-                        ? "Tutti i clienti"
-                        : isOperatorFilter
-                          ? "Tutti gli operatori"
-                          : filter.triggerLabel
-                    }
-                  />
-                );
-              })}
+              <SearchableSelect
+                placeholder="Cliente"
+                value={clientFilterValue}
+                onValueChange={setClientFilterValue}
+                options={uniqueClients}
+                searchPlaceholder="Cerca cliente..."
+                showAllOption={true}
+                allOptionLabel="Tutti i clienti"
+              />
               {/* Date Range Filter */}
               <DateRangeFilter
                 value={dateFilter}
@@ -522,123 +524,40 @@ export default function Pratiche({
       <div className="bg-background flex min-h-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
         {/* Body Header */}
         {/* Body Header - Stats */}
-        <div className="flex shrink-0 items-start gap-25.5">
-          {/* Stats - Totale pratiche */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Totale pratiche
-            </h3>
-            <div className="flex items-center justify-start gap-3.75">
-              <AnimateNumber className="text-xl">
-                {totalPractices}
-              </AnimateNumber>
-              <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
-              {/* Stats - Totale pratiche - Status Counts */}
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <CheckIcon
-                    size={24}
-                    style={{
-                      color: practiceStatusStyles.completed.iconColor,
-                    }}
-                    suppressHydrationWarning
-                  />
-                  <AnimateNumber>{completedCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <HalfStatusIcon
-                    size={24}
-                    style={{
-                      color: practiceStatusStyles.in_progress.iconColor,
-                    }}
-                    suppressHydrationWarning
-                  />
-                  <AnimateNumber>{inProgressCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <UserCircleIcon
-                    size={24}
-                    style={{
-                      color: practiceStatusStyles.assigned.iconColor,
-                    }}
-                    suppressHydrationWarning
-                  />
-                  <AnimateNumber>{assignedCount}</AnimateNumber>
-                </div>
-                <div className="flex items-center justify-center gap-1.25 text-xl">
-                  <XIcon
-                    size={24}
-                    style={{
-                      color: practiceStatusStyles.suspended.iconColor,
-                    }}
-                    suppressHydrationWarning
-                  />
-                  <AnimateNumber>{suspendedCount}</AnimateNumber>
-                </div>
-              </div>
+        <div className="grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Totale pratiche</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <PraticheIcon />
+              <AnimateNumber>{totalPractices}</AnimateNumber>
             </div>
           </div>
-          {/* Stats - Andamento pratiche completate */}
-          <div className="flex flex-col items-start justify-center gap-2.5">
-            <h3 className="text-stats-title text-sm font-medium">
-              Andamento pratiche completate
-            </h3>
-            <div className="flex items-center justify-start gap-2.5 text-xl">
-              <AnimateNumber suffix="%">{completionPercentage}</AnimateNumber>
-              {monthOverMonthChange !== 0 && (
-                <>
-                  <ArrowUpRightIcon size={24} />
-                  <h4 className="flex items-center justify-center gap-1.25">
-                    <AnimateNumber
-                      prefix={monthOverMonthChange > 0 ? "+" : ""}
-                      suffix="%"
-                      className={monthOverMonthChange > 0 ? "text-green" : ""}
-                    >
-                      {monthOverMonthChange}
-                    </AnimateNumber>{" "}
-                    rispetto al mese precedente
-                  </h4>
-                </>
-              )}
-              {monthOverMonthChange === 0 && (
-                <h4>Stabile rispetto al mese precedente</h4>
-              )}
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Assegnate</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <UserCircleIcon
+                size={24}
+                style={{ color: practiceStatusStyles.assigned.iconColor }}
+                suppressHydrationWarning
+              />
+              <AnimateNumber>{assignedCount}</AnimateNumber>
+            </div>
+          </div>
+          <div className="bg-card rounded-xl p-4">
+            <div className="text-stats-title text-sm">Concluse</div>
+            <div className="mt-3 flex items-center gap-2.5 text-2xl">
+              <CheckIcon
+                size={24}
+                style={{ color: practiceStatusStyles.completed.iconColor }}
+                suppressHydrationWarning
+              />
+              <AnimateNumber>{completedCount}</AnimateNumber>
             </div>
           </div>
         </div>
 
         {/* Table */}
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl">
-          {/* Body Head */}
-          <div className="bg-table-header shrink-0 rounded-xl px-3 py-2.25">
-            <div
-              className={cn(
-                "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
-                isMineView
-                  ? // Keep "Data" tighter so names (Cliente) can breathe on smaller screens
-                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(180px,1.6fr)_minmax(220px,max-content)]"
-                  : // Keep "Data" tighter so "Operatore" can show the full name
-                    "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(120px,0.8fr)_minmax(180px,1.3fr)_minmax(220px,max-content)]",
-              )}
-            >
-              <div className="flex items-center gap-2.5">
-                <Checkbox
-                  aria-label="Seleziona tutte le pratiche"
-                  labelClassName="items-center"
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-                <span>Pratica N.</span>
-              </div>
-              <div>Data</div>
-              {!isMineView && <div>Operatore Interno</div>}
-              <div>Cliente</div>
-              <div>Tipologia</div>
-              <div>Note</div>
-              <div>Stato</div>
-            </div>
-          </div>
           {/* Table Body */}
           <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
             {filteredPractices.length === 0 ? (
@@ -647,131 +566,92 @@ export default function Pratiche({
                   Nessuna pratica trovata
                 </p>
               </div>
-            ) : (
-              filteredPractices.map((practice) => {
-                const statusVisual = practiceStatusStyles[practice.status];
-
-                const handleRowClick = (e: React.MouseEvent) => {
-                  // Don't navigate if clicking on checkbox or its label
-                  const target = e.target as HTMLElement;
-                const isCheckboxClick = Boolean(
-                  target.closest('[role="checkbox"]') ??
-                    target.closest('input[type="checkbox"]') ??
-                    target.closest("label"),
-                );
-
-                  if (!isCheckboxClick) {
-                    router.push(`/pratiche/${practice.id}`);
-                  }
-                };
+            ) : shouldGroupByOperator ? (
+              <div className="flex flex-col gap-3">
+                {groupedPractices.map((group) => {
+                const isCollapsed = collapsedOperatorGroups.has(group.operatorName);
 
                 return (
                   <div
-                    key={practice.id}
-                    onClick={handleRowClick}
-                    className="border-checkbox-border/70 hover:bg-muted cursor-pointer border-b px-3 py-5 transition-colors last:border-b-0"
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Visualizza dettagli pratica ${practice.praticaNumber}`}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        router.push(`/pratiche/${practice.id}`);
-                      }
-                    }}
+                    key={group.operatorName}
+                    className="bg-card overflow-hidden rounded-xl border border-border"
                   >
-                    <div
-                      className={cn(
-                        "grid items-center gap-4 text-base",
-                        isMineView
-                          ? "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(180px,1.6fr)_minmax(220px,max-content)]"
-                          : "grid-cols-[minmax(120px,max-content)_minmax(130px,170px)_minmax(220px,1.4fr)_minmax(200px,1.2fr)_minmax(120px,0.8fr)_minmax(180px,1.3fr)_minmax(220px,max-content)]",
-                      )}
+                    <button
+                      type="button"
+                      data-no-press-scale
+                      onClick={() => toggleOperatorGroup(group.operatorName)}
+                      className="bg-background/70 hover:bg-muted flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors"
+                      aria-expanded={!isCollapsed}
+                      aria-label={`Gruppo operatore ${group.operatorName}, ${group.rows.length} pratiche`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                        {/* Transparent root; rounded-md per feedback (default Avatar is rounded-full). */}
+                        <Avatar
+                          aria-hidden
+                          className="size-9 shrink-0 rounded-md bg-transparent"
                         >
-                          <Checkbox
-                            aria-label={`Seleziona ${practice.praticaNumber}`}
-                            labelClassName="items-center"
-                            checked={selectedPractices.has(practice.id)}
-                            onChange={(e) =>
-                              handleSelectPractice(
-                                practice.id,
-                                e.target.checked,
-                              )
-                            }
-                          />
-                        </div>
-                        <span className="font-semibold">
-                          {practice.praticaNumber}
-                        </span>
-                      </div>
-                      {/* Keep the date compact so the operator name can fit */}
-                      <div className="truncate tabular-nums">{practice.date}</div>
-                      {!isMineView && (
-                        <div className="flex items-center gap-2 truncate">
-                          <Avatar aria-hidden className="bg-background">
-                            <AvatarFallback
-                              aria-label={`Operatore: ${practice.internalOperator}`}
-                              placeholderSeed={practice.internalOperator}
-                              style={getOperatorAvatarColors(practice.internalOperator)}
-                            >
-                              {/* Operator placeholder icon per spec */}
-                              <MsgSmile2Icon
-                                aria-hidden="true"
-                                size={16}
-                                className="text-primary"
-                              />
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate">
-                            {practice.internalOperator}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 truncate">
-                        <Avatar aria-hidden className="bg-background">
-                          <AvatarFallback placeholderSeed={practice.client} />
-                        </Avatar>
-                        <span className="truncate">{practice.client}</span>
-                      </div>
-                      <div className="truncate">{practice.type}</div>
-                      <div className="truncate">
-                        {practice.note ? (
-                          <NoteWithTooltip note={practice.note} />
-                        ) : (
-                          <span className="text-stats-title block w-full truncate text-left">
-                            Nessuna nota
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <span
-                          className="inline-flex items-center justify-center gap-2 rounded-full py-1.25 pr-3 pl-2.5 text-base font-medium"
-                          style={{
-                            backgroundColor: statusVisual.background,
-                            color: statusVisual.accent,
-                          }}
-                          suppressHydrationWarning
-                        >
-                          <span
-                            style={{
-                              color: statusVisual.iconColor,
-                            }}
-                            suppressHydrationWarning
+                          <AvatarFallback
+                            className="rounded-md"
+                            aria-label={`Operatore: ${group.operatorName}`}
+                            style={getOperatorAvatarColors(group.operatorName, {
+                              withInitialsForeground: true,
+                            })}
                           >
-                            {statusVisual.icon}
-                          </span>
-                          {statusVisual.label}
+                            {/* Text initials instead of whimsical icon for quick scan in group headers */}
+                            <span className="text-[11px] font-semibold uppercase leading-none tracking-tight">
+                              {getDisplayNameInitials(group.operatorName)}
+                            </span>
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="min-w-0 truncate font-semibold">
+                          {group.operatorName}
+                        </span>
+                        <span className="text-stats-title shrink-0 text-sm">
+                          ({group.rows.length})
                         </span>
                       </div>
-                    </div>
+                      <span className="text-stats-title flex shrink-0 items-center gap-1.5 text-sm">
+                        {isCollapsed ? "Espandi" : "Comprimi"}
+                        {isCollapsed ? (
+                          <FaChevronDown aria-hidden className="size-3.5" />
+                        ) : (
+                          <FaChevronUp aria-hidden className="size-3.5" />
+                        )}
+                      </span>
+                    </button>
+                    {/* Height + opacity animate open/close (content stays mounted for smooth exit). */}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: isCollapsed ? 0 : "auto",
+                        opacity: isCollapsed ? 0 : 1,
+                      }}
+                      transition={{
+                        duration: prefersReducedMotion ? 0 : 0.2,
+                        ease: [0.4, 0, 0.2, 1],
+                      }}
+                      style={{ overflow: "hidden" }}
+                      aria-hidden={isCollapsed}
+                      inert={isCollapsed ? true : undefined}
+                    >
+                      <div className="border-checkbox-border/70 border-t">
+                        {renderTableHeader(group.rows)}
+                        <div className="divide-checkbox-border/70 divide-y">
+                          {group.rows.map((practice) => renderPracticeRow(practice))}
+                        </div>
+                      </div>
+                    </motion.div>
                   </div>
                 );
-              })
+                })}
+              </div>
+            ) : (
+              <>
+                {renderTableHeader()}
+                <div className="divide-checkbox-border/70 divide-y">
+                  {filteredPractices.map((practice) => renderPracticeRow(practice))}
+                </div>
+              </>
             )}
           </div>
         </div>
