@@ -24,7 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { motion, useReducedMotion } from "motion/react";
-import { AnimateNumber } from "motion-plus/react";
+// Animated stat counts: morph transitions between digits without motion-plus’s masked span layout.
+import { TextMorph } from "torph/react";
 import { getDisplayNameInitials, type PracticeRow } from "@/lib/practices-utils";
 import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
@@ -446,7 +447,7 @@ export default function Pratiche({
             <div className="text-stats-title text-sm">Totale pratiche</div>
             <div className="mt-3 flex items-center gap-2.5 text-2xl">
               <PraticheIcon />
-              <AnimateNumber>{totalPractices}</AnimateNumber>
+              <TextMorph>{totalPractices}</TextMorph>
             </div>
           </div>
           <div className="bg-card rounded-xl p-4">
@@ -457,7 +458,7 @@ export default function Pratiche({
                 style={{ color: practiceStatusStyles.assigned.iconColor }}
                 suppressHydrationWarning
               />
-              <AnimateNumber>{assignedCount}</AnimateNumber>
+              <TextMorph>{assignedCount}</TextMorph>
             </div>
           </div>
           <div className="bg-card rounded-xl p-4">
@@ -468,7 +469,7 @@ export default function Pratiche({
                 style={{ color: practiceStatusStyles.completed.iconColor }}
                 suppressHydrationWarning
               />
-              <AnimateNumber>{completedCount}</AnimateNumber>
+              <TextMorph>{completedCount}</TextMorph>
             </div>
           </div>
         </div>

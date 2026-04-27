@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaPlus } from "react-icons/fa";
-import { AnimateNumber } from "motion-plus/react";
+// Stat numbers: TextMorph morphs digit changes; prefix/suffix are plain text (AnimateNumber API had prefix/suffix props).
+import { TextMorph } from "torph/react";
 import type { ClientRow, ClientStatus } from "@/lib/clients-utils";
 
 interface ClientiProps {
@@ -290,21 +291,21 @@ export default function Clienti({ clients }: ClientiProps) {
               Totale clienti
             </h3>
             <div className="flex items-center justify-start gap-3.75">
-              <AnimateNumber className="text-xl">{totalClients}</AnimateNumber>
+              <TextMorph className="text-xl">{totalClients}</TextMorph>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale clienti - Status Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{activeCount}</AnimateNumber>
+                  <TextMorph>{activeCount}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{inactiveCount}</AnimateNumber>
+                  <TextMorph>{inactiveCount}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{pendingCount}</AnimateNumber>
+                  <TextMorph>{pendingCount}</TextMorph>
                 </div>
               </div>
             </div>
@@ -316,18 +317,14 @@ export default function Clienti({ clients }: ClientiProps) {
               Clienti attivi
             </h3>
             <div className="flex items-center justify-start gap-2.5 text-xl">
-              <AnimateNumber suffix="%">{activePercentage}</AnimateNumber>
+              <TextMorph>{`${activePercentage}%`}</TextMorph>
               {activeTrend !== 0 && (
                 <>
                   <ArrowUpRightIcon size={24} />
                   <h4 className="flex items-center justify-center gap-1.25">
-                    <AnimateNumber
-                      prefix={activeTrend > 0 ? "+" : ""}
-                      suffix="%"
+                    <TextMorph
                       className={activeTrend > 0 ? "text-green" : ""}
-                    >
-                      {activeTrend}
-                    </AnimateNumber>{" "}
+                    >{`${activeTrend > 0 ? "+" : ""}${activeTrend}%`}</TextMorph>{" "}
                     rispetto al mese precedente
                   </h4>
                 </>

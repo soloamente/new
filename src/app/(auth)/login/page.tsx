@@ -10,7 +10,7 @@ import Image from "next/image";
 // Array delle immagini disponibili per lo sfondo
 const BACKGROUND_IMAGES = [
   "/images/image.jpg",
-  "/images/image2.jpg",
+  "/images/image2.png",
   "/images/image3.jpg",
   "/images/image4.jpg",
 ] as const;

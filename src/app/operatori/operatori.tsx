@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FaPlus } from "react-icons/fa";
-import { AnimateNumber } from "motion-plus/react";
+// Stat numbers: TextMorph morphs digit changes without motion-plus masked spans.
+import { TextMorph } from "torph/react";
 import type { OperatorRow, OperatorStatus } from "@/lib/operators-utils";
 import {
   getOperatorAvatarColors,
@@ -262,17 +263,24 @@ export default function Operatori({ operators }: OperatoriProps) {
             </button>
           </div>
         </div>
-        {/* Header - Filters & Search Container */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex w-full items-center justify-start gap-1.25">
-            {/* Header - StatusFilters */}
-            <div className="flex items-center justify-center">
+        {/* Header - filtri e ricerca: stesso pattern di /pratiche su md+ (relative + row gap-2 + search absolute);
+            sotto md colonna piena larghezza senza absolute per evitare overlap tra tab e campi */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-2">
+          <div className="flex w-full min-w-0 items-center justify-start gap-1.25">
+            <div
+              role="group"
+              className="flex min-w-0 flex-wrap items-center justify-start gap-1.25"
+              aria-label="Filtra per stato"
+            >
               {statusFilters.map((filter) => (
                 <button
                   key={filter.value}
+                  type="button"
+                  aria-pressed={filter.active}
                   onClick={filter.onClick}
                   className={cn(
-                    "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm will-change-transform",
+                    // stessi padding di SelectTrigger in /pratiche (px-3.75 py-1.75); min-h-11 solo su touch
+                    "bg-background flex min-h-11 min-w-0 shrink-0 items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm will-change-transform md:min-h-0",
                     !filter.active &&
                       "bg-button-inactive text-button-inactive-foreground",
                   )}
@@ -281,22 +289,24 @@ export default function Operatori({ operators }: OperatoriProps) {
                 </button>
               ))}
             </div>
-            {/* Header - Assignee Filters removed */}
-            <div className="flex w-full flex-0 items-center justify-center gap-1.25" />
           </div>
-          {/* Header - Search */}
-          <div className="absolute right-0 flex items-center justify-center">
+          <div className="w-full max-md:shrink-0 md:absolute md:right-0 md:flex md:w-auto md:items-center md:justify-center">
             <label
-              htmlFor="search"
-              className="bg-background flex w-60 items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-[width,box-shadow] duration-300 ease-out focus-within:w-84"
+              htmlFor="operatori-search"
+              className={cn(
+                "bg-background flex min-w-0 items-center justify-between rounded-full px-3.75 py-1.75 text-sm transition-[width,box-shadow] duration-300 ease-out",
+                "w-full max-md:shadow-[0_1px_8px_rgba(0,0,0,0.06)]",
+                "md:w-60 md:shadow-[-18px_0px_14px_var(--color-card)] md:focus-within:w-84",
+              )}
             >
               <input
-                placeholder="Nome, email, operatore..."
+                id="operatori-search"
+                placeholder="Nome, email, operatore…"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
+                className="placeholder:text-search-placeholder w-full min-w-0 truncate focus:outline-none"
               />
-              <SearchIcon className="text-search-placeholder" />
+              <SearchIcon className="text-search-placeholder max-md:ml-1 max-md:shrink-0" />
             </label>
           </div>
         </div>
@@ -469,7 +479,7 @@ export default function Operatori({ operators }: OperatoriProps) {
             <div className="text-stats-title text-sm">Totale operatori</div>
             <div className="mt-3 flex items-center gap-2.5 text-2xl">
               <OperatoriIcon />
-              <AnimateNumber>{totalOperators}</AnimateNumber>
+              <TextMorph>{totalOperators}</TextMorph>
             </div>
           </div>
           <div className="bg-card rounded-xl p-4">
@@ -480,7 +490,7 @@ export default function Operatori({ operators }: OperatoriProps) {
                 style={{ color: operatorStatusStyles.active.iconColor }}
                 suppressHydrationWarning
               />
-              <AnimateNumber>{activeCount}</AnimateNumber>
+              <TextMorph>{activeCount}</TextMorph>
             </div>
           </div>
           <div className="bg-card rounded-xl p-4">
@@ -491,48 +501,54 @@ export default function Operatori({ operators }: OperatoriProps) {
                 style={{ color: "var(--status-completed-icon)" }}
                 suppressHydrationWarning
               />
-              <AnimateNumber suffix="%">{completionRate}</AnimateNumber>
+              <TextMorph>{`${completionRate}%`}</TextMorph>
             </div>
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table: one scrollport for X+Y so colonne e header restano allineate; su viewport stretti
+            il wrapper con min-width evita che la griglia schiacci tutto e consente lo swipe orizzontale */}
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl">
-          {/* Body Head */}
-          <div className="bg-table-header shrink-0 rounded-xl px-3 py-2.25">
-            <div className="text-table-header-foreground grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-sm font-medium">
-              <div className="flex items-center gap-2.5">
-                <Checkbox
-                  aria-label="Seleziona tutti gli operatori"
-                  labelClassName="items-center"
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-                <span>Operatore N.</span>
-              </div>
-              <div>Nome</div>
-              <div>Email</div>
-              <div>Telefono</div>
-              <div className="min-w-0">
-                <span className="block">Pratiche</span>
-                {/* Stessa dimensione del resto dell’intestazione (text-sm), solo peso normale + leggero scuro */}
-                <span className="text-table-header-foreground/85 block text-sm font-normal">
-                  concluse su assegnate
-                </span>
-              </div>
-              <div>Ultima attività</div>
-              <div>Stato</div>
-            </div>
-          </div>
-          {/* Table Body */}
-          <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
+          <div
+            className={cn(
+              "scroll-fade-y min-h-0 w-full min-w-0 flex-1 overflow-x-auto overflow-y-auto",
+              // -webkit- overflow scrolling aiuta l’inertia su iOS; evitare touch-pan-y che limita il pan al solo asse verticale
+              "overscroll-y-contain [-webkit-overflow-scrolling:touch]",
+            )}
+          >
             {filteredOperators.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
+              <div className="flex h-full min-h-48 items-center justify-center text-muted-foreground">
                 <p>Nessun operatore trovato</p>
               </div>
             ) : (
-              filteredOperators.map((operator) => {
+              <div className="min-w-208 lg:min-w-0">
+                <div className="bg-table-header sticky top-0 z-20 rounded-t-xl px-3 py-2.25">
+                  <div className="text-table-header-foreground grid w-full grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-sm font-medium">
+                    <div className="flex items-center gap-2.5">
+                      <Checkbox
+                        aria-label="Seleziona tutti gli operatori"
+                        labelClassName="items-center"
+                        checked={allSelected}
+                        indeterminate={someSelected}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                      <span>Operatore N.</span>
+                    </div>
+                    <div>Nome</div>
+                    <div>Email</div>
+                    <div>Telefono</div>
+                    <div className="min-w-0">
+                      <span className="block">Pratiche</span>
+                      {/* Stessa dimensione del resto dell’intestazione (text-sm), solo peso normale + leggero scuro */}
+                      <span className="text-table-header-foreground/85 block text-sm font-normal">
+                        concluse su assegnate
+                      </span>
+                    </div>
+                    <div>Ultima attività</div>
+                    <div>Stato</div>
+                  </div>
+                </div>
+                {filteredOperators.map((operator) => {
                 const statusVisual = operatorStatusStyles[operator.status];
                 const completionPercentage =
                   operator.practicesCount > 0
@@ -546,9 +562,9 @@ export default function Operatori({ operators }: OperatoriProps) {
                 return (
                   <div
                     key={operator.id}
-                    className="border-checkbox-border/70 hover:bg-muted border-b px-3 py-5 transition-colors last:border-b-0"
+                    className="border-checkbox-border/70 hover:bg-muted border-b px-3 py-5 transition-colors last:rounded-b-xl last:border-b-0"
                   >
-                    <div className="grid grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-base">
+                    <div className="grid w-full grid-cols-[minmax(120px,max-content)_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 text-base">
                       <div className="flex items-center gap-2.5">
                         <Checkbox
                           aria-label={`Seleziona ${operator.operatorNumber}`}
@@ -727,6 +743,8 @@ export default function Operatori({ operators }: OperatoriProps) {
                   </div>
                 );
               })
+            }
+            </div>
             )}
           </div>
         </div>

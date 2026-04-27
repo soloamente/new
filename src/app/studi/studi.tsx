@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FaPlus } from "react-icons/fa";
-import { AnimateNumber } from "motion-plus/react";
+// Stat numbers: TextMorph morphs digit changes without motion-plus masked spans.
+import { TextMorph } from "torph/react";
 import type { StudioRow } from "@/lib/studios-utils";
 import { CreateStudioDialog } from "@/components/create-studio-dialog";
 
@@ -272,21 +273,21 @@ export default function Studi({ studios }: StudiProps) {
               Totale studi
             </h3>
             <div className="flex items-center justify-start gap-3.75 tabular-nums">
-              <AnimateNumber className="text-xl ">{totalStudios}</AnimateNumber>
+              <TextMorph className="text-xl">{totalStudios}</TextMorph>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale studi - Details */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{studiosWithAdmin}</AnimateNumber>
+                  <TextMorph>{studiosWithAdmin}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{studiosWithOperators}</AnimateNumber>
+                  <TextMorph>{studiosWithOperators}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{studiosWithoutAdmin}</AnimateNumber>
+                  <TextMorph>{studiosWithoutAdmin}</TextMorph>
                 </div>
               </div>
             </div>

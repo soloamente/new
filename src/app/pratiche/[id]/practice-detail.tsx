@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import type { Practice } from "@/app/actions/practices-actions";
 import {
   ArrowBackIcon,
@@ -9,7 +10,6 @@ import {
   UserCircleIcon,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { formatDate, mapApiStatusToUI } from "@/lib/practices-utils";
 import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { updatePractice } from "@/app/actions/practices-actions";
@@ -24,7 +24,7 @@ const practiceStatusStyles: Record<
     label: string;
     accent: string;
     background: string;
-    icon: React.ReactNode;
+    icon: ReactNode;
     iconColor: string;
   }
 > = {
@@ -51,12 +51,17 @@ const practiceStatusStyles: Record<
 export default function PracticeDetail({ practice }: PracticeDetailProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  // Local override so badge + buttons reflect the new stato immediately (before router.refresh).
+  const [optimisticConcluded, setOptimisticConcluded] = useState<boolean | null>(
+    null,
+  );
+  const effectiveConcluded = optimisticConcluded ?? practice.is_concluded;
 
-  const status = mapApiStatusToUI(practice.is_concluded);
+  useEffect(() => {
+    setOptimisticConcluded(null);
+  }, [practice.id, practice.is_concluded]);
+
+  const status = mapApiStatusToUI(effectiveConcluded);
   const statusVisual = practiceStatusStyles[status];
 
   const handleBack = () => {
@@ -64,36 +69,26 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
   };
 
   const handleStatusChange = async (newIsConcluded: boolean) => {
-    if (newIsConcluded === practice.is_concluded) return;
+    if (newIsConcluded === effectiveConcluded) return;
 
+    setOptimisticConcluded(newIsConcluded);
     setIsUpdating(true);
-    setUpdateMessage(null);
-    
+
     try {
       const result = await updatePractice(practice.id, {
         is_concluded: newIsConcluded,
       });
 
       if (result) {
-        setUpdateMessage({
-          type: "success",
-          text: "Stato pratica aggiornato con successo",
-        });
-        // Refresh the page to show updated data after a short delay
-        setTimeout(() => {
-          router.refresh();
-        }, 1000);
+        toast.success("Stato pratica aggiornato con successo");
+        router.refresh();
       } else {
-        setUpdateMessage({
-          type: "error",
-          text: "Errore durante l'aggiornamento dello stato",
-        });
+        setOptimisticConcluded(null);
+        toast.error("Errore durante l'aggiornamento dello stato");
       }
     } catch {
-      setUpdateMessage({
-        type: "error",
-        text: "Errore durante l'aggiornamento dello stato",
-      });
+      setOptimisticConcluded(null);
+      toast.error("Errore durante l'aggiornamento dello stato");
     } finally {
       setIsUpdating(false);
     }
@@ -258,30 +253,16 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
                     /* React keys must be string | number; boolean state is not a valid Key type. */
                     key={option.value ? "conclusa" : "assegnata"}
                     variant={
-                      practice.is_concluded === option.value
-                        ? "default"
-                        : "outline"
+                      effectiveConcluded === option.value ? "default" : "outline"
                     }
                     size="sm"
                     onClick={() => handleStatusChange(option.value)}
-                    disabled={isUpdating || practice.is_concluded === option.value}
+                    disabled={isUpdating || effectiveConcluded === option.value}
                     className="justify-start"
                   >
                     {option.label}
                   </Button>
                 ))}
-                {updateMessage && (
-                  <div
-                    className={cn(
-                      "mt-2 rounded-lg px-3 py-2 text-sm",
-                      updateMessage.type === "success"
-                        ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                        : "bg-red-500/10 text-red-600 dark:text-red-400",
-                    )}
-                  >
-                    {updateMessage.text}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -290,4 +271,3 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
     </main>
   );
 }
-

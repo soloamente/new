@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FaPlus } from "react-icons/fa";
-import { AnimateNumber } from "motion-plus/react";
+// Stat numbers: TextMorph morphs digit changes without motion-plus masked spans.
+import { TextMorph } from "torph/react";
 import type { UserRow } from "@/lib/users-utils";
 import { CreateAdminDialog } from "@/components/create-admin-dialog";
 
@@ -293,21 +294,21 @@ export default function Utenti({ users }: UtentiProps) {
               Totale utenti
             </h3>
             <div className="flex items-center justify-start gap-3.75 tabular-nums">
-              <AnimateNumber className="text-xl">{totalUsers}</AnimateNumber>
+              <TextMorph className="text-xl">{totalUsers}</TextMorph>
               <div className="bg-stats-secondary h-5 w-0.75 rounded-full" />
               {/* Stats - Totale utenti - Role Counts */}
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <UserCircleIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{datawebCount}</AnimateNumber>
+                  <TextMorph>{datawebCount}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <CheckIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{adminCount}</AnimateNumber>
+                  <TextMorph>{adminCount}</TextMorph>
                 </div>
                 <div className="flex items-center justify-center gap-1.25 text-xl">
                   <XIcon size={24} className="text-stats-secondary" />
-                  <AnimateNumber>{operatorCount}</AnimateNumber>
+                  <TextMorph>{operatorCount}</TextMorph>
                 </div>
               </div>
             </div>

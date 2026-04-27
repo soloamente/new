@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { TextMorph } from "torph/react";
 import type { PracticeStatusStats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useDashboardChartLoading } from "./chart-loading-context";
@@ -54,7 +55,9 @@ function MouseTooltip({
           }}
         >
           <div className="font-medium">{label}</div>
-          <div className="tabular-nums">{value.toLocaleString("it-IT")}</div>
+          <TextMorph className="tabular-nums">
+            {value.toLocaleString("it-IT")}
+          </TextMorph>
         </motion.div>
       )}
     </AnimatePresence>
@@ -142,11 +145,11 @@ export function RevenueBarChart({
             >
               <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-end gap-1">
                 {item.value > 0 && (
-                  <span
-                    className="text-foreground text-xs font-bold tabular-nums"
-                    aria-label={`${item.label}: ${item.value}`}
-                  >
-                    {item.value}
+                  <span aria-label={`${item.label}: ${item.value}`}>
+                    {/* Outer span keeps aria-label; TextMorph does not forward DOM attrs (torph implementation). */}
+                    <TextMorph className="text-foreground text-xs font-bold tabular-nums">
+                      {item.value}
+                    </TextMorph>
                   </span>
                 )}
                 <div

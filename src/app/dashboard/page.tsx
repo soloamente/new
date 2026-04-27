@@ -14,6 +14,7 @@ import {
   type StudioStatisticsResponse,
 } from "@/lib/api";
 import { ChartLoadingProvider } from "./chart-loading-context";
+import { DashboardStatMorph } from "./dashboard-stat-morph";
 import { OperatorStatisticsFilter } from "./operator-statistics-filter";
 import { RevenueBarChart, type StatusBarDatum } from "./revenue-bar-chart";
 
@@ -93,36 +94,6 @@ export default async function DashboardPage({
     assegnata: 0,
     conclusa: 0,
   };
-  const studioTotalAll = sumPracticeStats(studioTotal);
-
-  // Summary cards for the simplified dashboard overview.
-  const dashboardCards: DashboardCard[] = [
-    {
-      id: "assigned",
-      title: "Pratiche assegnate",
-      value: studioTotal.assegnata.toString(),
-      description: "Totale studio",
-      icon: <UserCircleIcon size={84} aria-hidden="true" />,
-      iconClassName: "text-stats-secondary",
-    },
-    {
-      id: "completed",
-      title: "Pratiche concluse",
-      value: studioTotal.conclusa.toString(),
-      description: "Totale studio",
-      icon: <CheckIcon size={84} aria-hidden="true" />,
-      iconClassName: "text-green",
-    },
-    {
-      id: "total",
-      title: "Totale pratiche",
-      value: studioTotalAll.toString(),
-      description: "Totale studio",
-      icon: <PraticheIcon size={84} aria-hidden="true" />,
-      iconClassName: "text-foreground",
-    },
-  ];
-
   const chartData: RevenueBarDatum[] = (studioStatistics?.operators ?? []).map(
     (operator) => {
       const total = sumPracticeStats(operator.stats);
@@ -185,6 +156,39 @@ export default async function DashboardPage({
       ? activeOperator.fullLabel
       : "Totale studio";
 
+  // Summary cards use the same scope as the chart/legend: selected operator or whole studio.
+  const cardsScopeDescription =
+    selectedOperatorId != null && activeOperator != null
+      ? activeOperator.fullLabel
+      : "Totale studio";
+  const cardsTotal = sumPracticeStats(chartStats);
+  const dashboardCards: DashboardCard[] = [
+    {
+      id: "assigned",
+      title: "Pratiche assegnate",
+      value: chartStats.assegnata.toString(),
+      description: cardsScopeDescription,
+      icon: <UserCircleIcon size={84} aria-hidden="true" />,
+      iconClassName: "text-stats-secondary",
+    },
+    {
+      id: "completed",
+      title: "Pratiche concluse",
+      value: chartStats.conclusa.toString(),
+      description: cardsScopeDescription,
+      icon: <CheckIcon size={84} aria-hidden="true" />,
+      iconClassName: "text-green",
+    },
+    {
+      id: "total",
+      title: "Totale pratiche",
+      value: cardsTotal.toString(),
+      description: cardsScopeDescription,
+      icon: <PraticheIcon size={84} aria-hidden="true" />,
+      iconClassName: "text-foreground",
+    },
+  ];
+
   return (
     <ChartLoadingProvider>
       <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 pb-6 font-medium">
@@ -229,9 +233,9 @@ export default async function DashboardPage({
                     aria-hidden="true"
                   />
                   <span className="whitespace-nowrap">{item.label}</span>
-                  <span className="text-foreground/80 tabular-nums">
+                  <DashboardStatMorph className="text-foreground/80 tabular-nums">
                     {item.value.toLocaleString("it-IT")}
-                  </span>
+                  </DashboardStatMorph>
                 </div>
               ))}
             </div>
@@ -308,12 +312,14 @@ export default async function DashboardPage({
                 </div>
                 <div className="relative z-10 flex items-baseline gap-2">
                   {/* Slightly smaller than before so metrics don’t overpower the layout on large screens */}
-                  <span className="text-7xl leading-none font-semibold tracking-tight xl:text-8xl 2xl:text-9xl">
+                  <DashboardStatMorph className="text-7xl leading-none font-semibold tracking-tight xl:text-8xl 2xl:text-9xl">
                     {card.value}
-                  </span>
+                  </DashboardStatMorph>
                 </div>
                 <p className="text-stats-secondary relative z-10 text-base md:text-lg">
-                  {card.description}
+                  <DashboardStatMorph className="text-inherit">
+                    {card.description}
+                  </DashboardStatMorph>
                 </p>
                 {/* Big decorative icon anchored to bottom-right to fill the card background. */}
                 <span
