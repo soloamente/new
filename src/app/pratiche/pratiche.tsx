@@ -46,6 +46,12 @@ const normalizeValue = (value: string) =>
 const PRATICHE_TABLE_GRID_CLASS =
   "grid-cols-[minmax(100px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
 
+/**
+ * Su viewport stretti la griglia supera la larghezza; come in operatori, un min-width
+ * mantiene le colonne leggibili e lascia a overflow-x (wrapper esterno) lo scroll orizzontale.
+ */
+const PRATICHE_TABLE_MIN_WIDTH_CLASS = "min-w-208 lg:min-w-0";
+
 const practiceStatusStyles: Record<
   PracticeRow["status"],
   {
@@ -355,9 +361,9 @@ export default function Pratiche({
   );
 
   return (
-    <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
+    <main className="bg-card m-2.5 flex min-w-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
       {/* Header - Info Container */}
-      <div className="relative flex w-full flex-col gap-4.5">
+      <div className="flex w-full min-w-0 flex-col gap-4.5">
         {/* Header - Title and Export Button */}
         <div className="flex items-center justify-between gap-2.5">
           <h1 className="flex items-center justify-center gap-3.5">
@@ -374,110 +380,152 @@ export default function Pratiche({
             </button>
           </div>
         </div>
-        {/* Header - Filters & Search Container */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex w-full items-center justify-start gap-1.25">
-            {/* Header - Status Select (replaces tabs) */}
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                const selectedFilter = statusFilters.find((f) => f.value === value);
-                if (selectedFilter) {
-                  selectedFilter.onClick();
-                }
-              }}
+        {/*
+          Filtri + ricerca: su mobile — riga1 stato, riga2 Cliente+Data in griglia, riga3 ricerca
+          (evita assoluti e overlap). `md+`: stesso allineamento di prima (stato + coppia + search).
+        */}
+        <div className="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+          <div className="flex w-full min-w-0 flex-col gap-2 md:min-h-0 md:min-w-0 md:flex-1 md:flex-row md:flex-nowrap md:items-center md:gap-1.25">
+            {/* Riga 1 (mobile) / capo a sinistra (md+): stato pratiche */}
+            <div className="w-fit min-h-11 shrink-0 self-start">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  const selectedFilter = statusFilters.find(
+                    (f) => f.value === value,
+                  );
+                  if (selectedFilter) {
+                    selectedFilter.onClick();
+                  }
+                }}
+              >
+                <SelectTrigger className="bg-background w-fit min-h-11 cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform">
+                  <SelectValue placeholder="Stato pratiche" />
+                </SelectTrigger>
+                <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
+                  {statusFilterOptions.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      className="cursor-pointer"
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/*
+              Sotto al select su mobile: Cliente e Data sulla stessa riga (2 colonne).
+              Da `md:`, `display: contents` in modo che le due celle partecipino al flex
+              con lo stato (tre controlli in riga) senza strato extra.
+            */}
+            <div
+              className="grid w-full min-w-0 [grid-template-columns:minmax(0,1fr)_minmax(0,1fr)] gap-1.25
+                         md:contents"
             >
-              <SelectTrigger className="bg-background w-fit cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform">
-                <SelectValue placeholder="Stato pratiche" />
-              </SelectTrigger>
-              <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
-                {statusFilterOptions.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    className="cursor-pointer"
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {/* Header - Client + Date Filters */}
-            <div className="flex w-full flex-0 items-center justify-center gap-1.25">
-              <SearchableSelect
-                placeholder="Cliente"
-                value={clientFilterValue}
-                onValueChange={setClientFilterValue}
-                options={uniqueClients}
-                searchPlaceholder="Cerca cliente..."
-                showAllOption={true}
-                allOptionLabel="Tutti i clienti"
-              />
-              {/* Date Range Filter */}
-              <DateRangeFilter
-                value={dateFilter}
-                onValueChange={setDateFilter}
-                placeholder="Data"
-              />
+              <div className="min-w-0 md:min-w-0 md:max-w-none md:flex-1">
+                <SearchableSelect
+                  placeholder="Cliente"
+                  value={clientFilterValue}
+                  onValueChange={setClientFilterValue}
+                  options={uniqueClients}
+                  searchPlaceholder="Cerca cliente..."
+                  showAllOption={true}
+                  allOptionLabel="Tutti i clienti"
+                  triggerClassName="w-full min-w-0 min-h-11"
+                />
+              </div>
+              <div className="min-w-0 md:min-w-0 md:max-w-none md:flex-1">
+                <DateRangeFilter
+                  value={dateFilter}
+                  onValueChange={setDateFilter}
+                  placeholder="Data"
+                  triggerClassName="w-full min-w-0 min-h-11"
+                />
+              </div>
             </div>
           </div>
-          {/* Header - Search */}
-          <div className="absolute right-0 flex items-center justify-center">
+          <div className="w-full min-w-0 shrink-0 md:flex md:max-w-[min(100%,24rem)] md:justify-end">
             <label
-              htmlFor="search"
-              className="bg-background flex w-60 items-center justify-between rounded-full px-3.75 py-1.75 text-sm shadow-[-18px_0px_14px_var(--color-card)] transition-[width,box-shadow] duration-300 ease-out focus-within:w-84"
+              htmlFor="pratiche-search"
+              className="bg-background flex w-full min-h-11 min-w-0 max-w-full touch-manipulation items-center justify-between rounded-full px-3.75 py-1.75 text-base leading-normal shadow-sm transition-[width,box-shadow] duration-300 ease-out sm:text-sm md:w-60 md:max-w-full md:shadow-[-18px_0px_14px_var(--color-card)] md:transition-[width,box-shadow] md:focus-within:max-w-none md:focus-within:w-84"
             >
               <input
-                placeholder="Numero pratica, stato, cliente..."
+                id="pratiche-search"
+                name="q"
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                placeholder="Numero pratica, stato, cliente…"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                className="placeholder:text-search-placeholder w-full truncate focus:outline-none"
+                className="placeholder:text-search-placeholder w-full min-w-0 min-h-11 py-0 text-base leading-normal focus:outline-none sm:min-h-0 sm:text-sm"
               />
-              <SearchIcon className="text-search-placeholder" />
+              <SearchIcon className="text-search-placeholder shrink-0" />
             </label>
           </div>
         </div>
       </div>
       {/* Body Wrapper */}
-      <div className="bg-background flex min-h-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
-        {/* Body Header */}
-        {/* Body Header - Stats */}
-        <div className="grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <div className="bg-card rounded-xl p-4">
-            <div className="text-stats-title text-sm">Totale pratiche</div>
-            <div className="mt-3 flex items-center gap-2.5 text-2xl">
-              <PraticheIcon />
-              <TextMorph>{totalPractices}</TextMorph>
+      <div className="bg-background flex min-h-0 min-w-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
+        {/* Body Header - Stats: su mobile una riga con scroll orizzontale + scroll-fade-x; da md stessa griglia 2/3 col */}
+        <div
+          className={cn(
+            "shrink-0",
+            "max-md:scroll-fade-x max-md:min-w-0 max-md:overflow-y-hidden max-md:overflow-x-auto",
+            "max-md:overscroll-x-contain",
+            "md:grid md:min-w-0 md:grid-cols-2 md:gap-3 md:overflow-visible",
+            "md:[-webkit-mask-image:none] md:[mask-image:none]",
+            "xl:grid-cols-3",
+          )}
+          aria-label="Riepilogo numeri pratiche"
+        >
+          <div
+            className="flex w-max min-w-0 flex-nowrap gap-3 max-md:pb-0.5 md:contents"
+            role="presentation"
+          >
+            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+              <div className="text-stats-title text-sm">Totale pratiche</div>
+              <div className="mt-3 flex items-center gap-2.5 text-2xl">
+                <PraticheIcon />
+                <TextMorph>{totalPractices}</TextMorph>
+              </div>
             </div>
-          </div>
-          <div className="bg-card rounded-xl p-4">
-            <div className="text-stats-title text-sm">Assegnate</div>
-            <div className="mt-3 flex items-center gap-2.5 text-2xl">
-              <UserCircleIcon
-                size={24}
-                style={{ color: practiceStatusStyles.assigned.iconColor }}
-                suppressHydrationWarning
-              />
-              <TextMorph>{assignedCount}</TextMorph>
+            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+              <div className="text-stats-title text-sm">Assegnate</div>
+              <div className="mt-3 flex items-center gap-2.5 text-2xl">
+                <UserCircleIcon
+                  size={24}
+                  style={{ color: practiceStatusStyles.assigned.iconColor }}
+                  suppressHydrationWarning
+                />
+                <TextMorph>{assignedCount}</TextMorph>
+              </div>
             </div>
-          </div>
-          <div className="bg-card rounded-xl p-4">
-            <div className="text-stats-title text-sm">Concluse</div>
-            <div className="mt-3 flex items-center gap-2.5 text-2xl">
-              <CheckIcon
-                size={24}
-                style={{ color: practiceStatusStyles.completed.iconColor }}
-                suppressHydrationWarning
-              />
-              <TextMorph>{completedCount}</TextMorph>
+            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+              <div className="text-stats-title text-sm">Concluse</div>
+              <div className="mt-3 flex items-center gap-2.5 text-2xl">
+                <CheckIcon
+                  size={24}
+                  style={{ color: practiceStatusStyles.completed.iconColor }}
+                  suppressHydrationWarning
+                />
+                <TextMorph>{completedCount}</TextMorph>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl">
-          {/* Table Body */}
-          <div className="scroll-fade-y flex h-full min-h-0 flex-1 flex-col overflow-scroll">
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
+          {/* Table: scroll condiviso su X+Y (come operatori); min-width sul contenuto = swipe orizzontale su mobile */}
+          <div
+            className={cn(
+              "scroll-fade-y min-h-0 w-full min-w-0 flex-1 overflow-x-auto overflow-y-auto",
+              "overscroll-y-contain overscroll-x-contain [-webkit-overflow-scrolling:touch]",
+            )}
+          >
             {filteredPractices.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8">
                 <p className="text-stats-title text-center">
@@ -492,7 +540,7 @@ export default function Pratiche({
                 return (
                   <div
                     key={group.operatorName}
-                    className="border-0 bg-card shadow-none ring-0 overflow-hidden rounded-xl"
+                    className="border-0 bg-card w-full min-w-0 shadow-none ring-0 rounded-xl"
                   >
                     <button
                       type="button"
@@ -533,14 +581,20 @@ export default function Pratiche({
                         duration: prefersReducedMotion ? 0 : 0.2,
                         ease: [0.4, 0, 0.2, 1],
                       }}
+                      // L’overflow è sul wrapper interno: così l’altezza animata resta clip, ma le righe larghe scrollano in orizzontale
                       style={{ overflow: "hidden" }}
                       aria-hidden={isCollapsed}
                       inert={isCollapsed ? true : undefined}
                     >
-                      <div>
-                        {renderTableHeader()}
-                        <div className="divide-checkbox-border/70 divide-y">
-                          {group.rows.map((practice) => renderPracticeRow(practice))}
+                      <div
+                        // Scrollport orizzontale: larghezza = card; la griglia più larga scrolla dentro
+                        className="w-full min-w-0 overflow-x-auto"
+                      >
+                        <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
+                          {renderTableHeader()}
+                          <div className="divide-checkbox-border/70 divide-y">
+                            {group.rows.map((practice) => renderPracticeRow(practice))}
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -549,12 +603,12 @@ export default function Pratiche({
                 })}
               </div>
             ) : (
-              <>
+              <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
                 {renderTableHeader()}
                 <div className="divide-checkbox-border/70 divide-y">
                   {filteredPractices.map((practice) => renderPracticeRow(practice))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

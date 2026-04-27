@@ -119,8 +119,12 @@ export function RevenueBarChart({
 
   return (
     <>
+      {/*
+        L’% di altezza vive su un’area traccia (relative+flex-1) separata dal numero sopra;
+        in basso l’`absolute` con `height: N%` evita barre tutte uguali o a ~1px su mobile.
+      */}
       <div
-        className="relative flex h-full w-full items-end justify-between gap-4 rounded-4xl bg-muted/50 p-6"
+        className="relative flex h-full min-h-48 w-full items-end justify-between gap-4 rounded-4xl bg-muted/50 p-6"
         role="img"
         aria-busy={isChartLoading}
         aria-live="polite"
@@ -128,7 +132,7 @@ export function RevenueBarChart({
       >
         <div
           className={cn(
-            "flex h-full w-full items-end justify-between gap-4",
+            "flex h-full min-h-0 w-full items-end justify-between gap-4",
             isChartLoading &&
               "pointer-events-none opacity-45 transition-opacity duration-200",
           )}
@@ -143,30 +147,45 @@ export function RevenueBarChart({
               key={item.key}
               className="flex h-full w-full min-w-0 flex-1 flex-col items-center gap-3"
             >
-              <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-end gap-1">
+              {/*
+                L’altezza della barra deve essere una % *solo* dell’area disegnabile, non
+                del blocco pieno con l’etichetta sopra, altrimenti i % in flex (specialmente
+                mobile / `h-40`) si confondono e le barre compaiono con la stessa altezza.
+                Slot: `h-40` sotto `sm` e `flex-1` da `sm+` con `min-h-0`; la barra è
+                ancorata in basso in quel box così l’% si risolve in modo stabile.
+              */}
+              <div
+                className="flex w-full min-h-40 flex-1 flex-col gap-1
+                           sm:min-h-0 sm:flex-1"
+              >
                 {item.value > 0 && (
-                  <span aria-label={`${item.label}: ${item.value}`}>
-                    {/* Outer span keeps aria-label; TextMorph does not forward DOM attrs (torph implementation). */}
+                  <span
+                    className="shrink-0 text-center"
+                    aria-label={`${item.label}: ${item.value}`}
+                  >
                     <TextMorph className="text-foreground text-xs font-bold tabular-nums">
                       {item.value}
                     </TextMorph>
                   </span>
                 )}
-                <div
-                  className={[
-                    "min-h-0 w-full overflow-visible rounded-4xl",
-                    "transition-[height,box-shadow] duration-200 ease-out motion-reduce:transition-none",
-                    "focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
-                  ].join(" ")}
-                  style={
-                    {
-                      height: `${heightPercent}%`,
-                      backgroundColor: "transparent",
-                    } as CSSProperties
-                  }
-                  title={`${item.label}: ${item.value}`}
-                >
+                <div className="relative w-full min-h-0 flex-1">
                   <div
+                    className={cn(
+                      "absolute right-0 bottom-0 left-0 overflow-visible rounded-4xl",
+                      "transition-[height,box-shadow] duration-200 ease-out motion-reduce:transition-none",
+                      "focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
+                    )}
+                    style={
+                      {
+                        height: `${heightPercent}%`,
+                        maxHeight: "100%",
+                        minHeight: heightPercent > 0 ? "0.5rem" : 0,
+                        backgroundColor: "transparent",
+                      } as CSSProperties
+                    }
+                    title={`${item.label}: ${item.value}`}
+                  >
+                    <div
                     className={cn(
                       "h-full w-full cursor-pointer rounded-4xl border border-foreground/5",
                       "transition-all duration-200 ease-out motion-reduce:transition-none",
@@ -192,6 +211,7 @@ export function RevenueBarChart({
                       setTooltipData(null);
                     }}
                   />
+                </div>
                 </div>
               </div>
               <span

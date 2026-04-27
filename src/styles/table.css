@@ -51,4 +51,54 @@
       --fb: 0px;
     }
   }
+
+  /* Ombreggiatura ai lati su scroll orizzontale (es. stats su mobile) */
+  @property --fl {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @property --fr {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 40px;
+  }
+
+  .scroll-fade-x {
+    --fl: 0px;
+    --fr: 40px;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--fl),
+      #000 calc(100% - var(--fr)),
+      transparent 100%
+    );
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    animation: fadeXLeft 1 linear both, fadeXRight 1 linear both;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0% 12%,
+      88% 100%;
+  }
+
+  @keyframes fadeXLeft {
+    from {
+      --fl: 0px;
+    }
+    to {
+      --fl: 40px;
+    }
+  }
+
+  @keyframes fadeXRight {
+    from {
+      --fr: 40px;
+    }
+    to {
+      --fr: 0px;
+    }
+  }
 }

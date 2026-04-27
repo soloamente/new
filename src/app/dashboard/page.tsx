@@ -191,9 +191,20 @@ export default async function DashboardPage({
 
   return (
     <ChartLoadingProvider>
-      <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 pb-6 font-medium">
+      {/*
+        Sotto `xl` la colonna unica: niente h-full + flex-1 sulle card. Lo scroll con
+        `scroll-fade-y` su un div interno; su `lg+` si disattiva (desktop senza mask sullo scroll).
+      */}
+      <main
+        className="bg-card m-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl px-9 pt-6 pb-6 font-medium"
+      >
+        <div
+          className="scroll-fade-y flex min-h-0 min-w-0 flex-1 flex-col gap-2.5 overflow-y-auto
+                     overflow-x-hidden overscroll-y-contain [scrollbar-gutter:stable]
+                     lg:animate-none lg:![-webkit-mask-image:none] lg:![mask-image:none]"
+        >
         {/* Header - Info Container (kept consistent with other pages like Studi/Pratiche) */}
-        <div className="relative flex w-full flex-col gap-4.5">
+        <div className="relative flex w-full shrink-0 flex-col gap-4.5">
           {/* Header - Title */}
           <div className="flex items-center justify-between gap-2.5">
             <h1 className="flex items-center justify-center gap-3.5">
@@ -252,12 +263,17 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="grid h-full min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div
+          className="grid w-full min-h-0 max-xl:shrink-0 max-xl:content-start grid-cols-1 gap-3
+                     xl:h-full xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_320px] xl:flex-1"
+        >
           {/* Grafico a barre semplificato e chiaro */}
           <section
             aria-labelledby="revenue-heading"
             // Main chart panel on the left; cards are now vertically stacked on the right.
-            className="bg-background flex h-full min-h-0 flex-col gap-4 rounded-4xl p-6"
+            className="bg-background flex w-full min-h-0 max-xl:h-auto max-xl:min-h-0 flex-col gap-4
+                       rounded-4xl p-6
+                       xl:h-full xl:min-h-0 xl:overflow-hidden"
           >
             {/* Titolo chiaro del grafico */}
             <div className="flex flex-col gap-1">
@@ -273,13 +289,23 @@ export default async function DashboardPage({
               </p>
             </div>
 
-            <div className="flex h-full w-full items-end pt-1">
+            <div
+              className="flex w-full min-h-0 max-xl:min-h-48 max-xl:items-stretch
+                         items-end pt-1
+                         xl:min-h-0 xl:h-full"
+            >
               {studioStatisticsError ? (
-                <div className="bg-card text-stats-title flex h-full w-full items-center justify-center rounded-3xl px-6 text-sm">
+                <div
+                  className="bg-card text-stats-title flex min-h-48 w-full items-center justify-center rounded-3xl px-6
+                             text-sm xl:min-h-0 xl:h-full"
+                >
                   {studioStatisticsError}
                 </div>
               ) : user.role_id !== 2 ? (
-                <div className="bg-card text-stats-title flex h-full w-full items-center justify-center rounded-3xl px-6 text-sm">
+                <div
+                  className="bg-card text-stats-title flex min-h-48 w-full items-center justify-center rounded-3xl px-6
+                             text-sm xl:min-h-0 xl:h-full"
+                >
                   Grafico disponibile solo per Amministratore Studio.
                 </div>
               ) : (
@@ -294,7 +320,8 @@ export default async function DashboardPage({
           {/* Overview cards: right side, vertical stack */}
           <section
             aria-labelledby="practices-overview"
-            className="flex h-full min-h-0 flex-col gap-3"
+            className="flex w-full min-h-0 max-xl:h-auto max-xl:min-h-0 flex-col gap-3
+                       xl:h-full xl:min-h-0 xl:overflow-hidden"
           >
             <h2 id="practices-overview" className="sr-only">
               Riepilogo pratiche
@@ -302,7 +329,11 @@ export default async function DashboardPage({
             {dashboardCards.map((card) => (
               <div
                 key={card.id}
-                className="bg-background relative flex min-h-0 flex-1 flex-col gap-3 overflow-hidden rounded-4xl p-5"
+                className="bg-background relative flex w-full max-xl:shrink-0
+                           max-xl:flex-none flex-col gap-3
+                           max-xl:overflow-visible xl:overflow-hidden
+                           rounded-4xl p-5
+                           xl:min-h-0 xl:max-h-full xl:flex-1"
               >
                 <div className="relative z-10 flex items-center justify-between gap-3">
                   {/* Large titles on metric cards for ultra-wide viewports (pairs with oversized numeric values). */}
@@ -331,6 +362,7 @@ export default async function DashboardPage({
               </div>
             ))}
           </section>
+        </div>
         </div>
       </main>
     </ChartLoadingProvider>
