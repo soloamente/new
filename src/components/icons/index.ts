@@ -5,6 +5,7 @@
 
 export { ClientsIcon } from "./clients-icon";
 export { ArrowUpRightIcon } from "./arrow-up-right-icon";
+export { ArrowBackIcon } from "./arrow-back-icon";
 export { CheckIcon } from "./check-icon";
 export { DashboardIcon } from "./dashboard-icon";
 export { GearIcon } from "./gear-icon";

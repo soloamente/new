@@ -6,7 +6,6 @@ import {
   CheckIcon,
   OperatoriIcon,
   SearchIcon,
-  UserCircleIcon,
   MsgSmile2Icon,
   XIcon,
 } from "@/components/icons";
@@ -32,7 +31,10 @@ import { cn } from "@/lib/utils";
 import { FaPlus } from "react-icons/fa";
 import { AnimateNumber } from "motion-plus/react";
 import type { OperatorRow, OperatorStatus } from "@/lib/operators-utils";
-import { getOperatorAvatarColors } from "@/lib/operators-utils";
+import {
+  getOperatorAvatarColors,
+  OPERATOR_PHONE_NOT_PROVIDED,
+} from "@/lib/operators-utils";
 import { createUser } from "@/app/actions/users-actions";
 
 // Component to show tooltip only when text is truncated
@@ -110,13 +112,6 @@ const operatorStatusStyles: Record<
     background: "var(--status-suspended-background)",
     icon: <XIcon />,
     iconColor: "var(--status-suspended-icon)",
-  },
-  on_leave: {
-    label: "In ferie",
-    accent: "var(--status-assigned-accent)",
-    background: "var(--status-assigned-background)",
-    icon: <UserCircleIcon />,
-    iconColor: "var(--status-assigned-icon)",
   },
 };
 
@@ -244,12 +239,6 @@ export default function Operatori({ operators }: OperatoriProps) {
       active: statusFilter === "inactive",
       onClick: () => setStatusFilter("inactive"),
     },
-    {
-      label: "In ferie",
-      value: "on_leave",
-      active: statusFilter === "on_leave",
-      onClick: () => setStatusFilter("on_leave"),
-    },
   ];
 
   return (
@@ -283,7 +272,7 @@ export default function Operatori({ operators }: OperatoriProps) {
                   key={filter.value}
                   onClick={filter.onClick}
                   className={cn(
-                    "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm",
+                    "bg-background flex items-center justify-center gap-2.5 rounded-full px-3.75 py-1.75 text-sm will-change-transform",
                     !filter.active &&
                       "bg-button-inactive text-button-inactive-foreground",
                   )}
@@ -525,7 +514,13 @@ export default function Operatori({ operators }: OperatoriProps) {
               <div>Nome</div>
               <div>Email</div>
               <div>Telefono</div>
-              <div>Pratiche</div>
+              <div className="min-w-0">
+                <span className="block">Pratiche</span>
+                {/* Stessa dimensione del resto dell’intestazione (text-sm), solo peso normale + leggero scuro */}
+                <span className="text-table-header-foreground/85 block text-sm font-normal">
+                  concluse su assegnate
+                </span>
+              </div>
               <div>Ultima attività</div>
               <div>Stato</div>
             </div>
@@ -569,9 +564,16 @@ export default function Operatori({ operators }: OperatoriProps) {
                       </div>
                       <div className="flex items-center gap-2 truncate">
                         <Tooltip>
-                          <TooltipTrigger className="truncate">
-                            <div className="flex cursor-help items-center gap-2 truncate">
-                              <Avatar aria-hidden className="bg-background">
+                          {/* asChild: Radix default Trigger is a <button> which can force
+                              ButtonText color onto children and make the avatar icon read as black in light theme. */}
+                          <TooltipTrigger asChild>
+                            <div className="flex min-w-0 cursor-help items-center gap-2 truncate">
+                              {/* bg-transparent: root default is bg-background which reads as a gray “tile” on light rows + tooltip */}
+                              <Avatar
+                                aria-hidden
+                                className="bg-transparent!"
+                                style={{ backgroundColor: "transparent" }}
+                              >
                                 <AvatarFallback
                                   aria-label={`Operatore: ${operator.name}`}
                                   placeholderSeed={operator.email || operator.id || operator.name}
@@ -579,11 +581,14 @@ export default function Operatori({ operators }: OperatoriProps) {
                                     operator.email || operator.id || operator.name,
                                   )}
                                 >
-                                  {/* Operator placeholder icon per spec */}
+                                  {/* Explicit token so icon never inherits wrong color from ancestors */}
                                   <MsgSmile2Icon
                                     aria-hidden="true"
                                     size={16}
-                                    className="text-primary"
+                                    className="shrink-0"
+                                    style={{
+                                      color: "var(--operator-avatar-icon)",
+                                    }}
                                   />
                                 </AvatarFallback>
                               </Avatar>
@@ -599,7 +604,10 @@ export default function Operatori({ operators }: OperatoriProps) {
                           >
                             <div className="flex flex-col gap-3 p-4">
                               <div className="flex items-center gap-3">
-                                <Avatar className="bg-background size-16 rounded-lg">
+                                <Avatar
+                                  className="size-16 rounded-lg bg-transparent!"
+                                  style={{ backgroundColor: "transparent" }}
+                                >
                                   <AvatarFallback
                                     aria-label={`Operatore: ${operator.name}`}
                                     placeholderSeed={operator.email || operator.id || operator.name}
@@ -611,7 +619,10 @@ export default function Operatori({ operators }: OperatoriProps) {
                                     <MsgSmile2Icon
                                       aria-hidden="true"
                                       size={22}
-                                      className="text-primary"
+                                      className="shrink-0"
+                                      style={{
+                                        color: "var(--operator-avatar-icon)",
+                                      }}
                                     />
                                   </AvatarFallback>
                                 </Avatar>
@@ -659,13 +670,37 @@ export default function Operatori({ operators }: OperatoriProps) {
                       <div className="truncate">
                         <EmailWithTooltip email={operator.email} />
                       </div>
-                      <div className="truncate">{operator.phone}</div>
-                      <div className="flex items-center gap-2 truncate">
-                        <span>{operator.practicesCount}</span>
-                        <div className="text-stats-secondary flex items-center gap-1 text-sm">
-                          <CheckIcon size={14} />
-                          <span>{operator.completedPractices}</span>
-                        </div>
+                      <div
+                        className={cn(
+                          "truncate",
+                          operator.phone === OPERATOR_PHONE_NOT_PROVIDED &&
+                            "text-muted-foreground",
+                        )}
+                        title={
+                          operator.phone === OPERATOR_PHONE_NOT_PROVIDED
+                            ? "Numero di telefono non presente in anagrafica"
+                            : undefined
+                        }
+                      >
+                        {operator.phone}
+                      </div>
+                      <div className="min-w-0">
+                        {operator.practicesCount === 0 ? (
+                          <span className="text-muted-foreground">Nessuna pratica</span>
+                        ) : (
+                          <p
+                            className="text-foreground leading-snug"
+                            title={`${operator.completedPractices} concluse su ${operator.practicesCount} assegnate a questo operatore`}
+                          >
+                            <span className="font-medium tabular-nums">
+                              {operator.completedPractices}
+                            </span>
+                            <span className="text-muted-foreground"> concluse su </span>
+                            <span className="font-medium tabular-nums">
+                              {operator.practicesCount}
+                            </span>
+                          </p>
+                        )}
                       </div>
                       <div className="truncate">{operator.lastActivity}</div>
                       <div>

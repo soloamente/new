@@ -26,7 +26,7 @@ import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { motion, useReducedMotion } from "motion/react";
 import { AnimateNumber } from "motion-plus/react";
 import { getDisplayNameInitials, type PracticeRow } from "@/lib/practices-utils";
-import { getOperatorAvatarColors } from "@/lib/operators-utils";
+import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
 
 type PracticeView = "all" | "mine";
@@ -270,7 +270,8 @@ export default function Pratiche({
       <div
         key={practice.id}
         onClick={handleRowClick}
-        className="hover:bg-muted cursor-pointer px-3 py-5 transition-colors"
+        // muted ≈ card in light theme; use a visible overlay on hover instead
+        className="hover:bg-foreground/5 dark:hover:bg-white/10 cursor-pointer px-3 py-5 transition-colors"
         role="button"
         tabIndex={0}
         aria-label={`Visualizza dettagli pratica ${practice.praticaNumber}`}
@@ -385,7 +386,7 @@ export default function Pratiche({
                 }
               }}
             >
-              <SelectTrigger className="bg-background w-fit cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none">
+              <SelectTrigger className="bg-background w-fit cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform">
                 <SelectValue placeholder="Stato pratiche" />
               </SelectTrigger>
               <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
@@ -490,35 +491,20 @@ export default function Pratiche({
                 return (
                   <div
                     key={group.operatorName}
-                    className="bg-card overflow-hidden rounded-xl border border-border"
+                    className="border-0 bg-card shadow-none ring-0 overflow-hidden rounded-xl"
                   >
                     <button
                       type="button"
                       data-no-press-scale
                       onClick={() => toggleOperatorGroup(group.operatorName)}
-                      className="bg-background/70 hover:bg-muted flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors"
+                      // Match table row: transparent base, visible hover overlay only
+                      className="hover:bg-foreground/5 dark:hover:bg-white/10 flex w-full items-center justify-between gap-3 bg-transparent! px-3 py-3 text-left transition-colors"
+                      style={{ backgroundColor: "transparent" }}
                       aria-expanded={!isCollapsed}
                       aria-label={`Gruppo operatore ${group.operatorName}, ${group.rows.length} pratiche`}
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                        {/* Transparent root; rounded-md per feedback (default Avatar is rounded-full). */}
-                        <Avatar
-                          aria-hidden
-                          className="size-9 shrink-0 rounded-md bg-transparent"
-                        >
-                          <AvatarFallback
-                            className="rounded-md"
-                            aria-label={`Operatore: ${group.operatorName}`}
-                            style={getOperatorAvatarColors(group.operatorName, {
-                              withInitialsForeground: true,
-                            })}
-                          >
-                            {/* Text initials instead of whimsical icon for quick scan in group headers */}
-                            <span className="text-[11px] font-semibold uppercase leading-none tracking-tight">
-                              {getDisplayNameInitials(group.operatorName)}
-                            </span>
-                          </AvatarFallback>
-                        </Avatar>
+                        <OperatorInitialsAvatar name={group.operatorName} />
                         <span className="min-w-0 truncate font-semibold">
                           {group.operatorName}
                         </span>
@@ -550,7 +536,7 @@ export default function Pratiche({
                       aria-hidden={isCollapsed}
                       inert={isCollapsed ? true : undefined}
                     >
-                      <div className="border-checkbox-border/70 border-t">
+                      <div>
                         {renderTableHeader()}
                         <div className="divide-checkbox-border/70 divide-y">
                           {group.rows.map((practice) => renderPracticeRow(practice))}

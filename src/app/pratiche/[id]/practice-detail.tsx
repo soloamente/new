@@ -4,17 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Practice } from "@/app/actions/practices-actions";
 import {
+  ArrowBackIcon,
   CheckIcon,
-  PraticheIcon,
   UserCircleIcon,
-  ArrowUpRightIcon,
-  MsgSmile2Icon,
 } from "@/components/icons";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDate, mapApiStatusToUI } from "@/lib/practices-utils";
-import { getOperatorAvatarColors } from "@/lib/operators-utils";
+import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { updatePractice } from "@/app/actions/practices-actions";
 
 interface PracticeDetailProps {
@@ -120,15 +117,12 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
             className="text-button-secondary hover:text-button-secondary/80 flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors"
             aria-label="Torna alla lista pratiche"
           >
-            <ArrowUpRightIcon className="rotate-180" />
+            <ArrowBackIcon />
             Indietro
           </button>
-          <div className="flex items-center gap-3.5">
-            <PraticheIcon />
-            <h1 className="text-2xl font-semibold">
-              Pratica {practice.practice_number}
-            </h1>
-          </div>
+          <h1 className="text-2xl font-semibold">
+            Pratica {practice.practice_number}
+          </h1>
         </div>
 
         {/* Status Badge */}
@@ -210,9 +204,11 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
               {practice.client ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Avatar aria-hidden className="bg-background">
-                      <AvatarFallback placeholderSeed={practice.client.name} />
-                    </Avatar>
+                    <OperatorInitialsAvatar
+                      kind="client"
+                      name={practice.client.name}
+                      seed={practice.client.name}
+                    />
                     <div className="flex flex-1 flex-col">
                       <span className="font-semibold">{practice.client.name}</span>
                       {practice.client.email && (
@@ -238,23 +234,14 @@ export default function PracticeDetail({ practice }: PracticeDetailProps) {
               <h2 className="mb-4 text-lg font-semibold">Operatore Interno</h2>
               {practice.operator ? (
                 <div className="flex items-center gap-3">
-                  <Avatar aria-hidden className="bg-background">
-                    <AvatarFallback
-                      aria-label={`Operatore: ${practice.operator.name}`}
-                      placeholderSeed={practice.operator.id?.toString() || practice.operator.name}
-                      style={getOperatorAvatarColors(
-                        practice.operator.id?.toString() ||
-                          practice.operator.name,
-                      )}
-                    >
-                      {/* Operator placeholder icon per spec */}
-                      <MsgSmile2Icon
-                        aria-hidden="true"
-                        size={16}
-                        className="text-primary"
-                      />
-                    </AvatarFallback>
-                  </Avatar>
+                  <OperatorInitialsAvatar
+                    name={practice.operator.name}
+                    seed={
+                      practice.operator.id != null
+                        ? String(practice.operator.id)
+                        : practice.operator.name
+                    }
+                  />
                   <span className="font-semibold">{practice.operator.name}</span>
                 </div>
               ) : (

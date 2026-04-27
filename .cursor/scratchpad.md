@@ -110,6 +110,9 @@
 - [x] Task 46: Wire Dashboard “API Statistiche” chart to `/api/statistics/studio` and use `studio_total` for the 4 status cards (handle 401/403 + non-admin roles).
 - [x] Task 47: Fix `SearchableSelect` dropdown overflow (when placeholder selected) so the menu never goes off-screen to the right.
 - [x] Task 48: Match Dashboard bar chart UI to the reference (pill bars + active gradient + hover/focus + 200ms transitions, reduced motion).
+- [x] Task 49: Restore bottom-right theme toggle visibility above page content layers.
+- [x] Task 50: Light theme operator avatar fallback colors (bg + icon) made readable on `/operatori`.
+- [x] Task 51: Operatori—fix avatar icon color (Tooltip `asChild` + explicit token), lighten light-mode chip tokens; replace phone `N/A` with `Non indicato`.
 
 ## Current Status / Progress Tracking
 
@@ -156,6 +159,10 @@
 - New bug report: when no operator is selected (placeholder shown), the `SearchableSelect` dropdown can overflow off-screen to the right (trigger is near the right edge and the label is short).
   - Implemented viewport-safe dropdown positioning in `src/components/ui/searchable-select.tsx` by switching the menu to `position: fixed` and clamping its `left/top/width` within the window.
 - New request (dashboard bar chart reference): updated `RevenueBarChart` to render a single “pill” per operator (height = total), with inactive charcoal styling and an active warm gradient (`--chart-4` → `--chart-5`) + glow; hover/focus affordances and 200ms transitions are enabled (and disabled under `prefers-reduced-motion`). Targeted lint on `src/app/dashboard/page.tsx` is clean.
+- Fixed theme toggle visibility regression: `src/components/ui/preferences.tsx` now uses `fixed` bottom-right positioning with `z-50` (including the pre-mount placeholder) so the control no longer renders behind the `z-10` main content layer.
+- Fixed operator avatar fallback contrast in light theme: `getOperatorAvatarColors` now uses theme-aware CSS variables (`--operator-avatar-bg-*`, `--operator-avatar-icon`), giving pastel backgrounds + softer icon tone in light mode while preserving richer chips in dark mode. Also switched `MsgSmile2Icon` color to inherit fallback color (instead of forced `text-primary`) in `/operatori` and practice detail.
+- Follow-up: on `/operatori`, `TooltipTrigger` now uses `asChild` (default trigger is a `<button>` and was forcing a near-black `color` on descendants). `MsgSmile2Icon` uses `var(--operator-avatar-icon)` directly; light-mode operator chip tokens were lightened again. Phone placeholder is `OPERATOR_PHONE_NOT_PROVIDED` = “Non indicato” in `convertOperatorToRow`.
+- Practice detail: card “Cliente” now uses the same `OperatorInitialsAvatar` as collapsible table group headers (hashed color chips + `kind="client"` for `aria-label` “Cliente: …”), replacing a plain `Avatar` with `--background` fill.
 
 ## Executor's Feedback or Assistance Requests
 
@@ -167,8 +174,13 @@
 - Please verify visually: in Dashboard, the “API Statistiche” card now shows one pill bar per operator (height = total) and the 4 cards below it use real totals (`studio_total`). Also confirm the error message for non-admin studio roles (or expired session) is acceptable.
 - Please verify visually: when the operator filter shows the placeholder (“Operatore”), opening the dropdown should **not** go off-screen to the right anymore (it should stay within the viewport even at the far-right of the header).
 - Please verify visually: the active bar matches the reference (warm gradient + glow), inactive bars are charcoal pills with subtle ring, and hover/focus transitions feel immediate (200ms).
+- Please verify visually: the theme button should now be visible again in the bottom-right corner on app pages and remain clickable above content.
+- Please verify visually on `/operatori` in light mode: operator avatar fallback should now appear with a light/pastel background and non-black icon; dark mode should remain high-contrast.
 
 ## Lessons
 
 - Inline box-shadow with CSS variables works well for directional shadows when Tailwind utilities aren’t specific enough.
 - Next 16 CLI no longer exposes `next lint`; run ESLint directly (e.g. `pnpm exec eslint <paths>`) for targeted linting.
+- Keep floating UI controls (`Preferences`, FABs) on `fixed` + explicit high z-index when parent layout content uses stacking layers (e.g. `z-10`), otherwise they may disappear behind page content.
+- Avoid hardcoding avatar icon color (`text-primary`) when fallback background is dynamic; let icon inherit from fallback color so light/dark theme palettes stay readable.
+- Radix `TooltipTrigger` without `asChild` renders a native `<button>`; browser `ButtonText` color can cascade to avatar icons (`currentColor`). Prefer `asChild` with a `div`/`button` you control, or set an explicit `color` on the icon.

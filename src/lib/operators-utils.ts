@@ -3,15 +3,19 @@ import type { Practice } from "@/app/actions/practices-actions";
 import type { CSSProperties } from "react";
 import { formatDate } from "./practices-utils";
 
-// UI status type
-export type OperatorStatus = "active" | "inactive" | "on_leave";
+/** Shown when the API does not expose a phone number yet (User model has no phone field). */
+export const OPERATOR_PHONE_NOT_PROVIDED = "Non indicato";
+
+// UI status type (mirrors API: active / inactive only — no “on leave” in backend)
+export type OperatorStatus = "active" | "inactive";
 
 // Map API status to UI status
 export function mapApiStatusToUI(apiStatus: string): OperatorStatus {
-  if (apiStatus === "active") return "active";
   if (apiStatus === "inactive") return "inactive";
-  if (apiStatus === "on_leave") return "on_leave";
-  return "active"; // Default to active
+  // Not exposed by current API; keep mapping if legacy data exists
+  if (apiStatus === "on_leave") return "inactive";
+  if (apiStatus === "active") return "active";
+  return "active";
 }
 
 // Convert User (operator) from API to OperatorRow for UI
@@ -58,7 +62,7 @@ export function convertOperatorToRow(
     operatorNumber: `OP-${operator.id.toString().padStart(3, "0")}`,
     name: operator.name,
     email: operator.email,
-    phone: "N/A", // Phone is not in User schema, would need to be added
+    phone: OPERATOR_PHONE_NOT_PROVIDED,
     practicesCount: practicesCount,
     completedPractices: completedPractices,
     lastActivity: lastActivity ? formatDate(lastActivity) : "Nessuna attività",
@@ -67,21 +71,34 @@ export function convertOperatorToRow(
 }
 
 const OPERATOR_AVATAR_BG_PALETTE: string[] = [
-  // Keep contrast high: darker backgrounds so the primary icon color pops.
-  "oklch(0.42 0.11 264)", // indigo
-  "oklch(0.42 0.10 200)", // cyan
-  "oklch(0.41 0.11 150)", // green
-  "oklch(0.42 0.12 100)", // lime
-  "oklch(0.42 0.12 55)", // amber
-  "oklch(0.42 0.12 25)", // orange
-  "oklch(0.42 0.12 340)", // magenta
-  "oklch(0.40 0.06 280)", // violet (lower chroma)
+  // Theme-aware CSS variables: softer backgrounds in light mode and richer
+  // chips in dark mode, while keeping deterministic color assignment per seed.
+  "var(--operator-avatar-bg-1)",
+  "var(--operator-avatar-bg-2)",
+  "var(--operator-avatar-bg-3)",
+  "var(--operator-avatar-bg-4)",
+  "var(--operator-avatar-bg-5)",
+  "var(--operator-avatar-bg-6)",
+  "var(--operator-avatar-bg-7)",
+  "var(--operator-avatar-bg-8)",
+];
+
+/** Initials badges (e.g. Pratiche group headers): separate tokens so light theme can use dark text, not near-white on pale chips. */
+const OPERATOR_AVATAR_INITIALS_BG_PALETTE: string[] = [
+  "var(--operator-avatar-initials-bg-1)",
+  "var(--operator-avatar-initials-bg-2)",
+  "var(--operator-avatar-initials-bg-3)",
+  "var(--operator-avatar-initials-bg-4)",
+  "var(--operator-avatar-initials-bg-5)",
+  "var(--operator-avatar-initials-bg-6)",
+  "var(--operator-avatar-initials-bg-7)",
+  "var(--operator-avatar-initials-bg-8)",
 ];
 
 export interface GetOperatorAvatarColorsOptions {
   /**
-   * When rendering initials on a colored badge, set a near-white foreground so
-   * text reads at full brightness (default placeholder icon color is muted gray).
+   * Initials badge (e.g. Pratiche group header): uses `--operator-avatar-initials-*`
+   * tokens so light theme gets dark text on saturated chips (not white on pale).
    */
   withInitialsForeground?: boolean;
 }
@@ -106,11 +123,17 @@ export function getOperatorAvatarColors(
   }
   const backgroundColor = OPERATOR_AVATAR_BG_PALETTE[paletteIndex]!;
   if (options?.withInitialsForeground) {
+    const initialsBackground =
+      OPERATOR_AVATAR_INITIALS_BG_PALETTE[paletteIndex]!;
     return {
-      backgroundColor,
-      // Full-luminance foreground on saturated chips (AvatarFallback default would stay gray).
-      color: "oklch(0.99 0 0)",
+      backgroundColor: initialsBackground,
+      // Light: dark text on saturated mid chips; dark: light text (see globals.css)
+      color: "var(--operator-avatar-initials-fg)",
     };
   }
-  return { backgroundColor };
+  // Operator icon fallback should be theme-aware (not always text-primary black in light mode).
+  return {
+    backgroundColor,
+    color: "var(--operator-avatar-icon)",
+  };
 }

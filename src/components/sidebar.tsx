@@ -33,9 +33,13 @@ interface NavigationItem {
   href: string;
 }
 
+/** Footer row: either opens the default mail client (`mailto:`) or runs logout. */
 interface FooterItem {
   icon: IconComponent;
   label: string;
+  /** e.g. `mailto:info@dataweb-srl.it` for Supporto */
+  href?: string;
+  isLogout?: boolean;
 }
 
 interface SidebarProps {
@@ -138,14 +142,17 @@ export default function Sidebar({ user }: SidebarProps) {
     isNavigationItemVisible(item.href, userRole),
   );
 
+  const supportMailto = "mailto:info@dataweb-srl.it";
   const navFooter: FooterItem[] = [
     {
       icon: HelpIcon as IconComponent,
       label: "Supporto",
+      href: supportMailto,
     },
     {
       icon: OpenRectArrowOutIcon as IconComponent,
       label: "Esci dall'account",
+      isLogout: true,
     },
   ];
 
@@ -208,21 +215,39 @@ export default function Sidebar({ user }: SidebarProps) {
           <div className="flex flex-col gap-2"></div>
         </div>
         <div className="flex flex-col gap-6 pb-2">
-          {navFooter.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => {
-                if (item.label === "Esci dall'account") {
-                  // Server action returns a Promise; explicitly void so ESLint accepts fire-and-forget.
-                  void logout();
-                }
-              }}
-              className="text-sidebar-secondary hover:text-sidebar-primary flex cursor-pointer items-center gap-3.5"
-            >
-              <item.icon size={24} />
-              {item.label}
-            </button>
-          ))}
+          {navFooter.map((item) => {
+            const className =
+              "text-sidebar-secondary hover:text-sidebar-primary flex cursor-pointer items-center gap-3.5";
+            if (item.href) {
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={closeMobileSidebar}
+                  className={className}
+                >
+                  <item.icon size={24} />
+                  {item.label}
+                </a>
+              );
+            }
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  if (item.isLogout) {
+                    // Server action returns a Promise; explicitly void so ESLint accepts fire-and-forget.
+                    void logout();
+                  }
+                }}
+                className={className}
+              >
+                <item.icon size={24} />
+                {item.label}
+              </button>
+            );
+          })}
 
           {/* p-1 pr-2: tight padding + extra right so hover pill breathes next to the edge */}
           <div className="hover:bg-card flex cursor-pointer items-center gap-3.5 rounded-full p-1 pr-2">

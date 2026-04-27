@@ -56,7 +56,7 @@ export default function Preferences() {
 
   if (!mounted) {
     return (
-      <div className="bg-primary absolute right-5 bottom-5 rounded-full px-3.75 py-1.75 text-sm font-medium opacity-0" />
+      <div className="bg-primary fixed right-5 bottom-5 z-50 rounded-full px-3.75 py-1.75 text-sm font-medium opacity-0" />
     );
   }
 
@@ -64,7 +64,7 @@ export default function Preferences() {
   const Icon = activeOption?.icon;
 
   return (
-    <div className="absolute right-5 bottom-5">
+    <div className="fixed right-5 bottom-5 z-50">
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.button

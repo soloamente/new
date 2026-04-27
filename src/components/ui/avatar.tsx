@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { Children, useMemo, type ReactNode } from "react";
 
 import { Avatar as AvatarPrimitive } from "@base-ui-components/react/avatar";
 
@@ -57,16 +57,19 @@ function AvatarFallback({
     [derivedSeed],
   );
 
-  const fallbackContent =
-    children ??
-    (
-      <placeholder.Icon
-        aria-hidden="true"
-        size={18}
-        style={{ color: "var(--avatar-placeholder-icon)" }}
-        suppressHydrationWarning
-      />
-    );
+  // Prefer initials/custom nodes when provided. Do not rely on `children ??` alone—some runtimes
+  // pass empty or fragment children in ways that still need the whimsical icon path.
+  const hasCustomFallbackContent = Children.count(children) > 0;
+  const fallbackContent = hasCustomFallbackContent ? (
+    children
+  ) : (
+    <placeholder.Icon
+      aria-hidden="true"
+      size={18}
+      style={{ color: "var(--avatar-placeholder-icon)" }}
+      suppressHydrationWarning
+    />
+  );
 
   const fallbackStyle = {
     // Default palette for placeholder avatars. Consumers may override this by passing
@@ -76,6 +79,8 @@ function AvatarFallback({
     ...inlineStyle,
   };
 
+  // Spread restProps before `style` so consumer + default palette (fallbackStyle) always win
+  // over any `style` merged in from the primitive (which could otherwise wash out token colors).
   return (
     <AvatarPrimitive.Fallback
       className={cn(
@@ -84,10 +89,10 @@ function AvatarFallback({
       )}
       data-slot="avatar-fallback"
       aria-label={ariaLabelProp ?? `Avatar placeholder: ${placeholder.label}`}
-      /* Preserve user styles while ensuring the new palette is always applied */
-      style={fallbackStyle}
       suppressHydrationWarning
       {...restProps}
+      /* Applied last: operator/custom bg + icon colors from callers must not be clobbered */
+      style={fallbackStyle}
     >
       {fallbackContent}
     </AvatarPrimitive.Fallback>

@@ -146,6 +146,26 @@
   /* Avatar placeholder colors - Light mode */
   --avatar-placeholder-icon: oklch(0.754 0 0);
   --avatar-placeholder-bg: oklch(0.9581 0 0);
+  /* Operator avatar colors - Light mode (light pastel chips; icon mid-tone, not near-black) */
+  --operator-avatar-icon: oklch(0.45 0.09 264);
+  --operator-avatar-bg-1: oklch(0.94 0.045 264);
+  --operator-avatar-bg-2: oklch(0.94 0.04 200);
+  --operator-avatar-bg-3: oklch(0.94 0.045 150);
+  --operator-avatar-bg-4: oklch(0.94 0.045 100);
+  --operator-avatar-bg-5: oklch(0.94 0.05 55);
+  --operator-avatar-bg-6: oklch(0.94 0.05 25);
+  --operator-avatar-bg-7: oklch(0.94 0.05 340);
+  --operator-avatar-bg-8: oklch(0.93 0.028 280);
+  /* Operator initials chips (e.g. Pratiche per-operator group): more saturation + dark text in light (avoid near-white on pale). */
+  --operator-avatar-initials-fg: oklch(0.2 0.03 264);
+  --operator-avatar-initials-bg-1: oklch(0.76 0.13 264);
+  --operator-avatar-initials-bg-2: oklch(0.76 0.12 200);
+  --operator-avatar-initials-bg-3: oklch(0.75 0.13 150);
+  --operator-avatar-initials-bg-4: oklch(0.76 0.14 100);
+  --operator-avatar-initials-bg-5: oklch(0.76 0.14 55);
+  --operator-avatar-initials-bg-6: oklch(0.76 0.14 25);
+  --operator-avatar-initials-bg-7: oklch(0.76 0.14 340);
+  --operator-avatar-initials-bg-8: oklch(0.74 0.09 280);
   /* Status colors - Light mode */
   --status-assigned-accent: oklch(0.75 0.15 200);
   --status-assigned-background: oklch(0.95 0.02 200);
@@ -222,6 +242,26 @@
   /* Avatar placeholder colors - Dark mode */
   --avatar-placeholder-icon: oklch(0.5693 0 0);
   --avatar-placeholder-bg: oklch(0.36 0 0);
+  /* Operator avatar colors - Dark mode (higher contrast for dark surfaces) */
+  --operator-avatar-icon: oklch(0.92 0.01 255);
+  --operator-avatar-bg-1: oklch(0.42 0.11 264);
+  --operator-avatar-bg-2: oklch(0.42 0.1 200);
+  --operator-avatar-bg-3: oklch(0.41 0.11 150);
+  --operator-avatar-bg-4: oklch(0.42 0.12 100);
+  --operator-avatar-bg-5: oklch(0.42 0.12 55);
+  --operator-avatar-bg-6: oklch(0.42 0.12 25);
+  --operator-avatar-bg-7: oklch(0.42 0.12 340);
+  --operator-avatar-bg-8: oklch(0.4 0.06 280);
+  /* Initials: reuse saturated operator chips + near-white text */
+  --operator-avatar-initials-fg: oklch(0.99 0 0);
+  --operator-avatar-initials-bg-1: var(--operator-avatar-bg-1);
+  --operator-avatar-initials-bg-2: var(--operator-avatar-bg-2);
+  --operator-avatar-initials-bg-3: var(--operator-avatar-bg-3);
+  --operator-avatar-initials-bg-4: var(--operator-avatar-bg-4);
+  --operator-avatar-initials-bg-5: var(--operator-avatar-bg-5);
+  --operator-avatar-initials-bg-6: var(--operator-avatar-bg-6);
+  --operator-avatar-initials-bg-7: var(--operator-avatar-bg-7);
+  --operator-avatar-initials-bg-8: var(--operator-avatar-bg-8);
   /* Status colors - Dark mode */
   --status-assigned-accent: oklch(0.7426 0.1434 244.07);
   --status-assigned-background: oklch(0.3038 0.0312 239.84);

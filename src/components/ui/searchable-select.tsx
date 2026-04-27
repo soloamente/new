@@ -225,7 +225,7 @@ export function SearchableSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className={cn(
-          "bg-background flex w-fit items-center justify-between gap-2 rounded-full border-0 px-3.75 py-1.75 text-sm font-normal whitespace-nowrap transition-colors outline-none focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "bg-background flex w-fit items-center justify-between gap-2 rounded-full border-0 px-3.75 py-1.75 text-sm font-normal whitespace-nowrap transition-colors outline-none will-change-transform focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           triggerClassName,
         )}
       >
