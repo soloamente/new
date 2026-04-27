@@ -362,8 +362,8 @@ export default function Pratiche({
 
   return (
     <main className="bg-card m-2.5 flex min-w-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
-      {/* Header - Info Container */}
-      <div className="flex w-full min-w-0 flex-col gap-4.5">
+      {/* Header - Info Container — `md:relative` serve alla search bar fissa a destra (come clienti) */}
+      <div className="relative flex w-full min-w-0 flex-col gap-4.5">
         {/* Header - Title and Export Button */}
         <div className="flex items-center justify-between gap-2.5">
           <h1 className="flex items-center justify-center gap-3.5">
@@ -381,13 +381,17 @@ export default function Pratiche({
           </div>
         </div>
         {/*
-          Filtri + ricerca: su mobile — riga1 stato, riga2 Cliente+Data in griglia, riga3 ricerca
-          (evita assoluti e overlap). `md+`: stesso allineamento di prima (stato + coppia + search).
+          Filtri + ricerca: su mobile — riga1 stato, riga2 Cliente+Data, riga3 ricerca a tutta larghezza.
+          Da `md:`, stesso modello di clienti/utenti: riga con filtri a sinistra, ricerca `absolute right-0 w-60`
+          (niente `flex-1` che allarga i select su tutta la pagina).
         */}
-        <div className="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-          <div className="flex w-full min-w-0 flex-col gap-2 md:min-h-0 md:min-w-0 md:flex-1 md:flex-row md:flex-nowrap md:items-center md:gap-1.25">
-            {/* Riga 1 (mobile) / capo a sinistra (md+): stato pratiche */}
-            <div className="w-fit min-h-11 shrink-0 self-start">
+        {/*
+          `md:pr-64` riserva lo spazio a destra (search assoluta ~15rem) così i filtri non sfiniscono sotto la ricerca.
+        */}
+        <div className="flex w-full min-w-0 flex-col gap-3 max-md:min-w-0 md:flex-row md:items-center md:gap-2 md:pr-64">
+          <div className="flex w-full min-w-0 flex-col gap-2 max-md:min-w-0 md:min-h-0 md:min-w-0 md:w-fit md:flex-row md:items-center md:justify-start md:gap-1.25">
+            {/* Riga 1 (mobile) / prima colonna (desktop): stato pratiche */}
+            <div className="w-fit min-h-11 shrink-0 self-start md:min-h-0">
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
@@ -399,7 +403,7 @@ export default function Pratiche({
                   }
                 }}
               >
-                <SelectTrigger className="bg-background w-fit min-h-11 cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform">
+                <SelectTrigger className="bg-background w-fit min-h-11 cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform md:min-h-0">
                   <SelectValue placeholder="Stato pratiche" />
                 </SelectTrigger>
                 <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
@@ -416,15 +420,13 @@ export default function Pratiche({
               </Select>
             </div>
             {/*
-              Sotto al select su mobile: Cliente e Data sulla stessa riga (2 colonne).
-              Da `md:`, `display: contents` in modo che le due celle partecipino al flex
-              con lo stato (tre controlli in riga) senza strato extra.
+              Mobile: griglia 2 col a tutta larghezza. Desktop: riga con larghezze al contenuto (`w-fit`) come prima.
             */}
             <div
               className="grid w-full min-w-0 [grid-template-columns:minmax(0,1fr)_minmax(0,1fr)] gap-1.25
-                         md:contents"
+                         max-md:min-w-0 md:flex md:min-w-0 md:w-fit"
             >
-              <div className="min-w-0 md:min-w-0 md:max-w-none md:flex-1">
+              <div className="min-w-0 md:min-w-0 md:w-fit">
                 <SearchableSelect
                   placeholder="Cliente"
                   value={clientFilterValue}
@@ -433,23 +435,24 @@ export default function Pratiche({
                   searchPlaceholder="Cerca cliente..."
                   showAllOption={true}
                   allOptionLabel="Tutti i clienti"
-                  triggerClassName="w-full min-w-0 min-h-11"
+                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit"
                 />
               </div>
-              <div className="min-w-0 md:min-w-0 md:max-w-none md:flex-1">
+              <div className="min-w-0 md:min-w-0 md:w-fit">
                 <DateRangeFilter
                   value={dateFilter}
                   onValueChange={setDateFilter}
                   placeholder="Data"
-                  triggerClassName="w-full min-w-0 min-h-11"
+                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit"
                 />
               </div>
             </div>
           </div>
-          <div className="w-full min-w-0 shrink-0 md:flex md:max-w-[min(100%,24rem)] md:justify-end">
+          {/* Mobile: sotto, full width. Desktop: assoluta a destra, non occupa flesso in riga. */}
+          <div className="w-full min-w-0 max-md:shrink-0 md:absolute md:right-0 md:flex md:w-auto md:items-center md:justify-center">
             <label
               htmlFor="pratiche-search"
-              className="bg-background flex w-full min-h-11 min-w-0 max-w-full touch-manipulation items-center justify-between rounded-full px-3.75 py-1.75 text-base leading-normal shadow-sm transition-[width,box-shadow] duration-300 ease-out sm:text-sm md:w-60 md:max-w-full md:shadow-[-18px_0px_14px_var(--color-card)] md:transition-[width,box-shadow] md:focus-within:max-w-none md:focus-within:w-84"
+              className="bg-background flex w-full min-h-11 min-w-0 max-w-full touch-manipulation items-center justify-between rounded-full px-3.75 py-1.75 text-base leading-normal shadow-sm transition-[width,box-shadow] duration-300 ease-out sm:text-sm md:h-auto md:w-60 md:min-h-0 md:text-sm md:shadow-[-18px_0px_14px_var(--color-card)] md:transition-[width,box-shadow] md:focus-within:w-84"
             >
               <input
                 id="pratiche-search"
@@ -460,7 +463,7 @@ export default function Pratiche({
                 placeholder="Numero pratica, stato, cliente…"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                className="placeholder:text-search-placeholder w-full min-w-0 min-h-11 py-0 text-base leading-normal focus:outline-none sm:min-h-0 sm:text-sm"
+                className="placeholder:text-search-placeholder w-full min-w-0 min-h-11 py-0 text-base leading-normal focus:outline-none sm:min-h-0 sm:text-sm md:min-h-0 md:truncate"
               />
               <SearchIcon className="text-search-placeholder shrink-0" />
             </label>
@@ -469,30 +472,32 @@ export default function Pratiche({
       </div>
       {/* Body Wrapper */}
       <div className="bg-background flex min-h-0 min-w-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
-        {/* Body Header - Stats: su mobile una riga con scroll orizzontale + scroll-fade-x; da md stessa griglia 2/3 col */}
+        {/* Body Header - Stats: su mobile riga a scroll; da `md` stessa griglia 2/3 col di prima (niente w-max a tutta riga) */}
         <div
           className={cn(
             "shrink-0",
             "max-md:scroll-fade-x max-md:min-w-0 max-md:overflow-y-hidden max-md:overflow-x-auto",
             "max-md:overscroll-x-contain",
-            "md:grid md:min-w-0 md:grid-cols-2 md:gap-3 md:overflow-visible",
-            "md:[-webkit-mask-image:none] md:[mask-image:none]",
-            "xl:grid-cols-3",
           )}
           aria-label="Riepilogo numeri pratiche"
         >
           <div
-            className="flex w-max min-w-0 flex-nowrap gap-3 max-md:pb-0.5 md:contents"
+            className={cn(
+              "min-w-0",
+              "flex w-max min-w-0 flex-nowrap gap-3 max-md:pb-0.5",
+              "md:grid md:w-full md:grid-cols-2 md:gap-3 md:overflow-visible md:pb-0",
+              "xl:grid-cols-3",
+            )}
             role="presentation"
           >
-            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
               <div className="text-stats-title text-sm">Totale pratiche</div>
               <div className="mt-3 flex items-center gap-2.5 text-2xl">
                 <PraticheIcon />
                 <TextMorph>{totalPractices}</TextMorph>
               </div>
             </div>
-            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
               <div className="text-stats-title text-sm">Assegnate</div>
               <div className="mt-3 flex items-center gap-2.5 text-2xl">
                 <UserCircleIcon
@@ -503,7 +508,7 @@ export default function Pratiche({
                 <TextMorph>{assignedCount}</TextMorph>
               </div>
             </div>
-            <div className="bg-card max-w-[16rem] min-w-[12rem] shrink-0 rounded-xl p-4">
+            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
               <div className="text-stats-title text-sm">Concluse</div>
               <div className="mt-3 flex items-center gap-2.5 text-2xl">
                 <CheckIcon
