@@ -63,7 +63,9 @@ export function convertClientToRowWithPractices(
   const baseRow = convertClientToRow(client);
 
   // Count practices for this client
-  const clientPractices = practices.filter((p) => p.client_id === client.id);
+  const clientPractices = practices.filter((p) =>
+    p.clients?.some((c) => c.id === client.id),
+  );
   const practicesCount = clientPractices.length;
 
   // Find most recent practice date

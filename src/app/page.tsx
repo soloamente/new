@@ -13,12 +13,10 @@ export default async function Home() {
 
   // Redirect authenticated users based on their role
   if (user) {
-    // Operators are redirected directly to "Le mie pratiche"
-    if (user.role_id === 3) {
-      redirect("/mie-pratiche");
+    if (user.role_id === 1) {
+      redirect("/dashboard");
     }
-    // Other authenticated users go to dashboard
-    redirect("/dashboard");
+    redirect("/pratiche");
   }
 
   // Redirect unauthenticated users to login

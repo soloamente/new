@@ -100,6 +100,11 @@ export default function Sidebar({ user }: SidebarProps) {
   const allNavigationItems: NavigationItem[] = [
     {
       icon: PraticheIcon,
+      label: "Tutte le pratiche",
+      href: "/pratiche",
+    },
+    {
+      icon: PraticheIcon,
       label: "Le mie pratiche",
       href: "/mie-pratiche",
     },
@@ -107,11 +112,6 @@ export default function Sidebar({ user }: SidebarProps) {
       icon: DashboardIcon,
       label: "Dashboard",
       href: "/dashboard",
-    },
-    {
-      icon: PraticheIcon,
-      label: "Tutte le pratiche",
-      href: "/pratiche",
     },
     
     // {

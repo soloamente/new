@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
   "https://cruscotto-pratiche-api-production.up.railway.app";
 
 type FetchOptions = RequestInit & {

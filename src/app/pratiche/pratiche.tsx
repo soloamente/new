@@ -8,7 +8,6 @@ import {
   SearchIcon,
   UserCircleIcon,
 } from "@/components/icons";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   DateRangeFilter,
@@ -26,9 +25,11 @@ import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { motion, useReducedMotion } from "motion/react";
 // Animated stat counts: morph transitions between digits without motion-plus’s masked span layout.
 import { TextMorph } from "torph/react";
-import { getDisplayNameInitials, type PracticeRow } from "@/lib/practices-utils";
+import { type PracticeRow } from "@/lib/practices-utils";
 import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
+import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
+import { ClientsAvatarStack } from "@/components/clients-avatar-stack";
 
 type PracticeView = "all" | "mine";
 
@@ -42,9 +43,13 @@ interface PraticheProps {
 const normalizeValue = (value: string) =>
   value.toLowerCase().trim().replace(/\s+/g, "-");
 
-/** Six columns: pratica #, date, client, phone, type, status (no row selection column). */
+/** Five columns: pratica #, date, client, type, status. */
 const PRATICHE_TABLE_GRID_CLASS =
-  "grid-cols-[minmax(100px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
+  "grid-cols-[minmax(100px,max-content)_minmax(130px,170px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
+
+/** Six columns: adds "Data Conclusione" after "Data" when filter = concluse. */
+const PRATICHE_TABLE_GRID_CLASS_CONCLUDED =
+  "grid-cols-[minmax(100px,max-content)_minmax(130px,170px)_minmax(130px,160px)_minmax(160px,1fr)_minmax(120px,0.8fr)_minmax(220px,max-content)]";
 
 /**
  * Su viewport stretti la griglia supera la larghezza; come in operatori, un min-width
@@ -97,6 +102,11 @@ export default function Pratiche({
   const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
 
+  const showConcludedDate = statusFilter === "completed";
+  const tableGridClass = showConcludedDate
+    ? PRATICHE_TABLE_GRID_CLASS_CONCLUDED
+    : PRATICHE_TABLE_GRID_CLASS;
+
   /** Respect OS “reduce motion”; collapse/expand stays instant when enabled. */
   const prefersReducedMotion = useReducedMotion();
 
@@ -136,14 +146,18 @@ export default function Pratiche({
     value: filter.value,
   }));
 
-  // Get unique clients from practices for filters
+  // Get unique client names across all practices for the filter dropdown
   const uniqueClients = useMemo(() => {
-    const clients = new Set(practices.map((p) => p.client).filter(Boolean));
-    return Array.from(clients).map((name) => ({
-      label: name,
-      value: name.toLowerCase().replace(/\s+/g, "-"),
-      active: false,
-    }));
+    const names = new Set(
+      practices.flatMap((p) => p.clients?.map((c) => c.name) ?? []),
+    );
+    return Array.from(names)
+      .sort()
+      .map((name) => ({
+        label: name,
+        value: name.toLowerCase().replace(/\s+/g, "-"),
+        active: false,
+      }));
   }, [practices]);
 
   const [clientFilterValue, setClientFilterValue] = useState("Cliente");
@@ -160,7 +174,9 @@ export default function Pratiche({
       const matchesClient =
         !clientFilter || clientFilter === "Cliente"
           ? true
-          : normalizeValue(practice.client) === clientFilter;
+          : (practice.clients ?? []).some(
+              (c) => normalizeValue(c.name) === clientFilter,
+            );
 
       const matchesSearch =
         normalizedSearch.length === 0 ||
@@ -292,29 +308,22 @@ export default function Pratiche({
         <div
           className={cn(
             "grid items-center gap-4 text-base",
-            PRATICHE_TABLE_GRID_CLASS,
+            tableGridClass,
           )}
         >
           <div className="flex items-center gap-2.5">
             <span className="font-semibold">{practice.praticaNumber}</span>
           </div>
-          <div className="truncate tabular-nums">{practice.date}</div>
-          <div className="flex items-center gap-2 truncate">
-            <Avatar aria-hidden className="bg-background">
-              <AvatarFallback
-                aria-label={`Cliente: ${practice.client}`}
-                placeholderSeed={practice.client}
-              >
-                {/* Same initials logic as operator badges; default placeholder palette from AvatarFallback */}
-                <span className="text-[10px] font-semibold uppercase leading-none tracking-tight">
-                  {getDisplayNameInitials(practice.client)}
-                </span>
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate">{practice.client}</span>
+          <div className="truncate font-semibold tabular-nums">{practice.date}</div>
+          {showConcludedDate && (
+            <div className="truncate font-semibold tabular-nums">
+              {practice.concludedAt ?? "—"}
+            </div>
+          )}
+          <div className="min-w-0 truncate font-semibold">
+            <ClientsAvatarStack clients={practice.clients} />
           </div>
-          <div className="truncate tabular-nums">{practice.clientPhone}</div>
-          <div className="truncate">{practice.type}</div>
+          <div className="truncate font-semibold">{practice.type}</div>
           <div>
             <span
               className="inline-flex items-center justify-center gap-2 rounded-full py-1.25 pr-3 pl-2.5 text-base font-medium"
@@ -345,15 +354,15 @@ export default function Pratiche({
       <div
         className={cn(
           "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
-          PRATICHE_TABLE_GRID_CLASS,
+          tableGridClass,
         )}
       >
         <div className="flex items-center gap-2.5">
           <span>Pratica N.</span>
         </div>
         <div>Data</div>
+        {showConcludedDate && <div>Data Conclusione</div>}
         <div>Cliente</div>
-        <div>Telefono</div>
         <div>Tipologia</div>
         <div>Stato</div>
       </div>
@@ -545,7 +554,10 @@ export default function Pratiche({
                 return (
                   <div
                     key={group.operatorName}
-                    className="border-0 bg-card w-full min-w-0 shadow-none ring-0 rounded-xl"
+                    className="bg-card w-full min-w-0 shadow-none ring-0 rounded-xl overflow-hidden border-l-4"
+                    style={{
+                      borderLeftColor: getOperatorAvatarColors(group.operatorName, { withInitialsForeground: true }).backgroundColor,
+                    }}
                   >
                     <button
                       type="button"

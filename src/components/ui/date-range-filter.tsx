@@ -136,7 +136,7 @@ interface DateRangeFilterProps {
 }
 
 // Mini calendar component
-function MiniCalendar({
+export function MiniCalendar({
   selectedDate,
   onSelectDate,
   currentMonth,

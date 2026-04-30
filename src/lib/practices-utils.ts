@@ -65,27 +65,35 @@ export interface PracticeRow {
   /** Raw date string from API for filtering purposes */
   rawDate: string | null;
   internalOperator: string;
+  /** All client names joined by ", " — used for text search and legacy filter matching */
   client: string;
+  /** All client phones joined by ", " — used for text search */
   clientPhone: string;
+  /** Full clients list for avatar stack rendering */
+  clients: Array<{ id: number; name: string; phone?: string }>;
   type: string;
   note: string | undefined;
   status: PracticeStatus;
   isConcluded: boolean;
+  concludedAt: string | null;
 }
 
 export function convertPracticeToRow(practice: Practice): PracticeRow {
+  const clients = practice.clients ?? [];
   return {
     id: practice.id.toString(),
     praticaNumber: practice.practice_number,
     date: formatDate(practice.created_at),
     rawDate: practice.created_at ?? null,
     internalOperator: practice.operator?.name ?? "Non assegnato",
-    client: practice.client?.name ?? "Cliente sconosciuto",
-    clientPhone: practice.client?.phone ?? "N/D",
+    client: clients.length > 0 ? clients.map((c) => c.name).join(", ") : "Cliente sconosciuto",
+    clientPhone: clients.map((c) => c.phone ?? "").filter(Boolean).join(", ") || "N/D",
+    clients: clients.map((c) => ({ id: c.id, name: c.name, phone: c.phone })),
     type: practice.type,
     note: practice.notes ?? undefined,
     status: mapApiStatusToUI(practice.is_concluded),
     isConcluded: practice.is_concluded,
+    concludedAt: practice.concluded_at ? formatDate(practice.concluded_at) : null,
   };
 }
 

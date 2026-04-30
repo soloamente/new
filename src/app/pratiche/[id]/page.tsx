@@ -1,32 +1,31 @@
 import { notFound } from "next/navigation";
-import { getPractice } from "@/app/actions/practices-actions";
+import { getPractice, getPracticeAudits } from "@/app/actions/practices-actions";
+import { getOperators } from "@/app/actions/users-actions";
 import PracticeDetail from "./practice-detail";
 
 interface PracticeDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-/**
- * Server component that fetches practice data
- * and passes it to the client PracticeDetail component
- */
 export default async function PracticeDetailPage({
   params,
 }: PracticeDetailPageProps) {
   const { id } = await params;
   const practiceId = Number.parseInt(id, 10);
 
-  // Validate ID is a number
   if (Number.isNaN(practiceId)) {
     notFound();
   }
 
-  const practice = await getPractice(practiceId);
+  const [practice, audits, operators] = await Promise.all([
+    getPractice(practiceId),
+    getPracticeAudits(practiceId),
+    getOperators(),
+  ]);
 
   if (!practice) {
     notFound();
   }
 
-  return <PracticeDetail practice={practice} />;
+  return <PracticeDetail practice={practice} audits={audits} operators={operators} />;
 }
-

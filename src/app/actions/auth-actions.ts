@@ -32,7 +32,8 @@ interface ApiError {
 export async function login(formData: FormData) {
   const email = formData.get("username") as string; // Form field is named 'username' but API expects 'email'
   const password = formData.get("password") as string;
-  let redirectTo = (formData.get("redirectTo") as string) || "/dashboard";
+  const explicitRedirect = formData.get("redirectTo") as string | null;
+  let redirectTo = explicitRedirect || "/pratiche";
 
   if (!email || !password) {
     return { error: "Email e password sono obbligatori" };
@@ -68,11 +69,9 @@ export async function login(formData: FormData) {
       path: "/",
     });
 
-    // If redirecting to dashboard (default), check user role and redirect operators to /mie-pratiche
-    if (redirectTo === "/dashboard") {
+    // If no explicit redirectTo was provided, route by role
+    if (!explicitRedirect) {
       try {
-        // Fetch user data directly using the token we just received
-        // This avoids cache issues with getCurrentUser()
         const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: "POST",
           headers: {
@@ -83,13 +82,10 @@ export async function login(formData: FormData) {
 
         if (userResponse.ok) {
           const user = (await userResponse.json()) as User;
-          // Operators (role_id === 3) should be redirected to "Le mie pratiche"
-          if (user?.role_id === 3) {
-            redirectTo = "/mie-pratiche";
-          }
+          // DATAWEB (role_id 1) → dashboard; ADMIN e OPERATORE → tutte le pratiche
+          redirectTo = user?.role_id === 1 ? "/dashboard" : "/pratiche";
         }
       } catch (error) {
-        // If we can't get user info, fall back to default redirect
         console.error("Failed to get user after login:", error);
       }
     }
