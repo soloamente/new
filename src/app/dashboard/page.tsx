@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import {
   CheckIcon,
-  DashboardIcon,
   UserCircleIcon,
   PraticheIcon,
 } from "@/components/icons";
+import { BarChart3 } from "lucide-react";
 import { getCurrentUser } from "@/app/actions/auth-actions";
 import {
   getStudioStatistics,
@@ -208,8 +208,8 @@ export default async function DashboardPage({
           {/* Header - Title */}
           <div className="flex items-center justify-between gap-2.5">
             <h1 className="flex items-center justify-center gap-3.5">
-              <DashboardIcon />
-              <span>Dashboard</span>
+              <BarChart3 className="size-5 shrink-0" aria-hidden />
+              <span>Statistiche</span>
             </h1>
           </div>
 

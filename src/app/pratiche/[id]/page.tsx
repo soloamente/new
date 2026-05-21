@@ -33,5 +33,5 @@ export default async function PracticeDetailPage({
     redirect("/mie-pratiche");
   }
 
-  return <PracticeDetail practice={practice} audits={audits} operators={operators} userRoleId={currentUser?.role_id} />;
+  return <PracticeDetail practice={practice} audits={audits} operators={operators} userRoleId={currentUser?.role_id} currentUserId={currentUser?.id} />;
 }

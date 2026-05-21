@@ -425,6 +425,7 @@ interface PracticeDetailProps {
   audits: PracticeAudit[];
   operators: User[];
   userRoleId?: number;
+  currentUserId?: number;
 }
 
 export default function PracticeDetail({
@@ -432,11 +433,12 @@ export default function PracticeDetail({
   audits,
   operators,
   userRoleId,
+  currentUserId,
 }: PracticeDetailProps) {
   const router = useRouter();
 
-  // AMMINISTRATORE_STUDIO (role_id=2) can only change status, not edit full practice
-  const canEdit = userRoleId !== 2;
+  // AMMINISTRATORE_STUDIO (role_id=2) can fully edit only practices assigned to themselves
+  const canEdit = userRoleId !== 2 || practice.assigned_to === currentUserId;
   // OPERATORE (role_id=3) comes from /mie-pratiche
   const backHref = userRoleId === 3 ? "/mie-pratiche" : "/pratiche";
 

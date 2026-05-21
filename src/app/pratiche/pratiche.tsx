@@ -119,11 +119,7 @@ export default function Pratiche({
   // Status filters - for OPERATORE, first filter is dynamic (Tutte/Mie)
   const statusFilters = [
     {
-      label: isOperator
-        ? isMineView
-          ? "Mie pratiche"
-          : "Tutte le pratiche"
-        : "Tutte le pratiche",
+      label: "Tutte le pratiche",
       value: "all",
       active: statusFilter === "all",
       // Status filter only — switching between /pratiche and /mie-pratiche is via sidebar nav, not this select.

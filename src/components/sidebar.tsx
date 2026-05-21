@@ -20,7 +20,7 @@ import OpenRectArrowOutIcon from "./icons/open-rect-arrow-out";
 import { logout } from "@/app/actions/auth-actions";
 import { WeatherWidget } from "./weather-widget";
 import { useMobileSidebar } from "./mobile-sidebar-context";
-import { X, ChevronDown, Settings2 } from "lucide-react";
+import { X, ChevronDown, Settings2, BarChart3 } from "lucide-react";
 
 type IconComponent = ComponentType<
   SVGProps<SVGSVGElement> & { size?: number; className?: string }
@@ -217,7 +217,7 @@ export default function Sidebar({ user }: SidebarProps) {
                         isActiveItem("/dashboard") && "bg-foreground/[0.08] font-semibold text-sidebar-primary",
                       )}
                     >
-                      <DashboardIcon size={18} />
+                      <BarChart3 className="size-[18px] shrink-0" aria-hidden />
                       Statistiche
                     </Link>
                     <Link
