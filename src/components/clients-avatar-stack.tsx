@@ -62,10 +62,10 @@ export function ClientsAvatarStack({
           </div>
 
           {/* Primary name label (first client) */}
-          <span className="truncate text-sm">
+          <span className="truncate text-lg font-semibold">
             {clients[0]?.name}
             {clients.length > 1 && (
-              <span className="text-muted-foreground ml-1 text-xs">
+              <span className="text-muted-foreground ml-1.5 text-base font-medium">
                 +{clients.length - 1}
               </span>
             )}

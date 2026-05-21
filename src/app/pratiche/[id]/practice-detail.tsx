@@ -424,14 +424,21 @@ interface PracticeDetailProps {
   practice: Practice;
   audits: PracticeAudit[];
   operators: User[];
+  userRoleId?: number;
 }
 
 export default function PracticeDetail({
   practice,
   audits,
   operators,
+  userRoleId,
 }: PracticeDetailProps) {
   const router = useRouter();
+
+  // AMMINISTRATORE_STUDIO (role_id=2) can only change status, not edit full practice
+  const canEdit = userRoleId !== 2;
+  // OPERATORE (role_id=3) comes from /mie-pratiche
+  const backHref = userRoleId === 3 ? "/mie-pratiche" : "/pratiche";
 
   // --- Status state (existing logic) ---
   const [isUpdating, setIsUpdating] = useState(false);
@@ -566,7 +573,7 @@ export default function PracticeDetail({
       <div className="flex shrink-0 items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <button
-            onClick={() => router.push("/pratiche")}
+            onClick={() => router.push(backHref)}
             className="text-button-secondary hover:text-button-secondary/80 flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors"
             aria-label="Torna alla lista pratiche"
           >
@@ -595,7 +602,7 @@ export default function PracticeDetail({
             {statusVisual.label}
           </span>
 
-          {isEditMode ? (
+          {canEdit && (isEditMode ? (
             <>
               <Button variant="outline" onClick={cancelEditMode} disabled={isSaving}>
                 Annulla
@@ -613,7 +620,7 @@ export default function PracticeDetail({
               <FaPencilAlt className="size-3.5" />
               Modifica
             </Button>
-          )}
+          ))}
         </div>
       </div>
 

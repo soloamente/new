@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getPractice, getPracticeAudits } from "@/app/actions/practices-actions";
 import { getOperators } from "@/app/actions/users-actions";
+import { getCurrentUser } from "@/app/actions/auth-actions";
 import PracticeDetail from "./practice-detail";
 
 interface PracticeDetailPageProps {
@@ -17,15 +18,20 @@ export default async function PracticeDetailPage({
     notFound();
   }
 
-  const [practice, audits, operators] = await Promise.all([
+  const [practice, audits, operators, currentUser] = await Promise.all([
     getPractice(practiceId),
     getPracticeAudits(practiceId),
     getOperators(),
+    getCurrentUser(),
   ]);
 
   if (!practice) {
     notFound();
   }
 
-  return <PracticeDetail practice={practice} audits={audits} operators={operators} />;
+  if (currentUser?.role_id === 3 && practice.assigned_to !== currentUser.id) {
+    redirect("/mie-pratiche");
+  }
+
+  return <PracticeDetail practice={practice} audits={audits} operators={operators} userRoleId={currentUser?.role_id} />;
 }

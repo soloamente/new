@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPlus, FaChevronRight } from "react-icons/fa";
 import { motion, useReducedMotion } from "motion/react";
 // Animated stat counts: morph transitions between digits without motion-plus’s masked span layout.
 import { TextMorph } from "torph/react";
@@ -30,6 +30,7 @@ import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { getOperatorAvatarColors } from "@/lib/operators-utils";
 import { CreatePracticeDialog } from "@/components/create-practice-dialog";
 import { ClientsAvatarStack } from "@/components/clients-avatar-stack";
+import { CalendarDays } from "lucide-react";
 
 type PracticeView = "all" | "mine";
 
@@ -97,7 +98,7 @@ export default function Pratiche({
   // Tutte le pratiche: default to "assegnate"; Le mie pratiche: default to full list.
   const [statusFilter, setStatusFilter] = useState<
     PracticeRow["status"] | "all"
-  >(() => (view === "all" ? "assigned" : "all"));
+  >("assigned");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const pageTitle = view === "mine" ? "Le mie pratiche" : "Tutte le pratiche";
@@ -284,7 +285,6 @@ export default function Pratiche({
 
   const renderPracticeRow = (practice: PracticeRow) => {
     const statusVisual = practiceStatusStyles[practice.status];
-
     const handleRowClick = () => {
       router.push(`/pratiche/${practice.id}`);
     };
@@ -293,8 +293,8 @@ export default function Pratiche({
       <div
         key={practice.id}
         onClick={handleRowClick}
-        // muted ≈ card in light theme; use a visible overlay on hover instead
-        className="hover:bg-foreground/5 dark:hover:bg-white/10 cursor-pointer px-3 py-5 transition-colors"
+        className="flex cursor-pointer items-center gap-3 rounded-xl border-l-4 bg-background px-5 py-3 shadow-sm ring-1 ring-border/50 transition-all hover:shadow-md hover:ring-border"
+        style={{ borderLeftColor: statusVisual.accent }}
         role="button"
         tabIndex={0}
         aria-label={`Visualizza dettagli pratica ${practice.praticaNumber}`}
@@ -307,26 +307,31 @@ export default function Pratiche({
       >
         <div
           className={cn(
-            "grid items-center gap-4 text-base",
+            "grid flex-1 items-center gap-4",
             tableGridClass,
           )}
         >
-          <div className="flex items-center gap-2.5">
-            <span className="font-semibold">{practice.praticaNumber}</span>
+          <div className="flex items-center">
+            <span className="rounded-md bg-foreground/[0.06] px-2 py-0.5 font-mono text-sm font-medium text-muted-foreground">
+              {practice.praticaNumber}
+            </span>
           </div>
-          <div className="truncate font-semibold tabular-nums">{practice.date}</div>
+          <div className="flex items-center gap-1.5 text-lg font-semibold tabular-nums">
+            <CalendarDays className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />
+            <span className="truncate">{practice.date}</span>
+          </div>
           {showConcludedDate && (
-            <div className="truncate font-semibold tabular-nums">
+            <div className="truncate text-lg font-semibold tabular-nums">
               {practice.concludedAt ?? "—"}
             </div>
           )}
-          <div className="min-w-0 truncate font-semibold">
+          <div className="min-w-0 truncate text-lg font-semibold">
             <ClientsAvatarStack clients={practice.clients} />
           </div>
-          <div className="truncate font-semibold">{practice.type}</div>
+          <div className="truncate text-lg font-semibold">{practice.type}</div>
           <div>
             <span
-              className="inline-flex items-center justify-center gap-2 rounded-full py-1.25 pr-3 pl-2.5 text-base font-medium"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-current py-1.5 pr-4 pl-3 text-lg font-semibold"
               style={{
                 backgroundColor: statusVisual.background,
                 color: statusVisual.accent,
@@ -334,9 +339,7 @@ export default function Pratiche({
               suppressHydrationWarning
             >
               <span
-                style={{
-                  color: statusVisual.iconColor,
-                }}
+                style={{ color: statusVisual.iconColor }}
                 suppressHydrationWarning
               >
                 {statusVisual.icon}
@@ -345,23 +348,22 @@ export default function Pratiche({
             </span>
           </div>
         </div>
+        <FaChevronRight className="size-3.5 shrink-0 text-muted-foreground/40" aria-hidden />
       </div>
     );
   };
 
   const renderTableHeader = () => (
-    <div className="bg-table-header shrink-0 rounded-none px-3 py-2.25">
+    <div className="shrink-0 px-5 pt-3 pb-2">
       <div
         className={cn(
-          "text-table-header-foreground grid items-center gap-4 text-sm font-medium",
+          "grid items-center gap-4 text-sm font-semibold text-foreground/55",
           tableGridClass,
         )}
       >
-        <div className="flex items-center gap-2.5">
-          <span>Pratica N.</span>
-        </div>
+        <div>N. Pratica</div>
         <div>Data</div>
-        {showConcludedDate && <div>Data Conclusione</div>}
+        {showConcludedDate && <div>Conclusa il</div>}
         <div>Cliente</div>
         <div>Tipologia</div>
         <div>Stato</div>
@@ -375,17 +377,17 @@ export default function Pratiche({
       <div className="relative flex w-full min-w-0 flex-col gap-4.5">
         {/* Header - Title and Export Button */}
         <div className="flex items-center justify-between gap-2.5">
-          <h1 className="flex items-center justify-center gap-3.5">
+          <h1 className="flex items-center gap-3 text-2xl font-bold">
             <PraticheIcon />
             <span>{pageTitle}</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
             <button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
+              className="bg-foreground text-background flex cursor-pointer items-center justify-center gap-2 rounded-full py-2.25 pr-3.5 pl-4.5 text-sm font-semibold shadow-sm hover:opacity-90"
             >
-              Aggiungi
-              <FaPlus className="text-button-secondary" />
+              Aggiungi pratica
+              <FaPlus className="size-3" />
             </button>
           </div>
         </div>
@@ -412,7 +414,7 @@ export default function Pratiche({
                   }
                 }}
               >
-                <SelectTrigger className="bg-background w-fit min-h-11 cursor-pointer rounded-full border-none px-3.75 py-1.75 text-sm shadow-none will-change-transform md:min-h-0">
+                <SelectTrigger className="bg-background w-fit min-h-11 cursor-pointer rounded-full border-none px-4 py-2 text-base font-medium shadow-none will-change-transform md:min-h-0">
                   <SelectValue placeholder="Stato pratiche" />
                 </SelectTrigger>
                 <SelectContent className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width)">
@@ -444,7 +446,7 @@ export default function Pratiche({
                   searchPlaceholder="Cerca cliente..."
                   showAllOption={true}
                   allOptionLabel="Tutti i clienti"
-                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit"
+                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit text-base font-medium"
                 />
               </div>
               <div className="min-w-0 md:min-w-0 md:w-fit">
@@ -452,7 +454,7 @@ export default function Pratiche({
                   value={dateFilter}
                   onValueChange={setDateFilter}
                   placeholder="Data"
-                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit"
+                  triggerClassName="w-full min-w-0 min-h-11 max-md:min-w-0 md:min-h-0 md:w-fit text-base font-medium"
                 />
               </div>
             </div>
@@ -480,8 +482,8 @@ export default function Pratiche({
         </div>
       </div>
       {/* Body Wrapper */}
-      <div className="bg-background flex min-h-0 min-w-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
-        {/* Body Header - Stats: su mobile riga a scroll; da `md` stessa griglia 2/3 col di prima (niente w-max a tutta riga) */}
+      <div className="bg-content-area flex min-h-0 min-w-0 flex-1 flex-col gap-6.25 rounded-t-3xl px-5.5 pt-6.25">
+        {/* KPI Cards — layout orizzontale (icona + numero + barra progresso) ispirato al template grafico */}
         <div
           className={cn(
             "shrink-0",
@@ -492,41 +494,75 @@ export default function Pratiche({
         >
           <div
             className={cn(
-              "min-w-0",
               "flex w-max min-w-0 flex-nowrap gap-3 max-md:pb-0.5",
               "md:grid md:w-full md:grid-cols-2 md:gap-3 md:overflow-visible md:pb-0",
               "xl:grid-cols-3",
             )}
             role="presentation"
           >
-            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
-              <div className="text-stats-title text-sm">Totale pratiche</div>
-              <div className="mt-3 flex items-center gap-2.5 text-2xl">
+            {/* Totale */}
+            <div className="bg-card relative flex min-w-48 shrink-0 items-center gap-5 overflow-hidden rounded-xl p-5 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.06] md:min-w-0">
+              <div className="grid size-14 shrink-0 place-items-center rounded-[14px] bg-muted text-muted-foreground">
                 <PraticheIcon />
-                <TextMorph>{totalPractices}</TextMorph>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-stats-title">Totale pratiche</div>
+                <div className="mt-1 text-4xl font-bold leading-none tracking-tight tabular-nums">
+                  <TextMorph>{totalPractices}</TextMorph>
+                </div>
               </div>
             </div>
-            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
-              <div className="text-stats-title text-sm">Assegnate</div>
-              <div className="mt-3 flex items-center gap-2.5 text-2xl">
-                <UserCircleIcon
-                  size={24}
-                  style={{ color: practiceStatusStyles.assigned.iconColor }}
-                  suppressHydrationWarning
-                />
-                <TextMorph>{assignedCount}</TextMorph>
+
+            {/* Assegnate */}
+            <div className="bg-card relative flex min-w-48 shrink-0 items-center gap-5 overflow-hidden rounded-xl p-5 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.06] md:min-w-0" suppressHydrationWarning>
+              <div
+                className="grid size-14 shrink-0 place-items-center rounded-[14px]"
+                style={{ background: "var(--status-assigned-background)", color: "var(--status-assigned-icon)" }}
+                suppressHydrationWarning
+              >
+                <UserCircleIcon size={26} />
               </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-stats-title">Assegnate</div>
+                <div className="mt-1 text-4xl font-bold leading-none tracking-tight tabular-nums">
+                  <TextMorph>{assignedCount}</TextMorph>
+                </div>
+              </div>
+              {totalPractices > 0 && (
+                <div className="absolute bottom-0 left-0 h-1 w-full bg-muted">
+                  <div
+                    className="h-full transition-[width] duration-500 ease-out"
+                    style={{ width: `${Math.round((assignedCount / totalPractices) * 100)}%`, background: "var(--status-assigned-accent)" }}
+                    suppressHydrationWarning
+                  />
+                </div>
+              )}
             </div>
-            <div className="bg-card min-w-[12rem] max-w-[16rem] shrink-0 rounded-xl p-4 md:min-w-0 md:max-w-none">
-              <div className="text-stats-title text-sm">Concluse</div>
-              <div className="mt-3 flex items-center gap-2.5 text-2xl">
-                <CheckIcon
-                  size={24}
-                  style={{ color: practiceStatusStyles.completed.iconColor }}
-                  suppressHydrationWarning
-                />
-                <TextMorph>{completedCount}</TextMorph>
+
+            {/* Concluse */}
+            <div className="bg-card relative flex min-w-48 shrink-0 items-center gap-5 overflow-hidden rounded-xl p-5 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.06] md:min-w-0" suppressHydrationWarning>
+              <div
+                className="grid size-14 shrink-0 place-items-center rounded-[14px]"
+                style={{ background: "var(--status-completed-background)", color: "var(--status-completed-icon)" }}
+                suppressHydrationWarning
+              >
+                <CheckIcon size={26} />
               </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-stats-title">Concluse</div>
+                <div className="mt-1 text-4xl font-bold leading-none tracking-tight tabular-nums">
+                  <TextMorph>{completedCount}</TextMorph>
+                </div>
+              </div>
+              {totalPractices > 0 && (
+                <div className="absolute bottom-0 left-0 h-1 w-full bg-muted">
+                  <div
+                    className="h-full transition-[width] duration-500 ease-out"
+                    style={{ width: `${Math.round((completedCount / totalPractices) * 100)}%`, background: "var(--status-completed-accent)" }}
+                    suppressHydrationWarning
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -550,11 +586,12 @@ export default function Pratiche({
               <div className="flex flex-col gap-3">
                 {groupedPractices.map((group) => {
                 const isCollapsed = collapsedOperatorGroups.has(group.operatorName);
+                const completedInGroup = group.rows.filter(r => r.status === "completed").length;
 
                 return (
                   <div
                     key={group.operatorName}
-                    className="bg-card w-full min-w-0 shadow-none ring-0 rounded-xl overflow-hidden border-l-4"
+                    className="bg-card w-full min-w-0 rounded-xl overflow-hidden border-l-4 shadow-md ring-1 ring-black/[0.08] dark:ring-white/[0.08]"
                     style={{
                       borderLeftColor: getOperatorAvatarColors(group.operatorName, { withInitialsForeground: true }).backgroundColor,
                     }}
@@ -563,22 +600,28 @@ export default function Pratiche({
                       type="button"
                       data-no-press-scale
                       onClick={() => toggleOperatorGroup(group.operatorName)}
-                      // Match table row: transparent base, visible hover overlay only
-                      className="hover:bg-foreground/5 dark:hover:bg-white/10 flex w-full items-center justify-between gap-3 bg-transparent! px-3 py-3 text-left transition-colors"
-                      style={{ backgroundColor: "transparent" }}
+                      className="hover:bg-foreground/[0.07] dark:hover:bg-white/[0.09] flex w-full items-center justify-between gap-3 bg-foreground/[0.03] dark:bg-white/[0.03] px-4 py-3.5 text-left transition-colors"
                       aria-expanded={!isCollapsed}
                       aria-label={`Gruppo operatore ${group.operatorName}, ${group.rows.length} pratiche`}
                     >
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <OperatorInitialsAvatar name={group.operatorName} />
-                        <span className="min-w-0 truncate font-semibold">
+                        <span className="min-w-0 truncate text-base font-bold">
                           {group.operatorName}
                         </span>
-                        <span className="text-stats-title shrink-0 text-sm">
-                          ({group.rows.length})
+                        <span className="text-muted-foreground shrink-0 text-sm font-medium">
+                          {group.rows.length} {group.rows.length === 1 ? "pratica" : "pratiche"}
+                          {completedInGroup > 0 && (
+                            <>
+                              {" · "}
+                              <span style={{ color: "var(--status-completed-accent)" }} suppressHydrationWarning>
+                                {completedInGroup} conclus{completedInGroup === 1 ? "a" : "e"}
+                              </span>
+                            </>
+                          )}
                         </span>
                       </div>
-                      <span className="text-stats-title flex shrink-0 items-center gap-1.5 text-sm">
+                      <span className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-sm font-medium">
                         {isCollapsed ? "Espandi" : "Comprimi"}
                         {isCollapsed ? (
                           <FaChevronDown aria-hidden className="size-3.5" />
@@ -609,7 +652,7 @@ export default function Pratiche({
                       >
                         <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
                           {renderTableHeader()}
-                          <div className="divide-checkbox-border/70 divide-y">
+                          <div className="flex flex-col gap-2 p-2.5">
                             {group.rows.map((practice) => renderPracticeRow(practice))}
                           </div>
                         </div>
@@ -622,7 +665,7 @@ export default function Pratiche({
             ) : (
               <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
                 {renderTableHeader()}
-                <div className="divide-checkbox-border/70 divide-y">
+                <div className="flex flex-col gap-2 p-2.5">
                   {filteredPractices.map((practice) => renderPracticeRow(practice))}
                 </div>
               </div>

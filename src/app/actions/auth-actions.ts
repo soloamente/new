@@ -82,8 +82,10 @@ export async function login(formData: FormData) {
 
         if (userResponse.ok) {
           const user = (await userResponse.json()) as User;
-          // DATAWEB (role_id 1) → dashboard; ADMIN e OPERATORE → tutte le pratiche
-          redirectTo = user?.role_id === 1 ? "/dashboard" : "/pratiche";
+          // DATAWEB (1) → dashboard; OPERATORE (3) → mie-pratiche; ADMIN (2) → pratiche
+          if (user?.role_id === 1) redirectTo = "/dashboard";
+          else if (user?.role_id === 3) redirectTo = "/mie-pratiche";
+          else redirectTo = "/pratiche";
         }
       } catch (error) {
         console.error("Failed to get user after login:", error);
