@@ -38,6 +38,7 @@ interface PraticheProps {
   practices: PracticeRow[];
   userRoleId?: number;
   currentUserId?: number;
+  assignableUsers?: { id: number; name: string }[];
   view?: PracticeView;
 }
 
@@ -88,6 +89,7 @@ export default function Pratiche({
   practices,
   userRoleId,
   currentUserId,
+  assignableUsers,
   view = "all",
 }: PraticheProps) {
   const router = useRouter();
@@ -675,6 +677,7 @@ export default function Pratiche({
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         currentUserId={currentUserId}
+        operators={assignableUsers}
       />
     </main>
   );

@@ -267,6 +267,7 @@ interface CreatePracticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentUserId?: number;
+  operators?: { id: number; name: string }[];
 }
 
 interface FormState {
@@ -279,6 +280,7 @@ export function CreatePracticeDialog({
   open,
   onOpenChange,
   currentUserId,
+  operators,
 }: CreatePracticeDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -293,6 +295,11 @@ export function CreatePracticeDialog({
   const [clientRows, setClientRows] = useState<ClientRowData[]>([emptyRow()]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+
+  // Sync assigned_to whenever the logged-in user changes (e.g. component reused across sessions)
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, assigned_to: currentUserId ?? 0 }));
+  }, [currentUserId]);
 
   const resetForm = () => {
     setFormData({ assigned_to: currentUserId ?? 0, type: "", notes: "" });
@@ -436,6 +443,36 @@ export function CreatePracticeDialog({
               className="w-full"
             />
           </div>
+
+          {/* Assegna a — solo per amministratori */}
+          {operators && operators.length > 0 && (
+            <div className="space-y-2">
+              <label
+                htmlFor="practice-assigned-to"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Assegna a
+              </label>
+              <select
+                id="practice-assigned-to"
+                value={formData.assigned_to}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    assigned_to: Number(e.target.value),
+                  }))
+                }
+                disabled={isSubmitting}
+                className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {operators.map((op) => (
+                  <option key={op.id} value={op.id}>
+                    {op.id === currentUserId ? `${op.name} (tu)` : op.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Clienti — carousel */}
           <div className="space-y-2">
