@@ -570,7 +570,7 @@ export default function PracticeDetail({
     setEditClients((prev) => [...prev, emptyClientRow()]);
 
   return (
-    <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
+    <main className="bg-content-area m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
@@ -627,22 +627,22 @@ export default function PracticeDetail({
       </div>
 
       {/* Scrollable content */}
-      <div className="bg-background flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto rounded-t-3xl px-6 pt-7 pb-8">
+      <div className="bg-content-area flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto rounded-t-3xl px-6 pt-7 pb-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
           {/* ── Left column ── */}
           <div className="flex flex-col gap-6">
 
             {/* Dettagli Pratica */}
-            <div className={cn("bg-card rounded-2xl border p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
+            <div className={cn("bg-card rounded-2xl border border-border shadow-sm p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
               <h2 className="mb-6 text-xl font-semibold">Dettagli Pratica</h2>
 
               {/* Practice number hero */}
-              <div className="mb-6 rounded-xl bg-muted/40 px-5 py-4">
-                <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <div className="page-header-gradient mb-6 rounded-xl px-5 py-4">
+                <p className="mb-1 text-xs font-medium uppercase tracking-widest text-white/70">
                   Numero Pratica
                 </p>
-                <p className="text-4xl font-bold tracking-tight">
+                <p className="text-4xl font-bold tracking-tight text-white">
                   {practice.practice_number}
                 </p>
               </div>
@@ -697,7 +697,7 @@ export default function PracticeDetail({
 
             {/* Note */}
             {(isEditMode || practice.notes) && (
-              <div className={cn("bg-card rounded-2xl border p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
+              <div className={cn("bg-card rounded-2xl border border-border shadow-sm p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
                 <h2 className="mb-4 text-xl font-semibold">Note</h2>
                 {isEditMode ? (
                   <textarea
@@ -721,7 +721,7 @@ export default function PracticeDetail({
           <div className="flex flex-col gap-6">
 
             {/* Clienti */}
-            <div className={cn("bg-card rounded-2xl border p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
+            <div className={cn("bg-card rounded-2xl border border-border shadow-sm p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
               <h2 className="mb-5 text-xl font-semibold">
                 {(practice.clients?.length ?? 0) > 1 ? "Clienti / Comparenti" : "Cliente"}
               </h2>
@@ -784,7 +784,7 @@ export default function PracticeDetail({
             </div>
 
             {/* Operatore Interno */}
-            <div className={cn("bg-card rounded-2xl border p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
+            <div className={cn("bg-card rounded-2xl border border-border shadow-sm p-7 transition-colors", isEditMode ? "border-primary/40 ring-2 ring-primary/10" : "border-border")}>
               <h2 className="mb-5 text-xl font-semibold">Operatore Interno</h2>
               {isEditMode ? (
                 <select
@@ -811,7 +811,7 @@ export default function PracticeDetail({
             </div>
 
             {/* Stato Pratica — visual toggle cards */}
-            <div className="bg-card rounded-2xl border border-border p-7">
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-7">
               <h2 className="mb-5 text-xl font-semibold">Stato Pratica</h2>
               <div className="grid grid-cols-2 gap-3">
                 {/* Assegnata */}
@@ -889,7 +889,7 @@ export default function PracticeDetail({
         </div>
 
         {/* Storico Modifiche */}
-        <div className="bg-card rounded-2xl border border-border">
+        <div className="bg-card rounded-2xl border border-border shadow-sm">
           <button
             type="button"
             onClick={() => setShowTimeline((v) => !v)}

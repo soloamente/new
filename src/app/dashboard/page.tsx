@@ -196,7 +196,7 @@ export default async function DashboardPage({
         `scroll-fade-y` su un div interno; su `lg+` si disattiva (desktop senza mask sullo scroll).
       */}
       <main
-        className="bg-card m-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl px-9 pt-6 pb-6 font-medium"
+        className="bg-content-area m-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl px-9 pt-6 pb-6 font-medium"
       >
         <div
           className="scroll-fade-y flex min-h-0 min-w-0 flex-1 flex-col gap-2.5 overflow-y-auto
@@ -206,8 +206,8 @@ export default async function DashboardPage({
         {/* Header - Info Container (kept consistent with other pages like Studi/Pratiche) */}
         <div className="relative flex w-full shrink-0 flex-col gap-4.5">
           {/* Header - Title */}
-          <div className="flex items-center justify-between gap-2.5">
-            <h1 className="flex items-center justify-center gap-3.5">
+          <div className="page-header-gradient flex items-center justify-between gap-2.5">
+            <h1 className="flex items-center justify-center gap-3.5 text-white">
               <BarChart3 className="size-5 shrink-0" aria-hidden />
               <span>Statistiche</span>
             </h1>

@@ -370,19 +370,23 @@ export default function Pratiche({
   );
 
   return (
-    <main className="bg-card m-2.5 flex min-w-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
+    <main className="bg-content-area m-2.5 flex min-w-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
       {/* Header - Info Container — `md:relative` serve alla search bar fissa a destra (come clienti) */}
       <div className="relative flex w-full min-w-0 flex-col gap-4.5">
         {/* Header - Title and Export Button */}
-        <div className="flex items-center justify-between gap-2.5">
-          <h1 className="flex items-center gap-3 text-2xl font-bold">
+        <div className="page-header-gradient flex items-center justify-between gap-2.5">
+          <h1 className="flex items-center gap-3 text-2xl font-bold text-white">
             <PraticheIcon />
             <span>{pageTitle}</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
             <button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-foreground text-background flex cursor-pointer items-center justify-center gap-2 rounded-full py-2.25 pr-3.5 pl-4.5 text-sm font-semibold shadow-sm hover:opacity-90"
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-full py-2.25 pr-3.5 pl-4.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80"
+              style={{
+                background: "var(--grad-red)",
+                boxShadow: "0 4px 12px rgba(185,29,44,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
             >
               Aggiungi pratica
               <FaPlus className="size-3" />
@@ -661,10 +665,12 @@ export default function Pratiche({
                 })}
               </div>
             ) : (
-              <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
-                {renderTableHeader()}
-                <div className="flex flex-col gap-2 p-2.5">
-                  {filteredPractices.map((practice) => renderPracticeRow(practice))}
+              <div className="bg-card w-full min-w-0 overflow-hidden rounded-xl shadow-md ring-1 ring-black/[0.08] dark:ring-white/[0.08]">
+                <div className={PRATICHE_TABLE_MIN_WIDTH_CLASS}>
+                  {renderTableHeader()}
+                  <div className="flex flex-col gap-2 p-2.5">
+                    {filteredPractices.map((practice) => renderPracticeRow(practice))}
+                  </div>
                 </div>
               </div>
             )}

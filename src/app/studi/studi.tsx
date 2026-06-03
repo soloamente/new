@@ -186,22 +186,22 @@ export default function Studi({ studios }: StudiProps) {
   };
 
   return (
-    <main className="bg-card m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
+    <main className="bg-content-area m-2.5 flex flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl px-9 pt-6 font-medium">
       {/* Header - Info Container */}
       <div className="relative flex w-full flex-col gap-4.5">
         {/* Header - Title and Export Button */}
-        <div className="flex items-center justify-between gap-2.5">
-          <h1 className="flex items-center justify-center gap-3.5">
+        <div className="page-header-gradient flex items-center justify-between gap-2.5">
+          <h1 className="flex items-center justify-center gap-3.5 text-white">
             <GearIcon />
             <span>Studi</span>
           </h1>
           <div className="flex items-center justify-center gap-2.5">
             <button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-background flex cursor-pointer items-center justify-center gap-2.5 rounded-full py-1.75 pr-2.5 pl-3.75 text-sm"
+              className="flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-white/30 bg-white/20 py-1.75 pr-2.5 pl-3.75 text-sm text-white transition-colors hover:bg-white/30"
             >
               Aggiungi
-              <FaPlus className="text-button-secondary" />
+              <FaPlus className="text-white" />
             </button>
           </div>
         </div>

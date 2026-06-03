@@ -18,7 +18,7 @@ import type { User, UserRole } from "@/app/actions/auth-actions";
 import HouseUserIcon from "./icons/house-user";
 import OpenRectArrowOutIcon from "./icons/open-rect-arrow-out";
 import { logout } from "@/app/actions/auth-actions";
-import { WeatherWidget } from "./weather-widget";
+import Image from "next/image";
 import { useMobileSidebar } from "./mobile-sidebar-context";
 import { X, ChevronDown, Settings2, BarChart3 } from "lucide-react";
 
@@ -162,8 +162,24 @@ export default function Sidebar({ user }: SidebarProps) {
             </button>
           </div>
 
-          {/* Weather Widget */}
-          <WeatherWidget className="mb-2" />
+          {/* Marina Militare brand block */}
+          <div className="flex flex-col items-center gap-3 py-2">
+            <Image
+              src="/images/logo-marina.png"
+              alt="Marina Militare"
+              width={80}
+              height={80}
+              className="size-20 shrink-0 object-contain"
+            />
+            <div className="flex flex-col items-center gap-0.5 text-center">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-secondary">
+                Cruscotto
+              </span>
+              <span className="text-[16px] font-bold leading-tight tracking-[0.01em] text-sidebar-primary">
+                Gestione Pratiche
+              </span>
+            </div>
+          </div>
 
           {/* Navigation */}
           <nav className="flex flex-col gap-0.5">
@@ -174,8 +190,8 @@ export default function Sidebar({ user }: SidebarProps) {
                 href={item.href}
                 onClick={closeMobileSidebar}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-secondary transition-colors hover:bg-foreground/[0.06] hover:text-sidebar-primary",
-                  isActiveItem(item.href) && "bg-foreground/[0.08] font-semibold text-sidebar-primary",
+                  "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sidebar-secondary transition-colors hover:bg-[#eef3fb] hover:text-sidebar-primary dark:hover:bg-white/[0.08]",
+                  isActiveItem(item.href) && "border-[#dbe5f3] bg-gradient-to-r from-[#eef3fb] to-white font-semibold text-sidebar-primary shadow-[inset_3px_0_0_#d33144] dark:border-white/[0.12] dark:bg-none dark:bg-white/[0.12] dark:from-transparent dark:to-transparent",
                 )}
               >
                 <item.icon size={20} />
@@ -213,8 +229,8 @@ export default function Sidebar({ user }: SidebarProps) {
                       href="/dashboard"
                       onClick={closeMobileSidebar}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-secondary transition-colors hover:bg-foreground/[0.06] hover:text-sidebar-primary",
-                        isActiveItem("/dashboard") && "bg-foreground/[0.08] font-semibold text-sidebar-primary",
+                        "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-secondary transition-colors hover:bg-[#eef3fb] hover:text-sidebar-primary dark:hover:bg-white/[0.08]",
+                        isActiveItem("/dashboard") && "border-[#dbe5f3] bg-gradient-to-r from-[#eef3fb] to-white font-semibold text-sidebar-primary shadow-[inset_3px_0_0_#d33144] dark:border-white/[0.12] dark:bg-none dark:bg-white/[0.12] dark:from-transparent dark:to-transparent",
                       )}
                     >
                       <BarChart3 className="size-[18px] shrink-0" aria-hidden />
@@ -224,8 +240,8 @@ export default function Sidebar({ user }: SidebarProps) {
                       href="/operatori"
                       onClick={closeMobileSidebar}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-secondary transition-colors hover:bg-foreground/[0.06] hover:text-sidebar-primary",
-                        isActiveItem("/operatori") && "bg-foreground/[0.08] font-semibold text-sidebar-primary",
+                        "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-secondary transition-colors hover:bg-[#eef3fb] hover:text-sidebar-primary dark:hover:bg-white/[0.08]",
+                        isActiveItem("/operatori") && "border-[#dbe5f3] bg-gradient-to-r from-[#eef3fb] to-white font-semibold text-sidebar-primary shadow-[inset_3px_0_0_#d33144] dark:border-white/[0.12] dark:bg-none dark:bg-white/[0.12] dark:from-transparent dark:to-transparent",
                       )}
                     >
                       <OperatoriIcon size={18} />
@@ -243,7 +259,7 @@ export default function Sidebar({ user }: SidebarProps) {
           <div className="flex flex-col gap-0.5">
             {navFooter.map((item) => {
               const className =
-                "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-secondary transition-colors hover:bg-foreground/[0.06] hover:text-sidebar-primary";
+                "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-secondary transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400";
               if (item.href) {
                 return (
                   <a
@@ -276,7 +292,7 @@ export default function Sidebar({ user }: SidebarProps) {
           </div>
 
           {/* User card */}
-          <div className="flex items-center gap-3 rounded-xl border border-foreground/[0.08] bg-foreground/[0.05] p-2.5">
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-2.5">
             <Avatar className="size-9 shrink-0">
               <AvatarFallback placeholderSeed={user?.name ?? "User"} />
             </Avatar>
