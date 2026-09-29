@@ -172,11 +172,8 @@ export default function Sidebar({ user }: SidebarProps) {
               className="size-20 shrink-0 object-contain"
             />
             <div className="flex flex-col items-center gap-0.5 text-center">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-secondary">
-                Cruscotto
-              </span>
               <span className="text-[16px] font-bold leading-tight tracking-[0.01em] text-sidebar-primary">
-                Gestione Pratiche
+                Plancia Pratiche
               </span>
             </div>
           </div>

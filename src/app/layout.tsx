@@ -11,8 +11,8 @@ import { Suspense } from "react";
 import Loader from "@/components/loader";
 
 export const metadata: Metadata = {
-  title: "Cruscotto pratiche",
-  description: "Cruscotto pratiche",
+  title: "Plancia Pratiche",
+  description: "Plancia Pratiche",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
