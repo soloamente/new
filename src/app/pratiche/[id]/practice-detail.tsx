@@ -15,9 +15,18 @@ import type {
   PracticeAuditChange,
 } from "@/app/actions/practices-actions";
 import {
+  deletePractice,
   updatePractice,
   type ClientInput,
 } from "@/app/actions/practices-actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { searchClients, type Client } from "@/app/actions/clients-actions";
 import type { User } from "@/app/actions/auth-actions";
 import { ArrowBackIcon, CheckIcon, UserCircleIcon } from "@/components/icons";
@@ -26,7 +35,14 @@ import { Input } from "@/components/ui/input";
 import { formatDate, mapApiStatusToUI } from "@/lib/practices-utils";
 import { OperatorInitialsAvatar } from "@/components/operator-initials-avatar";
 import { motion, AnimatePresence } from "motion/react";
-import { FaPencilAlt, FaTimes, FaPlus, FaHistory, FaCheck } from "react-icons/fa";
+import {
+  FaPencilAlt,
+  FaTimes,
+  FaPlus,
+  FaHistory,
+  FaCheck,
+  FaTrashAlt,
+} from "react-icons/fa";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -439,6 +455,8 @@ export default function PracticeDetail({
 
   // AMMINISTRATORE_STUDIO (role_id=2) can fully edit only practices assigned to themselves
   const canEdit = userRoleId !== 2 || practice.assigned_to === currentUserId;
+  // Only AMMINISTRATORE_STUDIO can delete, any practice of the studio
+  const canDelete = userRoleId === 2;
   // OPERATORE (role_id=3) comes from /mie-pratiche
   const backHref = userRoleId === 3 ? "/mie-pratiche" : "/pratiche";
 
@@ -556,6 +574,29 @@ export default function PracticeDetail({
     }
   };
 
+  // --- Delete ---
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const ok = await deletePractice(practice.id);
+      if (ok) {
+        toast.success(`Pratica ${practice.practice_number} eliminata`);
+        setIsDeleteDialogOpen(false);
+        router.push(backHref);
+        router.refresh();
+      } else {
+        toast.error("Errore durante l'eliminazione della pratica");
+      }
+    } catch {
+      toast.error("Errore durante l'eliminazione della pratica");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // --- Timeline toggle ---
   const [showTimeline, setShowTimeline] = useState(false);
 
@@ -623,8 +664,59 @@ export default function PracticeDetail({
               Modifica
             </Button>
           ))}
+
+          {canDelete && !isEditMode && (
+            <Button
+              variant="destructive-outline"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="gap-2"
+            >
+              <FaTrashAlt className="size-3.5" />
+              Elimina
+            </Button>
+          )}
         </div>
       </div>
+
+      <Dialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!isDeleting) setIsDeleteDialogOpen(open);
+        }}
+      >
+        <DialogContent showCloseButton={false} className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Eliminare la pratica {practice.practice_number}?</DialogTitle>
+            <DialogDescription>
+              La pratica, i suoi collegamenti ai clienti e lo storico delle
+              modifiche verranno eliminati definitivamente. L&apos;operazione
+              non può essere annullata.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex w-full items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <><Spinner size="sm" className="mr-1.5" />Eliminazione…</>
+              ) : (
+                "Elimina pratica"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Scrollable content */}
       <div className="bg-content-area flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto rounded-t-3xl px-6 pt-7 pb-8">

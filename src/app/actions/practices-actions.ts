@@ -216,3 +216,31 @@ export async function updatePractice(
     return null;
   }
 }
+
+/**
+ * Delete a practice permanently (AMMINISTRATORE_STUDIO only)
+ * Returns true on success, false if error occurs
+ */
+export async function deletePractice(id: number): Promise<boolean> {
+  try {
+    await apiFetch(`/api/practices/${id}`, {
+      method: "DELETE",
+    });
+    return true;
+  } catch (error: unknown) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 429
+    ) {
+      return false;
+    }
+
+    if (error instanceof Error) {
+      console.error(`Failed to delete practice ${id}:`, error.message);
+    } else {
+      console.error(`Failed to delete practice ${id}:`, error);
+    }
+    return false;
+  }
+}
