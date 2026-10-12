@@ -585,8 +585,8 @@ export default function PracticeDetail({
       if (ok) {
         toast.success(`Pratica ${practice.practice_number} eliminata`);
         setIsDeleteDialogOpen(false);
-        router.push(backHref);
-        router.refresh();
+        // replace (no refresh): refreshing would re-render this deleted practice → 404
+        router.replace("/pratiche");
       } else {
         toast.error("Errore durante l'eliminazione della pratica");
       }

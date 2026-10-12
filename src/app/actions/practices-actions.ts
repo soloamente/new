@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { apiFetch } from "@lib/api";
 
 export interface Practice {
@@ -226,6 +227,8 @@ export async function deletePractice(id: number): Promise<boolean> {
     await apiFetch(`/api/practices/${id}`, {
       method: "DELETE",
     });
+    // Drop cached list data so /pratiche shows the list without the deleted practice
+    revalidatePath("/pratiche");
     return true;
   } catch (error: unknown) {
     if (
