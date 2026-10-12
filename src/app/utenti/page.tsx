@@ -17,6 +17,11 @@ export default async function UtentiPage() {
 
   const userRows = users.map((user) => convertUserToRow(user, studioNameMap));
 
-  return <Utenti users={userRows} />;
+  const studioOptions = studios.map((studio) => ({
+    id: studio.id,
+    name: studio.name,
+  }));
+
+  return <Utenti users={userRows} studioOptions={studioOptions} />;
 }
 

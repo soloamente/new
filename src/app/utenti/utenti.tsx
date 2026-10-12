@@ -16,10 +16,14 @@ import { FaPlus } from "react-icons/fa";
 // Stat numbers: TextMorph morphs digit changes without motion-plus masked spans.
 import { TextMorph } from "torph/react";
 import type { UserRow } from "@/lib/users-utils";
-import { CreateAdminDialog } from "@/components/create-admin-dialog";
+import {
+  CreateAdminDialog,
+  type StudioOption,
+} from "@/components/create-admin-dialog";
 
 interface UtentiProps {
   users: UserRow[];
+  studioOptions: StudioOption[];
 }
 
 const normalizeValue = (value: string) =>
@@ -58,7 +62,7 @@ const userStatusStyles: Record<
   },
 };
 
-export default function Utenti({ users }: UtentiProps) {
+export default function Utenti({ users, studioOptions }: UtentiProps) {
   // State for selected users
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
@@ -422,6 +426,7 @@ export default function Utenti({ users }: UtentiProps) {
       <CreateAdminDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+        studios={studioOptions}
       />
     </main>
   );

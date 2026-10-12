@@ -33,16 +33,16 @@ export async function getUsers(): Promise<User[]> {
 }
 
 /**
- * Get operators (users with role_id = 3) for the current user's studio
- * For AMMINISTRATORE_STUDIO: returns operators of their studio
- * For DATAWEB: returns all operators
+ * Get studio members (operators role_id = 3 and admins role_id = 2)
+ * For AMMINISTRATORE_STUDIO: returns operators and the other admins of their studio
+ * For DATAWEB: returns all operators and admins
  * Returns empty array if error occurs
  */
 export async function getOperators(): Promise<User[]> {
   try {
     const users = await getUsers();
-    // Filter to only operators (role_id = 3)
-    return users.filter((user) => user.role_id === 3);
+    // Filter to studio members (admins and operators)
+    return users.filter((user) => user.role_id === 2 || user.role_id === 3);
   } catch (error: unknown) {
     if (
       error instanceof Error &&
@@ -147,8 +147,9 @@ export async function createUser(input: CreateUserInput): Promise<User | null> {
  * Creates both the admin user and the studio together
  * Returns the created user or null if error occurs
  * 
- * Note: This endpoint creates an Admin (role_id: 2) and automatically creates
- * the associated Studio. It's not possible to associate an Admin to an existing Studio.
+ * Note: This creates an Admin (role_id: 2) and automatically creates the
+ * associated Studio. To add an Admin to an existing Studio use createUser
+ * with role_id: 2 and studio_id.
  */
 export async function createAdminWithStudio(
   input: CreateAdminWithStudioInput,

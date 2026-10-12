@@ -29,6 +29,7 @@ export interface OperatorRow {
   completedPractices: number;
   lastActivity: string;
   status: OperatorStatus;
+  isAdmin: boolean;
   imageUrl?: string;
 }
 
@@ -67,6 +68,7 @@ export function convertOperatorToRow(
     completedPractices: completedPractices,
     lastActivity: lastActivity ? formatDate(lastActivity) : "Nessuna attività",
     status: mapApiStatusToUI(operator.status),
+    isAdmin: operator.role_id === 2,
   };
 }
 

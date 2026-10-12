@@ -10,6 +10,14 @@ import {
   XIcon,
 } from "@/components/icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -120,6 +128,23 @@ interface OperatoriProps {
   operators: OperatorRow[];
 }
 
+// role_id as string for the Select: "3" = OPERATORE (collaboratore), "2" = AMMINISTRATORE_STUDIO
+type CreateUserRole = "3" | "2";
+
+interface CreateUserForm {
+  name: string;
+  email: string;
+  password: string;
+  role: CreateUserRole;
+}
+
+const EMPTY_CREATE_FORM: CreateUserForm = {
+  name: "",
+  email: "",
+  password: "",
+  role: "3",
+};
+
 export default function Operatori({ operators }: OperatoriProps) {
   const router = useRouter();
   // State for selected operators
@@ -133,11 +158,9 @@ export default function Operatori({ operators }: OperatoriProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [createForm, setCreateForm] = useState<CreateUserForm>(
+    EMPTY_CREATE_FORM,
+  );
 
   // Derived filtered operators to mirror the visible table and stats
   const filteredOperators = useMemo(() => {
@@ -315,7 +338,7 @@ export default function Operatori({ operators }: OperatoriProps) {
         open={isCreateDialogOpen}
         onOpenChange={(open) => {
           if (!open && !isSubmitting) {
-            setCreateForm({ name: "", email: "", password: "" });
+            setCreateForm(EMPTY_CREATE_FORM);
             setCreateError(null);
           }
           setIsCreateDialogOpen(open);
@@ -323,10 +346,10 @@ export default function Operatori({ operators }: OperatoriProps) {
       >
         <DialogContent showCloseButton={false} className="sm:max-w-[480px]">
           <DialogHeader className="space-y-0">
-            <DialogTitle className="text-2xl text-center">Crea operatore</DialogTitle>
+            <DialogTitle className="text-2xl text-center">Crea utente</DialogTitle>
             <DialogDescription className="text-center">
-              Compila i campi obbligatori per creare un nuovo operatore dello
-              studio (ruolo impostato automaticamente).
+              Compila i campi obbligatori per aggiungere un collaboratore o un
+              amministratore allo studio.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -347,21 +370,21 @@ export default function Operatori({ operators }: OperatoriProps) {
                   name,
                   email,
                   password,
-                  role_id: 3,
+                  role_id: Number(createForm.role),
                   status: "active",
                 });
                 if (!created) {
-                  setCreateError("Errore nella creazione dell'operatore.");
+                  setCreateError("Errore nella creazione dell'utente.");
                   return;
                 }
-                setCreateForm({ name: "", email: "", password: "" });
+                setCreateForm(EMPTY_CREATE_FORM);
                 setIsCreateDialogOpen(false);
                 router.refresh();
               } catch (error) {
                 setCreateError(
                   error instanceof Error
                     ? error.message
-                    : "Errore nella creazione dell'operatore.",
+                    : "Errore nella creazione dell'utente.",
                 );
               } finally {
                 setIsSubmitting(false);
@@ -434,6 +457,32 @@ export default function Operatori({ operators }: OperatoriProps) {
                   className="w-full"
                 />
               </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="operator-role"
+                  className="text-sm font-medium leading-none"
+                >
+                  Ruolo <span className="text-destructive">*</span>
+                </label>
+                <Select
+                  value={createForm.role}
+                  onValueChange={(value) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      role: value as CreateUserRole,
+                    }))
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger id="operator-role" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">Collaboratore</SelectItem>
+                    <SelectItem value="2">Amministratore</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             {createError ? (
               <p className="text-destructive text-sm">{createError}</p>
@@ -464,7 +513,7 @@ export default function Operatori({ operators }: OperatoriProps) {
                     Creazione...
                   </>
                 ) : (
-                  "Crea operatore"
+                  "Crea utente"
                 )}
               </Button>
             </DialogFooter>
@@ -611,6 +660,9 @@ export default function Operatori({ operators }: OperatoriProps) {
                               <span className="truncate font-medium">
                                 {operator.name}
                               </span>
+                              {operator.isAdmin && (
+                                <Badge variant="info">Amministratore</Badge>
+                              )}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent

@@ -13,24 +13,43 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   createAdminWithStudio,
+  createUser,
   type CreateAdminWithStudioInput,
 } from "@/app/actions/users-actions";
 import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
+export interface StudioOption {
+  id: number;
+  name: string;
+}
+
+type StudioMode = "new" | "existing";
+
 interface CreateAdminDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  studios: StudioOption[];
 }
 
 export function CreateAdminDialog({
   open,
   onOpenChange,
+  studios,
 }: CreateAdminDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [studioMode, setStudioMode] = useState<StudioMode>("new");
+  const [selectedStudioId, setSelectedStudioId] = useState<string>("");
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<number>(1);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -56,10 +75,10 @@ export function CreateAdminDialog({
           setContentHeight(innerContentRef.current.scrollHeight);
         }
       };
-      
+
       // Initial measurement
       updateHeight();
-      
+
       const resizeObserver = new ResizeObserver(() => {
         updateHeight();
       });
@@ -74,22 +93,29 @@ export function CreateAdminDialog({
     setIsSubmitting(true);
 
     try {
-      // Clean up empty optional fields
-      const payload: CreateAdminWithStudioInput = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role_id: 2,
-        studio_name: formData.studio_name.trim(),
-        ...(formData.studio_city?.trim() && {
-          studio_city: formData.studio_city.trim(),
-        }),
-        ...(formData.studio_vat_number?.trim() && {
-          studio_vat_number: formData.studio_vat_number.trim(),
-        }),
-      };
-
-      const result = await createAdminWithStudio(payload);
+      const result =
+        studioMode === "existing"
+          ? await createUser({
+              name: formData.name.trim(),
+              email: formData.email.trim(),
+              password: formData.password,
+              role_id: 2,
+              studio_id: Number(selectedStudioId),
+            })
+          : await createAdminWithStudio({
+              name: formData.name.trim(),
+              email: formData.email.trim(),
+              password: formData.password,
+              role_id: 2,
+              studio_name: formData.studio_name.trim(),
+              // Clean up empty optional fields
+              ...(formData.studio_city?.trim() && {
+                studio_city: formData.studio_city.trim(),
+              }),
+              ...(formData.studio_vat_number?.trim() && {
+                studio_vat_number: formData.studio_vat_number.trim(),
+              }),
+            });
 
       if (result) {
         // Reset form and close dialog
@@ -102,13 +128,15 @@ export function CreateAdminDialog({
           studio_city: "",
           studio_vat_number: "",
         });
+        setStudioMode("new");
+        setSelectedStudioId("");
+        setCurrentStep(0);
+        setDirection(1);
         onOpenChange(false);
         // Refresh the page to show the new admin
         router.refresh();
       } else {
-        setError(
-          "Errore durante la creazione dell'amministratore. Riprova.",
-        );
+        setError("Errore durante la creazione dell'amministratore. Riprova.");
       }
     } catch (err) {
       setError(
@@ -146,6 +174,8 @@ export function CreateAdminDialog({
         studio_city: "",
         studio_vat_number: "",
       });
+      setStudioMode("new");
+      setSelectedStudioId("");
       setError(null);
       setCurrentStep(0);
       setDirection(1);
@@ -154,11 +184,12 @@ export function CreateAdminDialog({
   };
 
   const isStep1Valid =
-    formData.name.trim() &&
-    formData.email.trim() &&
-    formData.password;
+    formData.name.trim() && formData.email.trim() && formData.password;
 
-  const isStep2Valid = formData.studio_name.trim();
+  const isStep2Valid =
+    studioMode === "existing"
+      ? selectedStudioId !== ""
+      : formData.studio_name.trim();
 
   const isFormValid = isStep1Valid && isStep2Valid;
 
@@ -185,7 +216,7 @@ export function CreateAdminDialog({
               <div className="space-y-1.5">
                 <label
                   htmlFor="admin-name"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Nome <span className="text-destructive">*</span>
                 </label>
@@ -204,7 +235,7 @@ export function CreateAdminDialog({
               <div className="space-y-2">
                 <label
                   htmlFor="admin-email"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Email <span className="text-destructive">*</span>
                 </label>
@@ -223,7 +254,7 @@ export function CreateAdminDialog({
               <div className="space-y-2">
                 <label
                   htmlFor="admin-password"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Password <span className="text-destructive">*</span>
                 </label>
@@ -244,70 +275,139 @@ export function CreateAdminDialog({
       case 1:
         return (
           <div className="space-y-3">
-            <div className="space-y-2">
+            <div
+              role="radiogroup"
+              aria-label="Studio"
+              className="grid grid-cols-2 gap-2"
+            >
+              {(
+                [
+                  { value: "new", label: "Nuovo studio" },
+                  { value: "existing", label: "Studio esistente" },
+                ] as const
+              ).map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={studioMode === option.value}
+                  variant={studioMode === option.value ? "default" : "outline"}
+                  onClick={() => {
+                    setStudioMode(option.value);
+                    setError(null);
+                  }}
+                  disabled={
+                    isSubmitting ||
+                    (option.value === "existing" && studios.length === 0)
+                  }
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+
+            {studioMode === "existing" ? (
               <div className="space-y-1.5">
                 <label
-                  htmlFor="studio-name"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="existing-studio"
+                  className="text-sm leading-none font-medium"
                 >
-                  Nome Studio <span className="text-destructive">*</span>
+                  Studio <span className="text-destructive">*</span>
                 </label>
-                <Input
-                  id="studio-name"
-                  type="text"
-                  placeholder="Nome Studio"
-                  value={formData.studio_name}
-                  onChange={handleInputChange("studio_name")}
-                  required
+                <Select
+                  value={selectedStudioId}
+                  onValueChange={(value) => {
+                    setSelectedStudioId(value);
+                    setError(null);
+                  }}
                   disabled={isSubmitting}
-                  className="w-full"
-                />
+                >
+                  <SelectTrigger id="existing-studio" className="w-full">
+                    <SelectValue placeholder="Seleziona uno studio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {studios.map((studio) => (
+                      <SelectItem key={studio.id} value={String(studio.id)}>
+                        {studio.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+            ) : (
+              <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label
-                    htmlFor="studio-city"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    htmlFor="studio-name"
+                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Città
+                    Nome Studio <span className="text-destructive">*</span>
                   </label>
                   <Input
-                    id="studio-city"
+                    id="studio-name"
                     type="text"
-                    placeholder="Città"
-                    value={formData.studio_city || ""}
-                    onChange={handleInputChange("studio_city")}
+                    placeholder="Nome Studio"
+                    value={formData.studio_name}
+                    onChange={handleInputChange("studio_name")}
+                    required
                     disabled={isSubmitting}
                     className="w-full"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="studio-vat"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Partita IVA
-                  </label>
-                  <Input
-                    id="studio-vat"
-                    type="text"
-                    placeholder="IT12345678901"
-                    value={formData.studio_vat_number || ""}
-                    onChange={handleInputChange("studio_vat_number")}
-                    disabled={isSubmitting}
-                    className="w-full"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="studio-city"
+                      className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Città
+                    </label>
+                    <Input
+                      id="studio-city"
+                      type="text"
+                      placeholder="Città"
+                      value={formData.studio_city ?? ""}
+                      onChange={handleInputChange("studio_city")}
+                      disabled={isSubmitting}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="studio-vat"
+                      className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Partita IVA
+                    </label>
+                    <Input
+                      id="studio-vat"
+                      type="text"
+                      placeholder="IT12345678901"
+                      value={formData.studio_vat_number ?? ""}
+                      onChange={handleInputChange("studio_vat_number")}
+                      disabled={isSubmitting}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         );
       default:
         return null;
     }
-  }, [currentStep, formData, isSubmitting, handleInputChange]);
+  }, [
+    currentStep,
+    formData,
+    isSubmitting,
+    handleInputChange,
+    studioMode,
+    selectedStudioId,
+    studios,
+  ]);
 
   const stepVariants = {
     initial: (direction: number) => ({
@@ -327,24 +427,26 @@ export function CreateAdminDialog({
   const stepTitles = ["Dati Amministratore", "Dati Studio"];
   const stepDescriptions = [
     "Inserisci i dati dell'amministratore dello studio",
-    "Inserisci i dati dello studio da creare",
+    studioMode === "existing"
+      ? "Scegli lo studio a cui aggiungere l'amministratore"
+      : "Inserisci i dati dello studio da creare",
   ];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="sm:max-w-[500px] overflow-hidden"
+        className="overflow-hidden sm:max-w-[500px]"
       >
         <DialogHeader>
           <DialogTitle>Crea Nuovo Amministratore Studio</DialogTitle>
-          <DialogDescription>
-            {stepDescriptions[currentStep]}
-          </DialogDescription>
+          <DialogDescription>{stepDescriptions[currentStep]}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <MotionConfig transition={{ duration: 0.3, type: "spring", bounce: 0 }}>
+          <MotionConfig
+            transition={{ duration: 0.3, type: "spring", bounce: 0 }}
+          >
             <motion.div
               animate={{
                 height:
@@ -390,7 +492,7 @@ export function CreateAdminDialog({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="bg-destructive/10 text-destructive rounded-md p-2 text-sm mt-3"
+                className="bg-destructive/10 text-destructive mt-3 rounded-md p-2 text-sm"
               >
                 {error}
               </motion.div>
@@ -427,10 +529,7 @@ export function CreateAdminDialog({
                     Continua
                   </Button>
                 ) : (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !isFormValid}
-                  >
+                  <Button type="submit" disabled={isSubmitting || !isFormValid}>
                     {isSubmitting ? (
                       <>
                         <Spinner size="sm" className="mr-2" />
@@ -449,4 +548,3 @@ export function CreateAdminDialog({
     </Dialog>
   );
 }
-
