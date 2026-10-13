@@ -14,7 +14,7 @@ import { Spinner } from "./spinner";
 const CREAM = "#f7f4ee";
 
 const inputClassName =
-  "w-full rounded-2xl border border-white/15 bg-white/[0.08] py-3.5 pl-12 pr-4 text-base text-white placeholder:text-white/45 transition-colors duration-200 hover:border-white/25 focus:border-white/50 focus:bg-white/[0.12] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f7f4ee]/40";
+  "w-full rounded-2xl border border-white/15 bg-white/[0.08] py-3.5 pl-12 pr-4 text-base short:py-2.5 text-white placeholder:text-white/45 transition-colors duration-200 hover:border-white/25 focus:border-white/50 focus:bg-white/[0.12] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f7f4ee]/40";
 
 const emailSchema = z
   .string()
@@ -85,8 +85,10 @@ const SignIn1 = () => {
   return (
     // reducedMotion="user": con prefers-reduced-motion vengono disattivate le traslazioni
     <MotionConfig reducedMotion="user">
+      {/* shrink-0 + min-h-full: il contenitore cresce oltre il viewport invece di tagliare
+          card e pulsante sopra/sotto (justify-center su altezza fissa li rendeva irraggiungibili) */}
       <div
-        className="relative flex min-h-full w-full flex-1 flex-col items-center justify-center overflow-hidden px-4 py-12"
+        className="short:py-6 relative flex min-h-full w-full shrink-0 flex-col items-center justify-center overflow-hidden px-4 py-12"
         style={{ backgroundColor: CREAM }}
       >
         {/* Sfondo panna con aloni navy/blu e un tocco di rosso sfocati dietro la card */}
@@ -100,7 +102,7 @@ const SignIn1 = () => {
         {/* Card glass navy centrata */}
         <motion.div
           {...enter(0)}
-          className="relative z-10 flex w-full max-w-[460px] flex-col items-center overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(145deg,rgba(14,42,94,0.94)_0%,rgba(31,78,160,0.88)_100%)] px-7 py-10 shadow-[0_30px_80px_-20px_rgba(14,42,94,0.55)] backdrop-blur-xl sm:px-11 sm:py-12"
+          className="short:rounded-3xl short:py-6 sm:short:py-7 relative z-10 flex w-full max-w-[460px] flex-col items-center overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(145deg,rgba(14,42,94,0.94)_0%,rgba(31,78,160,0.88)_100%)] px-5 py-10 shadow-[0_30px_80px_-20px_rgba(14,42,94,0.55)] backdrop-blur-xl sm:px-11 sm:py-12"
         >
           {/* Filo rosso in alto, richiamo all'accento della sidebar */}
           <span
@@ -110,7 +112,7 @@ const SignIn1 = () => {
 
           {/* Logo */}
           <div
-            className="mb-6 flex size-28 items-center justify-center rounded-full shadow-xl ring-[6px] ring-white/15"
+            className="short:mb-3 short:size-16 short:ring-4 tiny:hidden mb-6 flex size-28 shrink-0 items-center justify-center rounded-full shadow-xl ring-[6px] ring-white/15"
             style={{ backgroundColor: CREAM }}
           >
             <Image
@@ -118,17 +120,17 @@ const SignIn1 = () => {
               alt="Marina Militare"
               width={250}
               height={320}
-              className="h-20 w-auto object-contain"
+              className="short:h-11 h-20 w-auto object-contain"
               priority
             />
           </div>
 
           {/* Titolo */}
-          <div className="mb-9 flex flex-col items-center gap-2 text-center">
-            <h1 className="text-3xl leading-tight font-bold text-white sm:text-[2.1rem]">
+          <div className="short:mb-5 short:gap-1 tiny:mb-3 mb-9 flex flex-col items-center gap-2 text-center">
+            <h1 className="short:text-2xl sm:short:text-[1.75rem] text-2xl leading-tight font-bold text-white sm:text-[2.1rem]">
               Plancia Pratiche
             </h1>
-            <p className="text-base text-white/70">
+            <p className="tiny:hidden text-base text-white/70">
               Accedi con le tue credenziali
             </p>
           </div>
@@ -141,7 +143,7 @@ const SignIn1 = () => {
               e.stopPropagation();
               void form.handleSubmit();
             }}
-            className="flex w-full flex-col gap-5"
+            className="short:gap-3 flex w-full flex-col gap-5"
           >
             <form.Field name="email" validators={{ onChange: emailSchema }}>
               {(field) => (
@@ -255,7 +257,7 @@ const SignIn1 = () => {
                   type="submit"
                   disabled={isSubmitting || isEmpty}
                   aria-busy={isSubmitting}
-                  className="mt-2 flex h-[52px] w-full cursor-pointer items-center justify-center rounded-full bg-[#f7f4ee] text-base font-semibold text-[#0e2a5e] shadow-lg transition-all duration-200 hover:bg-white focus-visible:ring-2 focus-visible:ring-[#f7f4ee] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e2a5e] focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100"
+                  className="short:mt-1 short:h-11 mt-2 flex h-[52px] w-full shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#f7f4ee] text-base font-semibold text-[#0e2a5e] shadow-lg transition-all duration-200 hover:bg-white focus-visible:ring-2 focus-visible:ring-[#f7f4ee] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e2a5e] focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100"
                 >
                   {isSubmitting ? (
                     <>
@@ -274,7 +276,7 @@ const SignIn1 = () => {
         {/* Nota di accesso riservato */}
         <motion.p
           {...enter(0.15)}
-          className="relative z-10 mt-8 flex items-center gap-2 text-center text-sm font-medium text-[#3d5382]"
+          className="short:mt-4 relative z-10 mt-8 flex items-center gap-2 text-center text-sm font-medium text-[#3d5382]"
         >
           <ShieldCheck aria-hidden className="size-4 text-[#d33144]" />
           Accesso riservato al personale autorizzato

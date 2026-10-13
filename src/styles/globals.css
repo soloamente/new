@@ -4,6 +4,9 @@
 @import "./checkbox.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Viewport bassi (notebook piccoli, zoom browser elevato): layout più compatto */
+@custom-variant short (@media (max-height: 760px));
+@custom-variant tiny (@media (max-height: 520px));
 
 @theme {
   --font-inter:
