@@ -301,7 +301,7 @@ export default function Sidebar({ user }: SidebarProps) {
                     {userRole === "DATAWEB"
                       ? "Super Admin"
                       : userRole === "AMMINISTRATORE_STUDIO"
-                        ? "Amministratore"
+                        ? "Visore"
                         : "Operatore"}
                   </span>
                 </>

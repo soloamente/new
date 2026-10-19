@@ -70,7 +70,7 @@ export default function Studi({ studios }: StudiProps) {
         values: uniqueCities,
       },
       {
-        triggerLabel: "Admin",
+        triggerLabel: "Visore",
         values: uniqueAdmins,
       },
     ],
@@ -114,7 +114,7 @@ export default function Studi({ studios }: StudiProps) {
   const filteredStudios = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const cityFilter = assigneeFilterValues[normalizeValue("Città")];
-    const adminFilter = assigneeFilterValues[normalizeValue("Admin")];
+    const adminFilter = assigneeFilterValues[normalizeValue("Visore")];
 
     return studios.filter((studio) => {
       const matchesSearch =
@@ -129,7 +129,7 @@ export default function Studi({ studios }: StudiProps) {
           : normalizeValue(studio.city) === cityFilter;
 
       const matchesAdmin =
-        !adminFilter || adminFilter === "Admin"
+        !adminFilter || adminFilter === "Visore"
           ? true
           : normalizeValue(studio.admin) === adminFilter;
 
@@ -313,7 +313,7 @@ export default function Studi({ studios }: StudiProps) {
               <div>Nome</div>
               <div>Città</div>
               <div>P.IVA</div>
-              <div>Admin</div>
+              <div>Visore</div>
               <div>Operatori</div>
             </div>
           </div>

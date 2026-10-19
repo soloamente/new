@@ -136,13 +136,13 @@ export function CreateAdminDialog({
         // Refresh the page to show the new admin
         router.refresh();
       } else {
-        setError("Errore durante la creazione dell'amministratore. Riprova.");
+        setError("Errore durante la creazione del visore. Riprova.");
       }
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Errore durante la creazione dell'amministratore. Riprova.",
+          : "Errore durante la creazione del visore. Riprova.",
       );
     } finally {
       setIsSubmitting(false);
@@ -424,11 +424,11 @@ export function CreateAdminDialog({
     }),
   };
 
-  const stepTitles = ["Dati Amministratore", "Dati Studio"];
+  const stepTitles = ["Dati Visore", "Dati Studio"];
   const stepDescriptions = [
-    "Inserisci i dati dell'amministratore dello studio",
+    "Inserisci i dati del visore dello studio",
     studioMode === "existing"
-      ? "Scegli lo studio a cui aggiungere l'amministratore"
+      ? "Scegli lo studio a cui aggiungere il visore"
       : "Inserisci i dati dello studio da creare",
   ];
 
@@ -439,7 +439,7 @@ export function CreateAdminDialog({
         className="overflow-hidden sm:max-w-[500px]"
       >
         <DialogHeader>
-          <DialogTitle>Crea Nuovo Amministratore Studio</DialogTitle>
+          <DialogTitle>Crea Nuovo Visore Studio</DialogTitle>
           <DialogDescription>{stepDescriptions[currentStep]}</DialogDescription>
         </DialogHeader>
 
@@ -536,7 +536,7 @@ export function CreateAdminDialog({
                         Creazione...
                       </>
                     ) : (
-                      "Crea Amministratore"
+                      "Crea Visore"
                     )}
                   </Button>
                 )}

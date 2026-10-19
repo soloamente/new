@@ -306,7 +306,7 @@ export default async function DashboardPage({
                   className="bg-card text-stats-title flex min-h-48 w-full items-center justify-center rounded-3xl px-6
                              text-sm xl:min-h-0 xl:h-full"
                 >
-                  Grafico disponibile solo per Amministratore Studio.
+                  Grafico disponibile solo per il Visore dello studio.
                 </div>
               ) : (
                 <RevenueBarChart

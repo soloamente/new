@@ -43,7 +43,7 @@ function getRoleDisplayName(role: UserRole): string {
     case "DATAWEB":
       return "Super Admin";
     case "AMMINISTRATORE_STUDIO":
-      return "Amministratore";
+      return "Visore";
     case "OPERATORE":
       return "Operatore";
     default:

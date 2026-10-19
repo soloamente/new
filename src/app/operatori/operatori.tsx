@@ -349,7 +349,7 @@ export default function Operatori({ operators }: OperatoriProps) {
             <DialogTitle className="text-2xl text-center">Crea utente</DialogTitle>
             <DialogDescription className="text-center">
               Compila i campi obbligatori per aggiungere un collaboratore o un
-              amministratore allo studio.
+              visore allo studio.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -479,7 +479,7 @@ export default function Operatori({ operators }: OperatoriProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="3">Collaboratore</SelectItem>
-                    <SelectItem value="2">Amministratore</SelectItem>
+                    <SelectItem value="2">Visore</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -661,7 +661,7 @@ export default function Operatori({ operators }: OperatoriProps) {
                                 {operator.name}
                               </span>
                               {operator.isAdmin && (
-                                <Badge variant="info">Amministratore</Badge>
+                                <Badge variant="info">Visore</Badge>
                               )}
                             </div>
                           </TooltipTrigger>

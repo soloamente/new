@@ -68,19 +68,19 @@ export function CreateStudioDialog({
       }
 
       if (!formData.admin_name.trim()) {
-        setError("Il nome dell'amministratore è obbligatorio");
+        setError("Il nome del visore è obbligatorio");
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.admin_email.trim()) {
-        setError("L'email dell'amministratore è obbligatoria");
+        setError("L'email del visore è obbligatoria");
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.admin_password.trim()) {
-        setError("La password dell'amministratore è obbligatoria");
+        setError("La password del visore è obbligatoria");
         setIsSubmitting(false);
         return;
       }
@@ -163,7 +163,7 @@ export function CreateStudioDialog({
             Crea Nuovo Studio
           </DialogTitle>
           <DialogDescription className="text-center">
-            Inserisci i dati dello studio e dell&apos;amministratore. I campi
+            Inserisci i dati dello studio e del visore. I campi
             con asterisco sono obbligatori.
           </DialogDescription>
         </DialogHeader>
@@ -238,7 +238,7 @@ export function CreateStudioDialog({
           {/* Admin Section */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">
-              Amministratore Studio
+              Visore Studio
             </h3>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="space-y-2">
